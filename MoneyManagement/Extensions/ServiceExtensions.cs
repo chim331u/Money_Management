@@ -62,12 +62,12 @@ namespace MoneyManagement.Extensions
 
             //Create a symmetric security key using the secret key from the configuration.
             SymmetricSecurityKey authSigningKey;
-
-            if (builder.Configuration.GetSection("IsDev").Value != null)
+            
+            if (builder.Environment.IsDevelopment())
             {
                 //for debug only
                 authSigningKey = new SymmetricSecurityKey
-                    (Encoding.UTF8.GetBytes(builder.Configuration["JWT:Secret"]));
+                    (Encoding.UTF8.GetBytes(builder.Configuration["JWT:SECRET"]));
             }
             else
             {

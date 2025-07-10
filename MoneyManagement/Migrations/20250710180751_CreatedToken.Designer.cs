@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using MoneyManagement.AppContext;
 
@@ -10,9 +11,11 @@ using MoneyManagement.AppContext;
 namespace MoneyManagement.Migrations
 {
     [DbContext(typeof(ApplicationContext))]
-    partial class UsersContextModelSnapshot : ModelSnapshot
+    [Migration("20250710180751_CreatedToken")]
+    partial class CreatedToken
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.15");

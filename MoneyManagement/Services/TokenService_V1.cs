@@ -29,11 +29,13 @@ public class TokenService_V1 : ITokenService_V1
     {
         var tokenHandler = new JwtSecurityTokenHandler();
 
-        var result = _vaultService.GetSecret(JWTSecretName, VaultPath, VaultMountPoint);
+        // var result = _vaultService.GetSecret(JWTSecretName, VaultPath, VaultMountPoint);
+        //
+        // string key = result.Result.Data.Value;
 
-        string key = result.Result.Data.Value;
-
-        if (result.Result.Data == null)
+        string key = _configuration[JWTSecretName];
+        
+        if (string.IsNullOrEmpty(key))
         {
             _logger.LogWarning($"No key found in LocalVault for {JWTSecretName}");
             return "No key found";
