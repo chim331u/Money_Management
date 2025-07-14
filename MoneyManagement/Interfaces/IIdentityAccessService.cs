@@ -1,17 +1,18 @@
-﻿using MoneyManagement.Models.IdentityAccess;
+﻿using MoneyManagement.Contract;
+using MoneyManagement.Models.IdentityAccess;
 
 namespace MoneyManagement.Interfaces
 {
     public interface IIdentityAccessService
     {
-        Task<ICollection<ISA_Accounts>> GetActiveIdentityAccountList();
-        Task<ISA_Accounts> GetIdentityAccount(int identityAccountId);
-        Task<ISA_Accounts> AddIdentityAccount(ISA_Accounts identityAccount);
-        Task<ISA_Accounts> UpdateIdentityAccount(ISA_Accounts identityAccount);
-        Task<ISA_Accounts> DeleteIdentityAccount(ISA_Accounts identityAccount);
+        Task<ApiResponse<ICollection<ISA_Accounts>>> GetActiveIdentityAccountList();
+        Task<ApiResponse<ISA_Accounts>> GetIdentityAccount(int identityAccountId);
+        Task<ApiResponse<ISA_Accounts>> AddIdentityAccount(ISA_Accounts identityAccount);
+        Task<ApiResponse<ISA_Accounts>> UpdateIdentityAccount(ISA_Accounts identityAccount);
+        Task<ApiResponse<bool>> DeleteIdentityAccount(int id);
 
-        Task<ICollection<ISA_PasswordsOld>> ListAllOldPasswords(int accountId);
-        Task<string> PasswordChange(ISA_Accounts item);
-        Task<string> GetCleanPsw(int isa_account_id);
+        Task<ApiResponse<ICollection<ISA_PasswordsOld>>> ListAllOldPasswords(int accountId);
+        Task<ApiResponse<string>> PasswordChange(ISA_Accounts item);
+        Task<ApiResponse<string>> GetCleanPsw(int isa_account_id);
     }
 }

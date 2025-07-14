@@ -42,13 +42,9 @@ public static class AccountEndPoint
             return result != null ? Results.Ok(result) : Results.NotFound();
         });
 
-        app.MapPut("/DeleteAccount", async (AccountMasterData? item, IBankAccountService service) =>
+        app.MapDelete("/DeleteAccount/{id}", async (int id, IBankAccountService service) =>
         {
-            if (item==null)
-            {
-                return Results.BadRequest("Account is null");
-            }
-            var result = await service.DeleteAccount(item);
+            var result = await service.DeleteAccount(id);
             return result != null ? Results.Ok(result) : Results.NotFound();
         });
         

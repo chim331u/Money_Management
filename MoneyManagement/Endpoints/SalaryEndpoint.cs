@@ -33,10 +33,10 @@ public static class SalaryEndpoint
             return result is not null ? Results.Ok(result) : Results.NotFound();
         });
         
-        app.MapPost("/DeleteSalary", async (Salary salary, ISalaryService salaryService) =>
+        app.MapDelete("/DeleteSalary", async (int id, ISalaryService salaryService) =>
         {
-            var result = await salaryService.DeleteSalary(salary);
-            return result is not null ? Results.Ok() : Results.NotFound();
+            var result = await salaryService.DeleteSalary(id);
+            return result is not null ? Results.Ok(result) : Results.NotFound();
         });
         
         return app;

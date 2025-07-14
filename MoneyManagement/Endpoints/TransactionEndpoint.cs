@@ -35,37 +35,37 @@ public static class TransactionEndpoint
         app.MapPost("/UploadCsv", async (List<Transaction> item, ITransactionService service) =>
         {
             var result = await service.UploadCsv(item);
-            return string.IsNullOrEmpty(result) ? Results.BadRequest("Transaction list is null or empty") : Results.Ok(result) ;
+            return result!=null  ? Results.BadRequest("Transaction list is null or empty") : Results.Ok(result) ;
         });
         
-        app.MapPut("/DeleteTransaction", async (Transaction item, ITransactionService service) =>
+        app.MapDelete("/DeleteTransaction/{id}", async (int id, ITransactionService service) =>
         {
-            var result = await service.DeleteTransaction(item);
-            return result != null ? Results.Ok("Transaction deleted successfully") : Results.NotFound();
+            var result = await service.DeleteTransaction(id);
+            return result != null ? Results.Ok(result) : Results.NotFound();
         });
         
         app.MapPut("/CategoryConfirmed", async (Transaction item, ITransactionService service) =>
         {
             var result = await service.CategoryConfirmed(item);
-            return result != null ? Results.Ok("Category Confirmed successfully") : Results.NotFound();
+            return result != null ? Results.Ok(result) : Results.NotFound();
         });        
         
         app.MapPut("/CategorizeTransaction", async (Transaction item, ITransactionService service) =>
         {
             var result = await service.CategorizeTransaction(item);
-            return result != null ? Results.Ok("Transaction Categorized successfully") : Results.NotFound();
+            return result != null ? Results.Ok(result) : Results.NotFound();
         });
         
         app.MapPut("/CategorizeAllTransaction", async (ITransactionService service) =>
         {
             var result = await service.CategorizeAllTransaction();
-            return result != null ? Results.Ok("All Transactions Categorized successfully") : Results.NotFound();
+            return result != null ? Results.Ok(result) : Results.NotFound();
         });
         
         app.MapPut("/TrainModelTransaction", async (ITransactionService service) =>
         {
             var result = await service.TrainModelTransaction();
-            return result != null ? Results.Ok("Train model successfully") : Results.NotFound();
+            return result != null ? Results.Ok(result) : Results.NotFound();
         });
         
         

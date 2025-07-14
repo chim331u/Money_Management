@@ -40,14 +40,10 @@ public static class SupplierEndpoint
             return result != null ? Results.Ok(result) : Results.NotFound();
         });
         
-        app.MapPut("/DeleteSupplier", async (Supplier item, IAncillaryService service) =>
+        app.MapDelete("/DeleteSupplier/{id}", async (int id, IAncillaryService service) =>
         {
-            if (item == null)
-            {
-                return Results.BadRequest("Supplier is null");
-            }
-            var result = await service.DeleteSupplier(item);
-            return result != null ? Results.Ok() : Results.NotFound();
+            var result = await service.DeleteSupplier(id);
+            return result != null ? Results.Ok(result) : Results.NotFound();
         });
         
         return app;

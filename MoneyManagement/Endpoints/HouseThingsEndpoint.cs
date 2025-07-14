@@ -63,13 +63,9 @@ public static class HouseThingsEndpoint
             return result != null ? Results.Ok(result) : Results.NotFound();
         });
         
-        app.MapPut("/DeleteHouseThings", async (HouseThings item, IHouseThingsService service) =>
+        app.MapDelete("/DeleteHouseThings/{id}", async (int id, IHouseThingsService service) =>
         {
-            if (item == null)
-            {
-                return Results.BadRequest("HouseThings is null");
-            }
-            var result = await service.DeleteHouseThings(item);
+            var result = await service.DeleteHouseThings(id);
             return result != null ? Results.Ok() : Results.NotFound();
         });
         

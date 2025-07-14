@@ -50,13 +50,9 @@ public static class CurrencyRateEndPoint
         });
         
         // Define the endpoint for deleting a currency conversion rate
-        app.MapPut("/DeleteCurrencyConversion", async (IAncillaryService service, CurrencyConversionRate item) =>
+        app.MapDelete("/DeleteCurrencyConversion/{id}", async (IAncillaryService service, int id) =>
         {
-            if (item == null)
-            {
-                return Results.BadRequest("Currency conversion rate is null");
-            }
-            var result = await service.DeleteCurrencyConversion(item);
+            var result = await service.DeleteCurrencyConversion(id);
             return result != null ? Results.Ok(result) : Results.BadRequest("Error deleting currency conversion rate");
         });
 
@@ -65,14 +61,15 @@ public static class CurrencyRateEndPoint
         {
             var result = await service.UpdateCurrencyRate();
 
-            return result switch
-            {
-                1 => Results.Ok("Rates already updated"),
-                0 => Results.Ok("Currency rate updated"),
-                -1 => Results.BadRequest("Rate not updated"),
-                -2 => Results.BadRequest("Error in update rate"),
-                _ => Results.NotFound()
-            };
+            // return result switch
+            // {
+            //     1 => Results.Ok("Rates already updated"),
+            //     0 => Results.Ok("Currency rate updated"),
+            //     -1 => Results.BadRequest("Rate not updated"),
+            //     -2 => Results.BadRequest("Error in update rate"),
+            //     _ => Results.NotFound()
+            // };
+            return result != null ? Results.Ok(result) : Results.NotFound();
         });
         
         // Define the endpoint for updating all currency rates
@@ -80,21 +77,24 @@ public static class CurrencyRateEndPoint
         {
             var result = await service.UpdateAllCurrencyRate();
 
-            return result switch
-            {
-                1 => Results.Ok("Rates already updated"),
-                0 => Results.Ok("Currency rate updated"),
-                -1 => Results.BadRequest("Rate not updated"),
-                -2 => Results.BadRequest("Error in update rate"),
-                _ => Results.NotFound()
-            };
+            // return result switch
+            // {
+            //     1 => Results.Ok("Rates already updated"),
+            //     0 => Results.Ok("Currency rate updated"),
+            //     -1 => Results.BadRequest("Rate not updated"),
+            //     -2 => Results.BadRequest("Error in update rate"),
+            //     _ => Results.NotFound()
+            // };
+            return result != null ? Results.Ok(result) : Results.NotFound();
         });
         
         app.MapGet("/ClearUnusedRates", async (IAncillaryService service) =>
         {
             var result = await service.ClearUnusedRates();
-            return string.IsNullOrEmpty(result)  ? Results.Ok("Currency conversion cache cleared successfully") : Results.BadRequest("Error clearing currency conversion cache");
+            return result != null ? Results.Ok(result) : Results.NotFound();
+            
         });
+        
         return app;
     }
 }

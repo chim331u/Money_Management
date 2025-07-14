@@ -1,13 +1,14 @@
-﻿using MoneyManagement.Models.Bill;
+﻿using MoneyManagement.Contract;
+using MoneyManagement.Models.Bill;
 
 namespace MoneyManagement.Interfaces
 {
     public interface IBillService
     {
-        Task<ICollection<Bill>> GetActiveBillList();
-        Task<Bill> GetBill(int BillId);
-        Task<Bill> AddBill(Bill bill);
-        Task<Bill> UpdateBill(Bill bill);
-        Task<Bill> DeleteBill(Bill bill);
+        Task<ApiResponse<ICollection<Bill>>> GetActiveBillList();
+        Task<ApiResponse<Bill>> GetBill(int BillId);
+        Task<ApiResponse<Bill>> AddBill(Bill bill);
+        Task<ApiResponse<Bill>> UpdateBill(Bill bill);
+        Task<ApiResponse<bool>> DeleteBill(int id);
     }
 }

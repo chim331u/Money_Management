@@ -42,20 +42,16 @@ public static class BillEndpoint
             return result != null ? Results.Ok(result) : Results.NotFound();
         });
         
-        app.MapPut("/DeleteBill", async (Bill item, IBillService service) =>
+        app.MapDelete("/DeleteBill/{id}", async (int id, IBillService service) =>
         {
-            if (item == null)
-            {
-                return Results.BadRequest("Bill is null");
-            }
-            var result = await service.DeleteBill(item);
-            return result != null ? Results.Ok() : Results.NotFound();
+            var result = await service.DeleteBill(id);
+            return result != null ? Results.Ok(result) : Results.NotFound();
         });
         
         //upload file
         app.MapPost("UploadBill/{id}", async (IFormFile file, int id, IBillService service, IConfiguration config) =>
         {
-            var bill = await service.GetBill(id);
+            var bill =  service.GetBill(id).Result.Data;
 
             if (bill == null)
             {

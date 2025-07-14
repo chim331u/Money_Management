@@ -2,6 +2,7 @@
 using System.Xml;
 using Microsoft.EntityFrameworkCore;
 using MoneyManagement.AppContext;
+using MoneyManagement.Contract;
 using MoneyManagement.Interfaces;
 using MoneyManagement.Models.AncillaryData;
 
@@ -29,37 +30,37 @@ namespace MoneyManagement.Services
 
         #region Country *
         
-        public async Task<ICollection<Country>> GetActiveCountryList()
+        public async Task<ApiResponse<ICollection<Country>>> GetActiveCountryList()
         {
             try
             {
                 var result = await _context.Country.Where(x => x.IsActive).ToListAsync();
-                return result;
+                return new ApiResponse<ICollection<Country>>(result, "Success");
 
             }
             catch (Exception ex)
             {
                 _logger.LogError($"Error getting active country list {ex.Message}");
-                return null;
+                return new ApiResponse<ICollection<Country>>(null, $"Error getting active country list {ex.Message}");
             }
         }
 
-        public async Task<Country> GetCountry(int countryId)
+        public async Task<ApiResponse<Country>> GetCountry(int countryId)
         {
             try
             {
                 var result = await _context.Country.FindAsync(countryId);
-                return result;
-
+                return new ApiResponse<Country>(result, "Success");
+                
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Error fetching country {ex.Message}");
-                return null;
+                 _logger.LogError($"Error fetching country {ex.Message}");
+                return new ApiResponse<Country>(null, $"Error fetching country {ex.Message}");
             }
         }
 
-        public async Task<Country> UpdateCountry(Country item)
+        public async Task<ApiResponse<Country>> UpdateCountry(Country item)
         {
             try
             {
@@ -68,7 +69,7 @@ namespace MoneyManagement.Services
                 if (existingCountry == null)
                 {
                     _logger.LogWarning($"Country with ID {item.Id} not found.");
-                    return null;
+                    return new ApiResponse<Country>(item, $"Country with ID {item.Id} not found");
                 }
                 
                 // Update the properties of the existing country
@@ -83,25 +84,25 @@ namespace MoneyManagement.Services
                 _context.Country.Update(existingCountry);
                 await _context.SaveChangesAsync();
 
-                return item;
+                return new ApiResponse<Country>(existingCountry, "Success");
             }
             catch (Exception ex)
             {
                 _logger.LogError($"Error updating country {ex.Message}");
-                return null;
+                return new ApiResponse<Country>(null, $"Error updating country {ex.Message}");
 
             }
 
         }
 
-        public async Task<Country> AddCountry(Country item)
+        public async Task<ApiResponse<Country>> AddCountry(Country item)
         {
             try
             {
                 if (item == null)
                 {
                     _logger.LogWarning($"Country to add is null");
-                    return null;
+                    return new ApiResponse<Country>(null, "Country to add is null");
                 }
 
                 item.CreatedDate = DateTime.Now;
@@ -110,27 +111,27 @@ namespace MoneyManagement.Services
                 await _context.Country.AddAsync(item);
                 await _context.SaveChangesAsync();
 
-                return await _context.Country.FindAsync(item.Id);
+                return new ApiResponse<Country>(await _context.Country.FindAsync(item.Id), "Success");
             }
             catch (Exception ex)
             {
                 _logger.LogError($"Error adding new Country: {ex.Message}");
-                return null;
+                return new ApiResponse<Country>(null, $"Error adding new Country: {ex.Message}");
 
             }
 
         }
 
-        public async Task<Country> DeleteCountry(Country item)
+        public async Task<ApiResponse<bool>> DeleteCountry(int id)
         {
             try
             {
-                var existingCountry = await _context.Country.FindAsync(item.Id);
+                var existingCountry = await _context.Country.FindAsync(id);
                 
                 if (existingCountry == null)
                 {
-                    _logger.LogWarning($"Country with ID {item.Id} not found.");
-                    return null;
+                    _logger.LogWarning($"Country with ID {id} not found.");
+                    return new ApiResponse<bool>(false, "Country with ID not found.");
                 }
                 existingCountry.LastUpdatedDate = DateTime.Now;
                 existingCountry.IsActive = false;
@@ -138,12 +139,12 @@ namespace MoneyManagement.Services
                 _context.Country.Update(existingCountry);
                 await _context.SaveChangesAsync();
 
-                return item;
+                return new ApiResponse<bool>(true, "Country deleted successfully");
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex.Message);
-                return null;
+                return new ApiResponse<bool>(false, $"Error deleting country {ex.Message}");
 
             }
 
@@ -154,37 +155,37 @@ namespace MoneyManagement.Services
         #region Currency *
 
 
-        public async Task<ICollection<Currency>> GetActiveCurrencyList()
+        public async Task<ApiResponse<ICollection<Currency>>> GetActiveCurrencyList()
         {
             try
             {
                 var result = await _context.Currency.Where(x => x!.IsActive).ToListAsync();
-                return result;
+                return new ApiResponse<ICollection<Currency>>(result, $"Currency list fetched successfully");
 
             }
             catch (Exception ex)
             {
                 _logger.LogError($"Error fetching active currency list {ex.Message}");
-                return null;
+                return new ApiResponse<ICollection<Currency>>(null, $"Error getting active currency list {ex.Message}");
             }
         }
 
-        public async Task<Currency> GetCurrency(int id)
+        public async Task<ApiResponse<Currency>> GetCurrency(int id)
         {
             try
             {
                 var result = await _context.Currency.FindAsync(id);
-                return result;
+                return new ApiResponse<Currency>(result, $"Currency fetched successfully");
 
             }
             catch (Exception ex)
             {
                 _logger.LogError($"Error fetching active currency {ex.Message}");
-                return null;
+                return new ApiResponse<Currency>(null, $"Error getting active currency {ex.Message}");
             }
         }
 
-        public async Task<Currency> UpdateCurrency(Currency item)
+        public async Task<ApiResponse<Currency>> UpdateCurrency(Currency item)
         {
             try
             {
@@ -193,7 +194,7 @@ namespace MoneyManagement.Services
                 if (existingCurrency == null)
                 {
                     _logger.LogWarning($"Currency with ID {item.Id} not found.");
-                    return null;
+                    return new ApiResponse<Currency>(item, $"Currency with ID {item.Id} not found");
                 }
                 // Update the properties of the existing currency
                 existingCurrency.Name = item.Name;
@@ -207,25 +208,25 @@ namespace MoneyManagement.Services
                 _context.Currency.Update(existingCurrency);
                 await _context.SaveChangesAsync();
 
-                return item;
+                return new ApiResponse<Currency>(existingCurrency, $"Currency updated successfully");
             }
             catch (Exception ex)
             {
                 _logger.LogError($"Error updating Currency: {ex.Message}");
-                return null;
+                return new ApiResponse<Currency>(null, $"Error updating Currency: {ex.Message}");
 
             }
 
         }
 
-        public async Task<Currency> AddCurrency(Currency item)
+        public async Task<ApiResponse<Currency>> AddCurrency(Currency item)
         {
             try
             {
                 if (item == null)
                 {
                     _logger.LogWarning($"Currency to add is null");
-                    return null;
+                    return new ApiResponse<Currency>(null, "Currency to add is null");
                 }
 
                 item.CreatedDate = DateTime.Now;
@@ -234,27 +235,27 @@ namespace MoneyManagement.Services
                 await _context.Currency.AddAsync(item);
                 await _context.SaveChangesAsync();
 
-                return await _context.Currency.FindAsync(item.Id);
+                return new ApiResponse<Currency>(await _context.Currency.FindAsync(item.Id), "Currency added successfully");
             }
             catch (Exception ex)
             {
                 _logger.LogError($"Error adding new Currency: {ex.Message} ");
-                return null;
+                return new ApiResponse<Currency>(null, $"Error adding new Currency: {ex.Message}");
 
             }
 
         }
 
-        public async Task<Currency> DeleteCurrency(Currency item)
+        public async Task<ApiResponse<bool>> DeleteCurrency(int id)
         {
             try
             {
-                var existingCurrency = await _context.Currency.FindAsync(item.Id);
+                var existingCurrency = await _context.Currency.FindAsync(id);
                 
                 if (existingCurrency == null)
                 {
-                    _logger.LogWarning($"Currency with ID {item.Id} not found.");
-                    return null;
+                    _logger.LogWarning($"Currency with ID {id} not found.");
+                    return new ApiResponse<bool>(false, "Currency with ID not found.");
                 }
                 existingCurrency.LastUpdatedDate = DateTime.Now;
                 existingCurrency.IsActive = false;
@@ -262,12 +263,12 @@ namespace MoneyManagement.Services
                 _context.Currency.Update(existingCurrency);
                 await _context.SaveChangesAsync();
 
-                return item;
+                return new ApiResponse<bool>(true, "Currency deleted successfully");
             }
             catch (Exception ex)
             {
                 _logger.LogError($"Error deleting currency {ex.Message}");
-                return null;
+                return new ApiResponse<bool>(false, $"Error deleting currency {ex.Message}");
 
             }
 
@@ -278,37 +279,37 @@ namespace MoneyManagement.Services
         #region Currency Conversion Rate *
 
 
-        public async Task<ICollection<CurrencyConversionRate>> GetActiveCurrencyConversionList()
+        public async Task<ApiResponse<ICollection<CurrencyConversionRate>>> GetActiveCurrencyConversionList()
         {
             try
             {
                 var result = await _context.CurrencyConversionRates.Where(x => x.IsActive).OrderByDescending(x => x.ReferringDate).ToListAsync();
-                return result;
+                return new ApiResponse<ICollection<CurrencyConversionRate>>(result, $"Currency conversion list fetched successfully");
 
             }
             catch (Exception ex)
             {
                 _logger.LogError($"Error fetching Currency conversion list: {ex.Message}");
-                return null;
+                return new ApiResponse<ICollection<CurrencyConversionRate>>(null, $"Error getting active currency conversion list {ex.Message}");
             }
         }
 
-        public async Task<CurrencyConversionRate> GetCurrencyConversion(int id)
+        public async Task<ApiResponse<CurrencyConversionRate>> GetCurrencyConversion(int id)
         {
             try
             {
                 var result = await _context.CurrencyConversionRates.FindAsync(id);
-                return result;
+                return new ApiResponse<CurrencyConversionRate>(result, $"Currency conversion list fetched successfully");
 
             }
             catch (Exception ex)
             {
                 _logger.LogError($"Error fetching currency conversion: {ex.Message}");
-                return null;
+                return new ApiResponse<CurrencyConversionRate>(null, $"Error getting currency conversion list {ex.Message}");
             }
         }
 
-        public async Task<CurrencyConversionRate> GetCurrencyRate(string currencyAlf3)
+        public async Task<ApiResponse<CurrencyConversionRate>> GetCurrencyRate(string currencyAlf3)
         {
             try
             {
@@ -316,17 +317,17 @@ namespace MoneyManagement.Services
                 .OrderByDescending(c => c.ReferringDate)
                 .FirstOrDefaultAsync();
 
-                return result;
+                return new ApiResponse<CurrencyConversionRate>(result, $"Currency conversion list fetched successfully");
 
             }
             catch (Exception ex)
             {
                 _logger.LogError($"Error fetching currency rate: {ex.Message}");
-                return null;
+                return new ApiResponse<CurrencyConversionRate>(null, $"Error getting currency rate: {ex.Message}");
             }
         }
 
-        public async Task<CurrencyConversionRate> UpdateCurrencyConversion(CurrencyConversionRate item)
+        public async Task<ApiResponse<CurrencyConversionRate>> UpdateCurrencyConversion(CurrencyConversionRate item)
         {
 
             try
@@ -335,7 +336,7 @@ namespace MoneyManagement.Services
                 if (existingRate == null)
                 {
                     _logger.LogWarning($"CurrencyConversionRate with ID {item.Id} not found.");
-                    return null;
+                    return new ApiResponse<CurrencyConversionRate>(null, "CurrencyConversionRate with ID not found.");
                 }
                 // Update the properties of the existing rate
                 existingRate.RateValue = item.RateValue;
@@ -349,18 +350,18 @@ namespace MoneyManagement.Services
                 _context.CurrencyConversionRates.Update(existingRate);
                 await _context.SaveChangesAsync();
 
-                return item;
+                return new ApiResponse<CurrencyConversionRate>(existingRate, $"CurrencyConversionRate updated successfully");
             }
             catch (Exception ex)
             {
                 _logger.LogError($"Error updating currency conversion: {ex.Message}");
-                return null;
+                return new ApiResponse<CurrencyConversionRate>(null, $"Error updating currency conversion {ex.Message}");
 
             }
 
         }
 
-        public async Task<CurrencyConversionRate> AddCurrencyConversion(CurrencyConversionRate item)
+        public async Task<ApiResponse<CurrencyConversionRate>> AddCurrencyConversion(CurrencyConversionRate item)
         {
             try
             {
@@ -370,33 +371,41 @@ namespace MoneyManagement.Services
                 await _context.CurrencyConversionRates.AddAsync(item);
                 await _context.SaveChangesAsync();
 
-                return await _context.CurrencyConversionRates.FindAsync(item.Id);
+                return new ApiResponse<CurrencyConversionRate>(await _context.CurrencyConversionRates.FindAsync(item.Id), $"Currency conversion rate added successfully");
             }
             catch (Exception ex)
             {
                 _logger.LogError($"Error adding new Currency Conversion Rate: {ex.Message}");
-                return null;
+                return new ApiResponse<CurrencyConversionRate>(null, $"Error adding new Currency Conversion Rate: {ex.Message}");
 
             }
 
         }
 
-        public async Task<CurrencyConversionRate> DeleteCurrencyConversion(CurrencyConversionRate item)
+        public async Task<ApiResponse<bool>> DeleteCurrencyConversion(int id)
         {
             try
             {
-                item.LastUpdatedDate = DateTime.Now;
-                item.IsActive = false;
+                var existingRate = await _context.CurrencyConversionRates.FindAsync(id);
+                
+                if (existingRate == null)
+                {
+                    _logger.LogWarning($"CurrencyConversionRate with ID {id} not found.");
+                    return new ApiResponse<bool>(false, "CurrencyConversionRate with ID not found.");
+                }
+                
+                existingRate.LastUpdatedDate = DateTime.Now;
+                existingRate.IsActive = false;
 
-                var result = _context.CurrencyConversionRates.Update(item);
+                _context.CurrencyConversionRates.Update(existingRate);
                 await _context.SaveChangesAsync();
 
-                return item;
+                return new ApiResponse<bool>(true, "Currency conversion rate deleted successfully");
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Error deleting currency conversion Rate: {ex.Message}");
-                return null;
+                _logger.LogError($"Error deleting currency conversion rate: {ex.Message}");
+                return new ApiResponse<bool>(false, $"Error deleting currency conversion rate: {ex.Message}");
 
             }
 
@@ -421,7 +430,7 @@ namespace MoneyManagement.Services
 
         }
 
-        public async Task<int> UpdateCurrencyRate()
+        public async Task<ApiResponse<int>> UpdateCurrencyRate()
         {
             var _startTime = DateTime.Now;
             _logger.LogInformation($"Start Update Currency Conversion Rates ... ");
@@ -442,7 +451,7 @@ namespace MoneyManagement.Services
                     {
                         var currency = node.Attributes["currency"].Value;
 
-                        if (!currentCurrencies.Any(x => x.CurrencyCodeALF3 == currency)) continue;
+                        if (!currentCurrencies.Data.Any(x => x.CurrencyCodeALF3 == currency)) continue;
                         var rate = Decimal.Parse(node.Attributes["rate"].Value, NumberStyles.Any, new CultureInfo("en-Us"));
                         var uniqueK = string.Concat(currency, rate.ToString(CultureInfo.InvariantCulture), DateTime.Now.Date);
 
@@ -482,28 +491,28 @@ namespace MoneyManagement.Services
                         var result = await _context.SaveChangesAsync();
                         
                         _logger.LogInformation($"Currency rate updated in {_utilityService.TimeDiff(_startTime, DateTime.Now)}");
-                        return result;
+                        return new ApiResponse<int>(result, "Currency conversion rate updated successfully");
                     }
                     catch (Exception ex)
                     {
                         _logger.LogError($"Error updating currency rate: {ex.Message}");
-                        return -2;
+                        return new ApiResponse<int>(-2, $"Error updating currency rate: {ex.Message}");
                     }
 
                 }
 
                 _logger.LogWarning($"Currency rates NOT updated {_utilityService.TimeDiff(_startTime, DateTime.Now)}");
-                return -1;
+                return new  ApiResponse<int>(-1, "Currency conversion rate not updated successfully");
             }
 
             _logger.LogInformation($"Currency rates already updated {_utilityService.TimeDiff(_startTime, DateTime.Now)}");
-            return 1;
+            return new ApiResponse<int>(1, "Currency conversion rate already updated successfully");
 
         }
 
         //Deprecated
         //TODO delete method: duplicated
-        public async Task<int> UpdateAllCurrencyRate()
+        public async Task<ApiResponse<int>> UpdateAllCurrencyRate()
         {
             if (await GetLastUpdateDate() < DateTime.Now.Date)
             {
@@ -544,33 +553,33 @@ namespace MoneyManagement.Services
                     {
                         var result = await _context.SaveChangesAsync();
                         _logger.LogInformation("Currency rate updated");
-                        return result;
+                        return new ApiResponse<int>(result, "Currency conversion rate updated successfully");
                     }
                     catch (Exception ex)
                     {
                         _logger.LogError(ex.Message);
-                        return -2;
+                        return new ApiResponse<int>(-2, $"Currency conversion rate not updated successfully: {ex.Message} ");
                     }
 
                 }
                 _logger.LogWarning("Currency rate NOT updated");
-                return -1;
+                return new ApiResponse<int>(-1, "Currency conversion rate not updated successfully");
             }
             else
             {
                 _logger.LogInformation("Currency rate already updated");
-                return 1;
+                return new  ApiResponse<int>(1, "Currency conversion rate already updated successfully");
             }
         }
 
-        public async Task<string> ClearUnusedRates()
+        public async Task<ApiResponse<string>> ClearUnusedRates()
         {
             var currentCurrencies = await _context.Currency.Where(x => x.IsActive).Select(x => x.CurrencyCodeALF3).ToListAsync();
 
             var currentCurrencyRates = await GetActiveCurrencyConversionList();
 
-            var rejectList = currentCurrencyRates.Where(i => currentCurrencies.Contains(i.CurrencyCodeALF3));
-            var filteredList = currentCurrencyRates.Except(rejectList);
+            var rejectList = currentCurrencyRates.Data.Where(i => currentCurrencies.Contains(i.CurrencyCodeALF3));
+            var filteredList = currentCurrencyRates.Data.Except(rejectList);
             try
             {
                 foreach (var item in filteredList)
@@ -583,12 +592,12 @@ namespace MoneyManagement.Services
 
                 await _context.SaveChangesAsync();
                 _logger.LogInformation("Clear Currency rate completed");
-                return "Deleted unused currency rates";
+                return new ApiResponse<string>("Deleted unused currency rates", "Clear Currency rate completed successfully");
             }
             catch (Exception ex)
             {
                 _logger.LogError($"Error clearing currency rates: {ex.Message}");
-                return null;
+                return new ApiResponse<string>($"Error clearing currency rates: {ex.Message}", $"Error clearing currency rates: {ex.Message}");
             }
 
 
@@ -596,37 +605,37 @@ namespace MoneyManagement.Services
         #endregion
 
         #region Service User *
-        public async Task<ICollection<ServiceUser>> GetActiveServiceUserList()
+        public async Task<ApiResponse<ICollection<ServiceUser>>> GetActiveServiceUserList()
         {
             try
             {
                 var result = await _context.ServiceUser.Where(x => x.IsActive).OrderBy(x => x.CreatedDate).ToListAsync();
-                return result;
+                return new ApiResponse<ICollection<ServiceUser>>(result, "Service user list fetched successfully");
 
             }
             catch (Exception ex)
             {
                 _logger.LogError($"Error fetching  active serviceUser list: {ex.Message}");
-                return null;
+                return new ApiResponse<ICollection<ServiceUser>>(null, $"Error fetching active serviceUser list: {ex.Message}");
             }
         }
 
-        public async Task<ServiceUser> GetServiceUser(int serviceUserId)
+        public async Task<ApiResponse<ServiceUser>> GetServiceUser(int serviceUserId)
         {
             try
             {
                 var result = await _context.ServiceUser.FindAsync(serviceUserId);
-                return result;
+                return new ApiResponse<ServiceUser>(result, "Service user fetched successfully");
 
             }
             catch (Exception ex)
             {
                 _logger.LogError($"Error  fetching serviceUser: {ex.Message}");
-                return null;
+                return new ApiResponse<ServiceUser>(null, $"Error fetching serviceUser: {ex.Message}");
             }
         }
 
-        public async Task<ServiceUser> UpdateServiceUser(ServiceUser item)
+        public async Task<ApiResponse<ServiceUser>> UpdateServiceUser(ServiceUser item)
         {
             try
             {
@@ -634,7 +643,7 @@ namespace MoneyManagement.Services
                 if (existingUser == null)
                 {
                     _logger.LogWarning($"ServiceUser with ID {item.Id} not found.");
-                    return null;
+                    return new ApiResponse<ServiceUser>(null, "Service user not found");
                 }
                 // Update the properties of the existing user
                 existingUser.Name = item.Name;
@@ -647,18 +656,18 @@ namespace MoneyManagement.Services
 
                 await _context.SaveChangesAsync();
 
-                return item;
+                return new ApiResponse<ServiceUser>(existingUser, "Service user updated successfully");
             }
             catch (Exception ex)
             {
                 _logger.LogError($"Error updating  serviceUser: {ex.Message}");
-                return null;
+                return new ApiResponse<ServiceUser>(null, $"Service user not updated {ex.Message}" );
 
             }
 
         }
 
-        public async Task<ServiceUser> AddServiceUser(ServiceUser item)
+        public async Task<ApiResponse<ServiceUser>> AddServiceUser(ServiceUser item)
         {
             try
             {
@@ -669,26 +678,26 @@ namespace MoneyManagement.Services
                 await _context.ServiceUser.AddAsync(item);
                 await _context.SaveChangesAsync();
 
-                return item;
+                return new ApiResponse<ServiceUser>(await _context.ServiceUser.FindAsync(item.Id), "Service user added successfully");
             }
             catch (Exception ex)
             {
                 _logger.LogError($"Error adding serviceUser: {ex.Message}");
-                return null;
+                return new ApiResponse<ServiceUser>(null, $"Service user not added {ex.Message}" );
 
             }
 
         }
 
-        public async Task<ServiceUser> DeleteServiceUser(ServiceUser item)
+        public async Task<ApiResponse<bool>> DeleteServiceUser(int id)
         {
             try
             {
-                var existingUser = await _context.ServiceUser.FindAsync(item.Id);
+                var existingUser = await _context.ServiceUser.FindAsync(id);
                 if (existingUser == null)
                 {
-                    _logger.LogWarning($"ServiceUser with ID {item.Id} not found.");
-                    return null;
+                    _logger.LogWarning($"ServiceUser with ID {id} not found.");
+                    return new ApiResponse<bool>(false, "Service user not found");
                 }
                 
                 existingUser.LastUpdatedDate = DateTime.Now;
@@ -697,12 +706,12 @@ namespace MoneyManagement.Services
                 _context.ServiceUser.Update(existingUser);
                 await _context.SaveChangesAsync();
 
-                return item;
+                return new ApiResponse<bool>(true, "Service user deleted successfully");
             }
             catch (Exception ex)
             {
                 _logger.LogError($"Error deleting serviceUser: {ex.Message}");
-                return null;
+                return new ApiResponse<bool>(false, $"Error deleting serviceUser {ex.Message}");
 
             }
 
@@ -714,38 +723,38 @@ namespace MoneyManagement.Services
         #region Supplier *
 
 
-        public async Task<ICollection<Supplier>> GetActiveSupplierList()
+        public async Task<ApiResponse<ICollection<Supplier>>> GetActiveSupplierList()
         {
             try
             {
                 var result = await _context.suppliers.Where(x => x.IsActive).ToListAsync();
-                return result;
+                return new ApiResponse<ICollection<Supplier>>(result, "Supplier list fetched successfully");
 
             }
             catch (Exception ex)
             {
                 _logger.LogError($"Error fetching Active supplier list: {ex.Message}");
-                return null;
+                return new ApiResponse<ICollection<Supplier>>(null, $"Error fetching Active supplier list: {ex.Message}");
             }
         }
 
-        public async Task<Supplier> GetSupplier(int supplierId)
+        public async Task<ApiResponse<Supplier>> GetSupplier(int supplierId)
         {
             try
             {
                 var result = await _context.suppliers.FindAsync(supplierId);
-                return result;
+                return new ApiResponse<Supplier>(result, "Supplier fetched successfully");
 
             }
             catch (Exception ex)
             {
                 _logger.LogError($"Error fetching supplier {ex.Message}");
                     
-                return null;
+                return new ApiResponse<Supplier>(null, $"Error fetching supplier {ex.Message}");
             }
         }
 
-        public async Task<Supplier> UpdateSupplier(Supplier item)
+        public async Task<ApiResponse<Supplier>> UpdateSupplier(Supplier item)
         {
             try
             {
@@ -753,7 +762,7 @@ namespace MoneyManagement.Services
                 if (existingSupplier == null)
                 {
                     _logger.LogWarning($"Supplier with ID {item.Id} not found.");
-                    return null;
+                    return new ApiResponse<Supplier>(null, "Supplier not found");
                 }
                 // Update the properties of the existing supplier
                 existingSupplier.Name = item.Name;
@@ -768,18 +777,18 @@ namespace MoneyManagement.Services
                  _context.suppliers.Update(existingSupplier);
                 await _context.SaveChangesAsync();
 
-                return item;
+                return new ApiResponse<Supplier>(existingSupplier, "Supplier updated successfully");
             }
             catch (Exception ex)
             {
                 _logger.LogError($"Error updating  supplier {ex.Message}");
-                return null;
+                return new ApiResponse<Supplier>(null, $"Supplier not updated {ex.Message}");
 
             }
 
         }
 
-        public async Task<Supplier> AddSupplier(Supplier item)
+        public async Task<ApiResponse<Supplier>> AddSupplier(Supplier item)
         {
             try
             {
@@ -789,26 +798,26 @@ namespace MoneyManagement.Services
                 await _context.suppliers.AddAsync(item);
                 await _context.SaveChangesAsync();
 
-                return await _context.suppliers.FindAsync(item.Id);
+                return new  ApiResponse<Supplier>(await _context.suppliers.FindAsync(item.Id), "Supplier added successfully");
             }
             catch (Exception ex)
             {
                 _logger.LogError($"Error adding supplier {ex.Message}");
-                return null;
+                return new ApiResponse<Supplier>(null, $"Supplier not added {ex.Message}");
 
             }
 
         }
 
-        public async Task<Supplier> DeleteSupplier(Supplier item)
+        public async Task<ApiResponse<bool>> DeleteSupplier(int id)
         {
             try
             {
-                var existingSupplier = await _context.suppliers.FindAsync(item.Id);
+                var existingSupplier = await _context.suppliers.FindAsync(id);
                 if (existingSupplier == null)
                 {
-                    _logger.LogWarning($"Supplier with ID {item.Id} not found.");
-                    return null;
+                    _logger.LogWarning($"Supplier with ID {id} not found.");
+                    return new ApiResponse<bool>(false, "Supplier not found");
                 }
                 
                 existingSupplier.LastUpdatedDate = DateTime.Now;
@@ -817,12 +826,12 @@ namespace MoneyManagement.Services
                 _context.suppliers.Update(existingSupplier);
                 await _context.SaveChangesAsync();
 
-                return item;
+                return new ApiResponse<bool>(true, "Supplier deleted successfully");
             }
             catch (Exception ex)
             {
                 _logger.LogError($"Error deleting supplier {ex.Message}");
-                return null;
+                return new ApiResponse<bool>(false, $"Supplier not deleted {ex.Message}");
 
             }
 
@@ -833,52 +842,52 @@ namespace MoneyManagement.Services
         #region ReadInBill *
 
 
-        public async Task<ICollection<ReadInBill>?> GetActiveReadInBillList()
+        public async Task<ApiResponse<ICollection<ReadInBill>>> GetActiveReadInBillList()
         {
             try
             {
                 var result = await _context.readInBill.Include(c => c.Supplier).Where(x => x.IsActive).ToListAsync();
-                return result;
+                return new ApiResponse<ICollection<ReadInBill>>(result, "ReadInBill fetched successfully");
 
             }
             catch (Exception ex)
             {
                 _logger.LogError($"Error getting Active readinbill list: {ex.Message}");
-                return null;
+                return new ApiResponse<ICollection<ReadInBill>>(null, $"Error fetching Active readinbill list: {ex.Message}");
             }
         }        
         
-        public async Task<ICollection<ReadInBill>> GetActiveReadInBillBySupplierList(int id)
+        public async Task<ApiResponse<ICollection<ReadInBill>>> GetActiveReadInBillBySupplierList(int id)
         {
             try
             {
                 var result = await _context.readInBill.Include(c => c.Supplier).Where(x => x.IsActive && x.Supplier.Id==id).ToListAsync();
-                return result;
+                return new ApiResponse<ICollection<ReadInBill>>(result, "ReadInBill by supplier fetched successfully");
 
             }
             catch (Exception ex)
             {
                 _logger.LogError($"Error getting Active readinbill list by suppllier: {ex.Message}");
-                return null;
+                return new ApiResponse<ICollection<ReadInBill>>(null, $"Error fetching Active readinbill by supplier list: {ex.Message}");
             }
         }
 
-        public async Task<ReadInBill> GetReadInBill(int readInBillId)
+        public async Task<ApiResponse<ReadInBill>> GetReadInBill(int readInBillId)
         {
             try
             {
                 var result = await _context.readInBill.Include(c => c.Supplier).Where(x=>x.Id==readInBillId).FirstOrDefaultAsync(); 
-                return result;
+                return new ApiResponse<ReadInBill>(result, "ReadInBill fetched successfully");
 
             }
             catch (Exception ex)
             {
                 _logger.LogError($"Error getting Active readinbill {ex.Message}");
-                return null;
+                return new ApiResponse<ReadInBill>(null, $"Error fetching Active readinbill {ex.Message}");
             }
         }
 
-        public async Task<ReadInBill?> UpdateReadInBill(ReadInBill? item)
+        public async Task<ApiResponse<ReadInBill>> UpdateReadInBill(ReadInBill item)
         {
             try
             {
@@ -887,7 +896,7 @@ namespace MoneyManagement.Services
                 if (existingBill == null)
                 {
                     _logger.LogWarning($"ReadInBill with ID {item.Id} not found.");
-                    return null;
+                    return new ApiResponse<ReadInBill>(null, "ReadInBill not found");
                 }
                 // Update the properties of the existing bill
                 existingBill.BillProperty = item.BillProperty;
@@ -902,18 +911,18 @@ namespace MoneyManagement.Services
                 _context.readInBill.Update(existingBill);
                 await _context.SaveChangesAsync();
 
-                return item;
+                return new ApiResponse<ReadInBill>(existingBill, "ReadInBill updated successfully");
             }
             catch (Exception ex)
             {
                 _logger.LogError($"Error updating read inbill {ex.Message}");
-                return null;
+                return new ApiResponse<ReadInBill>(null, $"Error fetching Active readinbill {ex.Message}");
 
             }
 
         }
 
-        public async Task<ReadInBill?> AddReadInBill(ReadInBill? item)
+        public async Task<ApiResponse<ReadInBill>> AddReadInBill(ReadInBill item)
         {
             try
             {
@@ -925,19 +934,25 @@ namespace MoneyManagement.Services
                 await _context.readInBill.AddAsync(item);
                 await _context.SaveChangesAsync();
 
-                return await _context.readInBill.FindAsync(item.Id);
+                return new  ApiResponse<ReadInBill>(await _context.readInBill.FindAsync(item.Id), "ReadInBill added successfully");
             }
             catch (Exception ex)
             {
                 _logger.LogError($"Error adding readinbill {ex.Message}");
-                return null;
+                return new ApiResponse<ReadInBill>(null, $"Error fetching ReadInBill {ex.Message}");
 
             }
 
         }
 
-        public async Task<ReadInBill?> DeleteReadInBill(ReadInBill? item)
+        public async Task<ApiResponse<bool>> DeleteReadInBill(int id)
         {
+            var item = await _context.readInBill.FindAsync(id);
+            if (item == null)
+            {
+                _logger.LogWarning($"ReadInBill with ID {id} not found.");
+                return new ApiResponse<bool>(false, "ReadInBill not found");
+            }
             try
             {
                 item.LastUpdatedDate = DateTime.Now;
@@ -946,12 +961,12 @@ namespace MoneyManagement.Services
                 _context.readInBill.Update(item);
                 await _context.SaveChangesAsync();
 
-                return item;
+                return new  ApiResponse<bool>(true, "ReadInBill deleted successfully");
             }
             catch (Exception ex)
             {
                 _logger.LogError($"Error deleting read inbill {ex.Message}");
-                return null;
+                return new ApiResponse<bool>(false, "Error deleting ReadInBill");
 
             }
 

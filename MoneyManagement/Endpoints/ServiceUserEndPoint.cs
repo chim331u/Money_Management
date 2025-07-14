@@ -41,14 +41,10 @@ public static class ServiceUserEndpoint
             return result != null ? Results.Ok(result) : Results.NotFound();
         });
         
-        app.MapPut("/DeleteServiceUser", async (ServiceUser item, IAncillaryService service) =>
+        app.MapDelete("/DeleteServiceUser/{id}", async (int id, IAncillaryService service) =>
         {
-            if (item == null)
-            {
-                return Results.BadRequest("ServiceUser is null");
-            }
-            var result = await service.DeleteServiceUser(item);
-            return result != null ? Results.Ok() : Results.NotFound();
+            var result = await service.DeleteServiceUser(id);
+            return result != null ? Results.Ok(result) : Results.NotFound();
         });
         
         

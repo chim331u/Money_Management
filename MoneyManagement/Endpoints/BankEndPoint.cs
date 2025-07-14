@@ -42,13 +42,10 @@ public static class BankEndPoint
             return result != null ? Results.Ok(result) : Results.NotFound();
         });
 
-        app.MapPut("/DeleteBank", async (BankMasterData? item, IBankAccountService service) =>
+        app.MapDelete("/DeleteBank/{id}", async (int id, IBankAccountService service) =>
         {
-            if (item==null)
-            {
-                return Results.BadRequest("Bank is null");
-            }
-            var result = await service.DeleteBank(item);
+      
+            var result = await service.DeleteBank(id);
             return result != null ? Results.Ok(result) : Results.NotFound();
         });
         

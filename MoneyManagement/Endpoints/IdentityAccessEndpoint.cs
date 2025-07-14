@@ -41,13 +41,9 @@ public static class IdentityAccessEndpoint
             return result != null ? Results.Ok(result) : Results.NotFound();
         });
         
-        app.MapPut("/DeleteIdentityAccess", async (ISA_Accounts item, IIdentityAccessService service) =>
+        app.MapDelete("/DeleteIdentityAccess/{id}", async (int id, IIdentityAccessService service) =>
         {
-            if (item == null)
-            {
-                return Results.BadRequest("Identity Access is null");
-            }
-            var result = await service.DeleteIdentityAccount(item);
+            var result = await service.DeleteIdentityAccount(id);
             return result != null ? Results.Ok("Identity Access deleted successfully") : Results.NotFound();
         });
         
@@ -60,7 +56,7 @@ public static class IdentityAccessEndpoint
         app.MapGet("/GetCleanPsw/{id}", async (int id, IIdentityAccessService service) =>
         {
             var result = await service.GetCleanPsw(id);
-            return !string.IsNullOrEmpty(result) ? Results.Ok(result) : Results.NotFound();
+            return result!=null ? Results.Ok(result) : Results.NotFound();
         });
         
         app.MapPut("/PasswordChange", async (ISA_Accounts item, IIdentityAccessService service) =>
@@ -70,7 +66,7 @@ public static class IdentityAccessEndpoint
                 return Results.BadRequest("Password is null");
             }
             var result = await service.PasswordChange(item);
-            return !string.IsNullOrEmpty(result) ? Results.Ok(result) : Results.NotFound();
+            return result!=null ? Results.Ok(result) : Results.NotFound();
         });
         
         return app;

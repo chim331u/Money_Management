@@ -41,9 +41,9 @@ public static class CurrencyEndPoint
             return result != null ? Results.Ok(result) : Results.NotFound();
         });
         
-        app.MapPut("/DeleteCurrency/{id}", async (Currency item, IAncillaryService service) =>
+        app.MapDelete("/DeleteCurrency/{id}", async (int id, IAncillaryService service) =>
         {
-            var result = await service.DeleteCurrency(item);
+            var result = await service.DeleteCurrency(id);
             return result != null ? Results.Ok(result) : Results.NotFound();
         });
         

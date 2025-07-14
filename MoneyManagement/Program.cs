@@ -75,9 +75,9 @@ app.MapGroup("/api/access/")
     .WithTags(" Access endpoints")
     .MapAccessEndPoint();
 
-app.MapGroup("/api/Country/")
+app.MapGroup("/api/v1/")
     .WithTags(" Country endpoints")
-    .RequireAuthorization()
+    //.RequireAuthorization()
     .MapCountryEndPoint();
 
 app.MapGroup("/api/Currency/")

@@ -41,14 +41,10 @@ public static class ReadInBillEndpoint
             var result = await service.UpdateReadInBill(item);
             return result != null ? Results.Ok(result) : Results.NotFound();
         });
-        app.MapPut("/DeleteReadInBill", async (ReadInBill item, IAncillaryService service) =>
+        app.MapDelete("/DeleteReadInBill/{id}", async (int id, IAncillaryService service) =>
         {
-            if (item == null)
-            {
-                return Results.BadRequest("ReadInBill is null");
-            }
-            var result = await service.DeleteReadInBill(item);
-            return result != null ? Results.Ok() : Results.NotFound();
+            var result = await service.DeleteReadInBill(id);
+            return result != null ? Results.Ok(result) : Results.NotFound();
         });
         
         

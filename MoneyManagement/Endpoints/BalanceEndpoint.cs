@@ -37,9 +37,9 @@ public static class BalanceEndpoint
 
         });
 
-        app.MapPost("/DeleteBalance", async (Balance item, IBalanceService service) =>
+        app.MapDelete("/DeleteBalance/{id}", async (int id, IBalanceService service) =>
         {
-            var result = await service.DeleteBalance(item);
+            var result = await service.DeleteBalance(id);
             return result != null ? Results.Ok(result) : Results.NotFound();
         });
         
