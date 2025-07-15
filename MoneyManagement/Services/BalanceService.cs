@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using MoneyManagement.AppContext;
+using MoneyManagement.Contract;
 using MoneyManagement.Interfaces;
 using MoneyManagement.Models.Balance;
 
@@ -16,7 +17,7 @@ namespace MoneyManagement.Services
             _logger = logger;
         }
 
-        public async Task<ICollection<Balance>?> GetActiveBalanceList()
+        public async Task<ApiResponse<ICollection<Balance>>> GetActiveBalanceList()
         {
             try
             {
@@ -26,16 +27,16 @@ namespace MoneyManagement.Services
                     .Where(x => x.IsActive)
                     .OrderByDescending(x => x.DateBalance).ToListAsync();
 
-                return result;
+                return new ApiResponse<ICollection<Balance>>(result, $"Balance list retrieved successfully with {result.Count} items.");
             }
             catch (Exception ex)
             {
                 _logger.LogError($"Error retrieving Active balance list: {ex.Message}");
-                return null;
+                return new ApiResponse<ICollection<Balance>>(null, $"Error retrieving Active balance list: {ex.Message}");
             }
         }
 
-        public async Task<Balance?> GetBalance(int balanceId)
+        public async Task<ApiResponse<Balance>> GetBalance(int balanceId)
         {
             try
             {
@@ -44,16 +45,16 @@ namespace MoneyManagement.Services
                     .Include(c => c.Account.Currency)
                     .Where(x => x.Id == balanceId).FirstOrDefaultAsync();
 
-                return result;
+                return new  ApiResponse<Balance>(result, $"Balance retrieved successfully with id {balanceId}");
             }
             catch (Exception ex)
             {
                 _logger.LogError($"Error retrieving Balance: {ex.Message}");
-                return null;
+                return new ApiResponse<Balance>(null, $"Error retrieving Balance: {ex.Message}");
             }
         }
 
-        public async Task<Balance?> UpdateBalance(Balance item)
+        public async Task<ApiResponse<Balance>> UpdateBalance(Balance item)
         {
             try
             {
@@ -65,7 +66,7 @@ namespace MoneyManagement.Services
                 if (existingBalance == null)
                 {
                     _logger.LogError("Balance not found for update.");
-                    return null;
+                    return new ApiResponse<Balance>(null, $"Balance not found for update.");
                 }
 
                 existingBalance.DateBalance = item.DateBalance;
@@ -77,16 +78,16 @@ namespace MoneyManagement.Services
                 _context.Balance.Update(existingBalance);
                 await _context.SaveChangesAsync();
 
-                return item;
+                return new ApiResponse<Balance>(existingBalance, $"Balance updated successfully with id {existingBalance.Id}");
             }
             catch (Exception ex)
             {
                 _logger.LogError($"Error update Balance: {ex.Message}");
-                return null;
+                return new ApiResponse<Balance>(null, $"Error update Balance: {ex.Message}");
             }
         }
 
-        public async Task<Balance?> AddBalance(Balance item)
+        public async Task<ApiResponse<Balance>> AddBalance(Balance item)
         {
             var account = await _context.AccountMasterData
                 .Include(x => x.Currency)
@@ -102,27 +103,27 @@ namespace MoneyManagement.Services
                 await _context.Balance.AddAsync(item);
                 await _context.SaveChangesAsync();
 
-                return item;
+                return new ApiResponse<Balance>(item, $"Balance added successfully with id {item.Id}");
             }
             catch (Exception ex)
             {
                 _logger.LogError($"Error adding Balance: {ex.Message}");
-                return null;
+                return new ApiResponse<Balance>(null, $"Error adding Balance: {ex.Message}");
             }
         }
 
-        public async Task<Balance?> DeleteBalance(Balance item)
+        public async Task<ApiResponse<bool>> DeleteBalance(int id)
         {
             try
             {
                 var existingBalance = await _context.Balance.Include(c => c.Account)
                     .Include(c => c.Account.Currency)
-                    .Where(x => x.Id == item.Id).FirstOrDefaultAsync();
+                    .Where(x => x.Id == id).FirstOrDefaultAsync();
 
                 if (existingBalance == null)
                 {
                     _logger.LogWarning("Balance not found for delete.");
-                    return null;
+                    return new ApiResponse<bool>(false, $"Balance not found for delete.");
                 }
 
                 existingBalance.LastUpdatedDate = DateTime.Now;
@@ -132,12 +133,12 @@ namespace MoneyManagement.Services
 
                 await _context.SaveChangesAsync();
 
-                return item;
+                return new ApiResponse<bool>(true, $"Balance deleted successfully with id {id}");
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex.Message);
-                return null;
+                return new ApiResponse<bool>(false, $"Error deleting Balance: {ex.Message}");
             }
         }
     }
