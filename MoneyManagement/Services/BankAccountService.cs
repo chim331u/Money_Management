@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using MoneyManagement.AppContext;
+using MoneyManagement.Contract;
 using MoneyManagement.Interfaces;
 using MoneyManagement.Models.BankAccount;
 
@@ -21,24 +22,24 @@ namespace MoneyManagement.Services
 
         #region Bank
 
-        public async Task<ICollection<BankMasterData>?> GetActiveBankList()
+        public async Task<ApiResponse<ICollection<BankMasterData>>> GetActiveBankList()
         {
             try
             {
                 var result = await _context.BankMasterData.Include(x=>x.Country)
                     .Where(x => x.IsActive).OrderByDescending(x => x.CreatedDate).ToListAsync();
 
-              return result;
-
+                return new ApiResponse<ICollection<BankMasterData>>(result, "Active bank list retrieved successfully.");
             }
             catch (Exception ex)
             {
                 _logger.LogError($"Error retrieve bank active list: {ex.Message}");
-                return null;
+                return new ApiResponse<ICollection<BankMasterData>>(null, $"Error retrieving active bank list: {ex.Message}");
+                
             }
         }
 
-        public async Task<BankMasterData?> GetBank(int bankId)
+        public async Task<ApiResponse<BankMasterData>> GetBank(int bankId)
         {
             try
             {
@@ -46,27 +47,26 @@ namespace MoneyManagement.Services
                     .Include(x=>x.Country)
                     .Where(x=>x.Id == bankId).FirstOrDefaultAsync();
 
-                return result;
+                return new ApiResponse<BankMasterData>(result, $"Bank with ID {bankId} retrieved successfully.");
 
             }
             catch (Exception ex)
             {
                 _logger.LogError($"Error retrieve bank {bankId}: {ex.Message}");
-                return null;
+                return new ApiResponse<BankMasterData>(null, $"Error retrieving bank {bankId}: {ex.Message}");
             }
         }
 
-        public async Task<BankMasterData?> UpdateBank(BankMasterData? item)
+        public async Task<ApiResponse<BankMasterData>> UpdateBank(BankMasterData? item)
         {
-           
-            try
+           try
             {
                 var existingBank = await _context.BankMasterData.Include(x=>x.Country).Where(x=>x.Id==item.Id).FirstOrDefaultAsync();
 
                 if (existingBank == null)
                 {
                     _logger.LogWarning($"Bank to update not found");
-                    return null;
+                    return new ApiResponse<BankMasterData>(null, $"Bank with ID {item.Id} not found.");
                 }
                 
                 existingBank.Address=item.Address;
@@ -84,21 +84,26 @@ namespace MoneyManagement.Services
                 _context.BankMasterData.Update(existingBank);
                 await _context.SaveChangesAsync();
 
-                return item;
+                return new ApiResponse<BankMasterData>(existingBank, $"Bank with ID {item.Id} updated successfully.");
             }
             catch (Exception ex)
             {
                 _logger.LogError($"Error Updating bank: {ex.Message}");
-                return null;
+                return new ApiResponse<BankMasterData>(null, $"Error updating bank: {ex.Message}");
 
             }
 
         }
 
-        public async Task<BankMasterData?> AddBank(BankMasterData? item)
+        public async Task<ApiResponse<BankMasterData>> AddBank(BankMasterData? item)
         {
             var country = await _context.Country.FindAsync(item.Country.Id);
            
+            if (country == null)
+            {
+                _logger.LogWarning($"Country not found");
+                return new ApiResponse<BankMasterData>(null, $"Country not found.");
+            }
             try
             {
                 item.CreatedDate = DateTime.Now;
@@ -108,7 +113,7 @@ namespace MoneyManagement.Services
                 await _context.BankMasterData.AddAsync(item);
                 await _context.SaveChangesAsync();
 
-                return item;
+                return new ApiResponse<BankMasterData>(await _context.BankMasterData.FindAsync(item.Id), $"Bank with ID {item.Id} added successfully.");
             }
             catch (Exception ex)
             {
@@ -119,17 +124,16 @@ namespace MoneyManagement.Services
 
         }
 
-        public async Task<BankMasterData?> DeleteBank(BankMasterData? item)
+        public async Task<ApiResponse<bool>> DeleteBank(int id)
         {
-            
             try
             {
-                var existingBank = await _context.BankMasterData.Include(x=>x.Country).Where(x=> x.Id == item.Id).FirstOrDefaultAsync();
+                var existingBank = await _context.BankMasterData.Include(x=>x.Country).Where(x=> x.Id == id).FirstOrDefaultAsync();
 
                 if (existingBank == null)
                 {
                     _logger.LogWarning($"Bank not found");
-                    return null;
+                    return new ApiResponse<bool>(false, $"Bank with ID {id} not found.");
                 }
 
                 existingBank.LastUpdatedDate = DateTime.Now;
@@ -139,12 +143,12 @@ namespace MoneyManagement.Services
 
                 await _context.SaveChangesAsync();
 
-                return item;
+                return new ApiResponse<bool>(true, $"Bank with ID {id} deleted successfully.");
             }
             catch (Exception ex)
             {
                 _logger.LogError($"Error deleting bank: {ex.Message}");
-                return null;
+                return new ApiResponse<bool>(false, $"Error deleting bank: {ex.Message}");
 
             }
 
@@ -154,7 +158,7 @@ namespace MoneyManagement.Services
 
         #region Account
 
-        public async Task<ICollection<AccountMasterData>?> GetActiveAccountList()
+        public async Task<ApiResponse<ICollection<AccountMasterData>>> GetActiveAccountList()
         {
             try
             {
@@ -164,17 +168,17 @@ namespace MoneyManagement.Services
                     .Where(x => x.IsActive)
                     .OrderByDescending(x => x.CreatedDate).ToListAsync();
                 
-                return result;
+                return new ApiResponse<ICollection<AccountMasterData>>(result, "Active account list retrieved successfully.");
 
             }
             catch (Exception ex)
             {
                 _logger.LogError($"Error retrieve Account list: {ex.Message}");
-                return null;
+                return new ApiResponse<ICollection<AccountMasterData>>(null, $"Error retrieving active account list: {ex.Message}");
             }
         }
 
-        public async Task<AccountMasterData?> GetAccount(int accountId)
+        public async Task<ApiResponse<AccountMasterData>> GetAccount(int accountId)
         {
             try
             {
@@ -183,17 +187,17 @@ namespace MoneyManagement.Services
                     .Include(x=>x.BankMasterData)
                     .Where(x=>x.Id==accountId).FirstOrDefaultAsync();
                 
-                return result;
+                return new ApiResponse<AccountMasterData>(result, $"Account with ID {accountId} retrieved successfully.");
 
             }
             catch (Exception ex)
             {
                 _logger.LogError($"Error retrieve Account {accountId}: {ex.Message}");
-                return null;
+                return new ApiResponse<AccountMasterData>(null, $"Error retrieve Account {accountId}: {ex.Message}");
             }
         }
 
-        public async Task<AccountMasterData?> UpdateAccount(AccountMasterData? item)
+        public async Task<ApiResponse<AccountMasterData>> UpdateAccount(AccountMasterData? item)
         {
             try
             {
@@ -204,7 +208,7 @@ namespace MoneyManagement.Services
                 if (existingAccount == null)
                 {
                     _logger.LogWarning($"Account to update not found");
-                    return null;
+                    return new ApiResponse<AccountMasterData>(null, $"Account with ID {item.Id} not found.");
                 }
                 
                 existingAccount.AccountType = item.AccountType;
@@ -213,30 +217,30 @@ namespace MoneyManagement.Services
                 _context.AccountMasterData.Update(item);
                 await _context.SaveChangesAsync();
 
-                return item;
+                return new ApiResponse<AccountMasterData>(existingAccount, $"Account with ID {item.Id} updated successfully.");
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex.Message);
-                return null;
+                return new ApiResponse<AccountMasterData>(null, $"Error updating account: {ex.Message}");
 
             }
 
         }
 
-        public async Task<AccountMasterData?> AddAccount(AccountMasterData? item)
+        public async Task<ApiResponse<AccountMasterData>> AddAccount(AccountMasterData? item)
         {
             if (item == null)
             {
                 _logger.LogWarning($"Account to add not found");
-                return null;
+                return new ApiResponse<AccountMasterData>(null, "Account to add not found.");
 
             }
 
             if (item.Currency == null)
             {
                 _logger.LogWarning($"Currency for Account to add not found");
-                return null;
+                return new ApiResponse<AccountMasterData>(null, "Currency for Account to add not found.");
                     
             }
 
@@ -244,7 +248,7 @@ namespace MoneyManagement.Services
             if (item.BankMasterData == null)
             {
                 _logger.LogWarning($"Bank for Account to add not found");
-                return null;
+                return new ApiResponse<AccountMasterData>(null, "Bank for Account to add not found.");
             }
 
             var bank = await _context.BankMasterData.FindAsync(item.BankMasterData.Id);
@@ -259,37 +263,42 @@ namespace MoneyManagement.Services
                 await _context.AccountMasterData.AddAsync(item);
                 await _context.SaveChangesAsync();
 
-                return item;
+                return new ApiResponse<AccountMasterData>(await _context.AccountMasterData.FindAsync(item.Id), $"Account with ID {item.Id} added successfully.");
             }
             catch (Exception ex)
             {
                 _logger.LogError($"Error adding new account : {ex.Message}");
-                return null;
+                return new ApiResponse<AccountMasterData>(null, $"Error adding new account : {ex.Message}");
             }
         }
 
-        public async Task<AccountMasterData?> DeleteAccount(AccountMasterData? item)
+        public async Task<ApiResponse<bool>> DeleteAccount(int id)
         {
             try
             {
+                var item = await _context.AccountMasterData
+                    .Include(x=>x.Currency)
+                    .Include(x=>x.BankMasterData)
+                    .Where(x => x.Id == id).FirstOrDefaultAsync();
+                
                 if (item == null)
                 {
-                    _logger.LogWarning($"Account to delete not found");
-                    return null;
+                    _logger.LogWarning($"Account not found");
+                    return new ApiResponse<bool>(false, $"Account with ID {id} not found.");
                 }
-
+                
                 item.LastUpdatedDate = DateTime.Now;
                 item.IsActive = false;
 
                 _context.AccountMasterData.Update(item);
                 await _context.SaveChangesAsync();
 
-                return item;
+                return new ApiResponse<bool>(true, $"Account with ID {id} deleted successfully.");
             }
             catch (Exception ex)
             {
                 _logger.LogError($"Error deleting new account : {ex.Message}");
-                return null;
+                return new ApiResponse<bool>(false, $"Error deleting new account : {ex.Message}");
 
             }
 

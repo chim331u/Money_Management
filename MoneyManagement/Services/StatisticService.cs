@@ -28,7 +28,7 @@ namespace MoneyManagement.Services
             Dashboard dashboard = new Dashboard();
 
             var summaryAccountsBalance = await GetAvailableBalances();
-            var CHFRate = (await _anchillaryService.GetCurrencyRate("CHF")).RateValue;
+            var CHFRate = (await _anchillaryService.GetCurrencyRate("CHF")).Data.RateValue;
 
             dashboard.BalanceLineChar = await GetBalanceLineChart(summaryAccountsBalance, CHFRate);
             dashboard.SalaryCharts = await GetSalaryChart();
@@ -73,7 +73,7 @@ namespace MoneyManagement.Services
                         if (item.Account.Currency.CurrencyCodeALF3 != "EUR" && item.Account.Currency.CurrencyCodeALF3 != "CHF")
                         {
                             var exchangeRate = await _anchillaryService.GetCurrencyRate(item.Account.Currency.CurrencyCodeALF3);
-                            balanceDTO.BalanceValue = item.BalanceValue / Convert.ToDouble(exchangeRate.RateValue);
+                            balanceDTO.BalanceValue = item.BalanceValue / Convert.ToDouble(exchangeRate.Data.RateValue);
                         }
 
                         totBalances.Add(balanceDTO);
@@ -268,7 +268,7 @@ namespace MoneyManagement.Services
                             break;
 
                         default:
-                            var rate = (await _anchillaryService.GetCurrencyRate(item)).RateValue;
+                            var rate = (await _anchillaryService.GetCurrencyRate(item)).Data.RateValue;
                             grandTotalEur += totAmount / Convert.ToDouble(rate);
                             grandDiffEur += totDiff / Convert.ToDouble(rate);
                             break;
@@ -303,7 +303,7 @@ namespace MoneyManagement.Services
 
         public async Task<List<SalaryStatistics>> GetSalaryStatistic(int userId)
         {
-            var salaries = await _salaryService.GetActiveSalaryList();
+            var salaries = _salaryService.GetActiveSalaryList().Result.Data;
 
             //salaries = salaries.Where(s=>s.ReferMonth == "12").ToList();
 

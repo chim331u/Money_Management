@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using MoneyManagement.AppContext;
+using MoneyManagement.Contract;
 using MoneyManagement.Interfaces;
 using MoneyManagement.Models.HouseThings;
 
@@ -18,68 +19,69 @@ namespace MoneyManagement.Services
 
         #region House Things 
 
-        public async Task<ICollection<HouseThings>> GetActiveHouseThingsList()
+        public async Task<ApiResponse<ICollection<HouseThings>>> GetActiveHouseThingsList()
         {
             try
             {
                 var result = await _context.HouseThings
                     .Include(i => i.Room).Where(x => x.IsActive).OrderByDescending(x => x.PurchaseDate).ToListAsync();
-                return result;
+                return new ApiResponse<ICollection<HouseThings>>(result, $"HouseThings list retrieved successfully.");
             }
             catch (Exception ex)
             {
                 _logger.LogError($"Error retrieving active HouseThings list: {ex.Message}");
-                return null;
+                return new ApiResponse<ICollection<HouseThings>>(null, $"Error retrieving active HouseThings list: {ex.Message}");
             }
         }
 
-        public async Task<ICollection<HouseThings>> GetActiveHouseThingsListByRoom(int id)
+        public async Task<ApiResponse<ICollection<HouseThings>>> GetActiveHouseThingsListByRoom(int id)
         {
             try
             {
                 var result = await _context.HouseThings
                     .Include(x => x.Room)
                     .Where(x => x.IsActive && x.Room.Id == id).OrderByDescending(x => x.PurchaseDate).ToListAsync();
-                return result;
+                return new ApiResponse<ICollection<HouseThings>>(result, $"HouseThings list by room ID {id} retrieved successfully.");
             }
             catch (Exception ex)
             {
                 _logger.LogError($"Error retrieving active HouseThings list by room: {ex.Message}");
-                return null;
+                return new ApiResponse<ICollection<HouseThings>>(null, $"Error retrieving active HouseThings list by room: {ex.Message}");
             }
         }
 
-        public async Task<ICollection<HouseThings>> GetHistoryHouseThingsList(int historyId)
+        public async Task<ApiResponse<ICollection<HouseThings>>> GetHistoryHouseThingsList(int historyId)
         {
             try
             {
                 var result = await _context.HouseThings.Include(x => x.Room)
                     .Where(x => x.IsActive == false && x.HistoryId == historyId)
                     .OrderByDescending(x => x.PurchaseDate).ToListAsync();
-                return result;
+                return new ApiResponse<ICollection<HouseThings>>(result, $"History HouseThings list retrieved successfully for history ID {historyId}.");
             }
             catch (Exception ex)
             {
                 _logger.LogError($"Error retrieving history HouseThings list: {ex.Message}");
-                return null;
+                return new ApiResponse<ICollection<HouseThings>>(null, $"Error retrieving history HouseThings list: {ex.Message}");
             }
         }
 
-        public async Task<HouseThings> GetHouseThings(int houseThingsId)
+        public async Task<ApiResponse<HouseThings>> GetHouseThings(int houseThingsId)
         {
             try
             {
                 var result = await _context.HouseThings.FindAsync(houseThingsId);
-                return result;
+                return new ApiResponse<HouseThings>(result, $"HouseThings with ID {houseThingsId} retrieved successfully.");
+                
             }
             catch (Exception ex)
             {
                 _logger.LogError($"Error retrieving HouseThings with ID {houseThingsId}: {ex.Message}");
-                return null;
+                return new ApiResponse<HouseThings>(null, $"Error retrieving HouseThings with ID {houseThingsId}: {ex.Message}");
             }
         }
 
-        public async Task<HouseThings> UpdateHouseThings(HouseThings item)
+        public async Task<ApiResponse<HouseThings>> UpdateHouseThings(HouseThings item)
         {
             try
             {
@@ -89,7 +91,7 @@ namespace MoneyManagement.Services
                 if (existingItem == null)
                 {
                     _logger.LogWarning($"Unable to find HouseThings with ID {item.Id} for update.");
-                    return null;
+                    return new ApiResponse<HouseThings>(null, $"HouseThings with ID {item.Id} not found for update.");
                 }
 
                 existingItem.Cost = item.Cost;
@@ -107,16 +109,16 @@ namespace MoneyManagement.Services
 
                 await _context.SaveChangesAsync();
 
-                return item;
+                return new ApiResponse<HouseThings>(existingItem, $"HouseThings with ID {item.Id} updated successfully.");
             }
             catch (Exception ex)
             {
                 _logger.LogError($"Error updating HouseThings with ID {item.Id}: {ex.Message}");
-                return null;
+                return new ApiResponse<HouseThings>(null, $"Error updating HouseThings with ID {item.Id}: {ex.Message}");
             }
         }
 
-        public async Task<HouseThings> AddHouseThings(HouseThings item)
+        public async Task<ApiResponse<HouseThings>> AddHouseThings(HouseThings item)
         {
             try
             {
@@ -129,16 +131,16 @@ namespace MoneyManagement.Services
                 await _context.HouseThings.AddAsync(item);
                 await _context.SaveChangesAsync();
 
-                return item;
+                return new ApiResponse<HouseThings>(await _context.HouseThings.FindAsync(item.Id), $"HouseThings added successfully.");
             }
             catch (Exception ex)
             {
                 _logger.LogError($"Error adding HouseThings: {ex.Message}");
-                return null;
+                return new ApiResponse<HouseThings>(null, $"Error adding HouseThings: {ex.Message}");
             }
         }
 
-        public async Task<HouseThings> RenewHouseThings(HouseThings item)
+        public async Task<ApiResponse<HouseThings>> RenewHouseThings(HouseThings item)
         {
             //item = new HouseThings;
 
@@ -150,47 +152,48 @@ namespace MoneyManagement.Services
                 if (oldItem == null)
                 {
                     _logger.LogWarning($"Unable to find HouseThings with ID {item.Id} to renew.");
-                    return null;
+                    return new ApiResponse<HouseThings>(null, $"HouseThings with ID {item.Id} not found for renewal.");
                 }
 
-                await DeleteHouseThings(oldItem);
+                await DeleteHouseThings(oldItem.Id);
 
                 item.Id = 0;
-                await AddHouseThings(item);
+                var renewedItem =await AddHouseThings(item);
 
-                return item;
+                return new ApiResponse<HouseThings>(renewedItem.Data, $"HouseThings with ID {item.Id} renewed successfully.");
             }
             catch (Exception ex)
             {
                 _logger.LogError($"Error renewing HouseThings with ID {item.Id}: {ex.Message}");
-                return null;
+                return new ApiResponse<HouseThings>(null, $"Error renewing HouseThings with ID {item.Id}: {ex.Message}");
             }
         }
 
-        public async Task<HouseThings> DeleteHouseThings(HouseThings item)
-        {
+        public async Task<ApiResponse<bool>> DeleteHouseThings(int id)
+        {   
+            
             try
             {
-                var existingItem = await _context.HouseThings.Include(x => x.Room).Where(x => x.Id == item.Id)
+                var existingItem = await _context.HouseThings.Include(x => x.Room).Where(x => x.Id == id)
                     .FirstOrDefaultAsync();
                 if (existingItem == null)
                 {
-                    _logger.LogWarning($"Unable to find HouseThings with ID {item.Id} for deletion.");
-                    return null;
+                    _logger.LogWarning($"Unable to find HouseThings with ID {id} for deletion.");
+                    return new ApiResponse<bool>(false, $"HouseThings with ID {id} not found for deletion.");
                 }
 
                 existingItem.LastUpdatedDate = DateTime.Now;
                 existingItem.IsActive = false;
 
-                _context.HouseThings.Update(item);
+                _context.HouseThings.Update(existingItem);
                 await _context.SaveChangesAsync();
 
-                return item;
+                return new ApiResponse<bool>(true, $"HouseThings with ID {id} deleted successfully.");
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Error deleting HouseThings with ID {item.Id}: {ex.Message}");
-                return null;
+                _logger.LogError($"Error deleting HouseThings with ID {id}: {ex.Message}");
+                return new ApiResponse<bool>(false, $"Error deleting HouseThings with ID {id}: {ex.Message}");
             }
         }
 
@@ -198,36 +201,37 @@ namespace MoneyManagement.Services
 
         #region House Things Rooms
 
-        public async Task<ICollection<HouseThingsRooms>> GetActiveHouseThingsRoomsList()
+        public async Task<ApiResponse<ICollection<HouseThingsRooms>>> GetActiveHouseThingsRoomsList()
         {
             try
             {
                 var result = await _context.houseThingsRooms.Where(x => x.IsActive)
                     .OrderByDescending(x => x.CreatedDate).ToListAsync();
-                return result;
+                return new ApiResponse<ICollection<HouseThingsRooms>>(result, "Active HouseThingsRooms list retrieved successfully.");
             }
             catch (Exception ex)
             {
                 _logger.LogError($"Error retrieving active HouseThingsRooms list: {ex.Message}");
-                return null;
+                return new ApiResponse<ICollection<HouseThingsRooms>>(null, $"Error retrieving active HouseThingsRooms list: {ex.Message}");
             }
         }
 
-        public async Task<HouseThingsRooms> GetHouseThingsRooms(int houseThingsRoomId)
+        public async Task<ApiResponse<HouseThingsRooms>> GetHouseThingsRooms(int houseThingsRoomId)
         {
             try
             {
                 var result = await _context.houseThingsRooms.FindAsync(houseThingsRoomId);
-                return result;
+                return new ApiResponse<HouseThingsRooms>(result, $"HouseThingsRooms with ID {houseThingsRoomId} retrieved successfully.");
+        
             }
             catch (Exception ex)
             {
                 _logger.LogError($"Error retrieving HouseThingsRooms with ID {houseThingsRoomId}: {ex.Message}");
-                return null;
+                return new ApiResponse<HouseThingsRooms>(null, $"Error retrieving HouseThingsRooms with ID {houseThingsRoomId}: {ex.Message}");
             }
         }
 
-        public async Task<HouseThingsRooms> UpdateHouseThingsRooms(HouseThingsRooms item)
+        public async Task<ApiResponse<HouseThingsRooms>> UpdateHouseThingsRooms(HouseThingsRooms item)
         {
             try
             {
@@ -236,7 +240,7 @@ namespace MoneyManagement.Services
                 if (existingItem == null)
                 {
                     _logger.LogWarning($"Unable to find HouseThingsRooms with ID {item.Id} for update.");
-                    return null;
+                    return new ApiResponse<HouseThingsRooms>(null, $"HouseThingsRooms with ID {item.Id} not found for update.");
                 }
 
                 existingItem.Color = item.Color;
@@ -250,16 +254,16 @@ namespace MoneyManagement.Services
                 _context.houseThingsRooms.Update(existingItem);
                 await _context.SaveChangesAsync();
 
-                return item;
+                return new ApiResponse<HouseThingsRooms>(existingItem, $"HouseThingsRooms with ID {item.Id} updated successfully.");
             }
             catch (Exception ex)
             {
                 _logger.LogError($"Error updating HouseThingsRooms with ID {item.Id}: {ex.Message}");
-                return null;
+                return new ApiResponse<HouseThingsRooms>(null, $"Error updating HouseThingsRooms with ID {item.Id}: {ex.Message}");
             }
         }
 
-        public async Task<HouseThingsRooms> AddHouseThingsRooms(HouseThingsRooms item)
+        public async Task<ApiResponse<HouseThingsRooms>> AddHouseThingsRooms(HouseThingsRooms item)
         {
             try
             {
@@ -269,27 +273,25 @@ namespace MoneyManagement.Services
                 await _context.houseThingsRooms.AddAsync(item);
                 await _context.SaveChangesAsync();
 
-                return item;
+                return new ApiResponse<HouseThingsRooms>(await _context.houseThingsRooms.FindAsync(item.Id), "HouseThingsRooms added successfully.");
             }
             catch (Exception ex)
             {
                 _logger.LogError($"Error adding HouseThingsRooms: {ex.Message}");
-                return null;
+                return new ApiResponse<HouseThingsRooms>(null, $"Error adding HouseThingsRooms: {ex.Message}");
             }
         }
 
-        public async Task<HouseThingsRooms> DeleteHouseThingsRooms(HouseThingsRooms item)
+        public async Task<ApiResponse<bool>> DeleteHouseThingsRooms(int id)
         {
             try
             {
-                var existingItem = await _context.houseThingsRooms.FindAsync(item.Id);
+                var existingItem = await _context.houseThingsRooms.FindAsync(id);
                 if (existingItem == null)
                 {
-                    _logger.LogWarning($"Unable to find HouseThingsRooms with ID {item.Id} for deletion.");
-                    return null;
+                    _logger.LogWarning($"Unable to find HouseThingsRooms with ID {id} for deletion.");
+                    return new ApiResponse<bool>(false, $"HouseThingsRooms with ID {id} not found for deletion.");
                 }
-                
-                
                 
                 existingItem.LastUpdatedDate = DateTime.Now;
                 existingItem.IsActive = false;
@@ -297,12 +299,12 @@ namespace MoneyManagement.Services
                 _context.houseThingsRooms.Update(existingItem);
                 await _context.SaveChangesAsync();
 
-                return item;
+                return new ApiResponse<bool>(true, $"HouseThingsRooms with ID {id} deleted successfully.");
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Error deleting HouseThingsRooms with ID {item.Id}: {ex.Message}");
-                return null;
+                _logger.LogError($"Error deleting HouseThingsRooms with ID {id}: {ex.Message}");
+                return new ApiResponse<bool>(false, $"Error deleting HouseThingsRooms with ID {id}: {ex.Message}");
             }
         }
 

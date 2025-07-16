@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using MoneyManagement.AppContext;
+using MoneyManagement.Contract;
 using MoneyManagement.Interfaces;
 using MoneyManagement.Models.Bill;
 
@@ -16,44 +17,45 @@ namespace MoneyManagement.Services
             _logger = logger;
         }
 
-        public async Task<ICollection<Bill>> GetActiveBillList()
+        public async Task<ApiResponse<ICollection<Bill>>> GetActiveBillList()
         {
             try
             {
                 var result = await _context.bills.Include(c => c.Supplier)
                     .Where(x => x.IsActive).OrderByDescending(x => x.CreatedDate).ToListAsync();
+                
                 if (result == null || result.Count == 0)
                 {
                     _logger.LogWarning("No active bills found.");
-                    return new List<Bill>();
+                    return new ApiResponse<ICollection<Bill>>(null, "No active bills found.");
                 }
 
-                return result;
+                return new ApiResponse<ICollection<Bill>>(result, "Active bills retrieved successfully.");
             }
             catch (Exception ex)
             {
                 _logger.LogError($"Error retrieving Bill list {ex.Message}");
-                return null;
+                return new ApiResponse<ICollection<Bill>>(null, $"Error retrieving Bill list: {ex.Message}");
             }
         }
 
-        public async Task<Bill> GetBill(int billId)
+        public async Task<ApiResponse<Bill>> GetBill(int billId)
         {
             try
             {
                 var result = await _context.bills.Include(c => c.Supplier).Where(x => x.Id == billId)
                     .FirstOrDefaultAsync();
 
-                return result;
+                return new ApiResponse<Bill>(result, $"Bill retrieved successfully with ID: {billId}");
             }
             catch (Exception ex)
             {
                 _logger.LogError($"Error retrieving Bill {ex.Message}");
-                return null;
+                return new ApiResponse<Bill>(null, $"Error retrieving Bill: {ex.Message}");
             }
         }
 
-        public async Task<Bill> UpdateBill(Bill item)
+        public async Task<ApiResponse<Bill>> UpdateBill(Bill item)
         {
             try
             {
@@ -62,7 +64,7 @@ namespace MoneyManagement.Services
                 if (existingBill == null)
                 {
                     _logger.LogWarning("Bill not found for update.");
-                    return null;
+                    return new ApiResponse<Bill>(null, "Bill not found for update.");
                 }
 
                 existingBill.Amount = item.Amount;
@@ -80,23 +82,23 @@ namespace MoneyManagement.Services
                 _context.bills.Update(existingBill);
                 await _context.SaveChangesAsync();
 
-                return item;
+                return new ApiResponse<Bill>(existingBill, "Bill updated successfully.");
             }
             catch (Exception ex)
             {
                 _logger.LogError($"Error updating Bill {ex.Message}");
-                return null;
+                return new ApiResponse<Bill>(null, $"Error updating Bill: {ex.Message}");
             }
         }
 
-        public async Task<Bill> AddBill(Bill item)
+        public async Task<ApiResponse<Bill>> AddBill(Bill item)
         {
             var supplier = await _context.suppliers.Where(x => x.Id == item.Supplier.Id).FirstOrDefaultAsync();
 
             if (_context.bills.Where(x => x.BillNumber == item.BillNumber).Any())
             {
                 _logger.LogWarning("Bill already present.");
-                return null;
+                return new ApiResponse<Bill>(null, "Bill already present.");
             }
 
             try
@@ -108,7 +110,7 @@ namespace MoneyManagement.Services
                 await _context.bills.AddAsync(item);
                 await _context.SaveChangesAsync();
 
-                return item;
+                return new ApiResponse<Bill>(await _context.bills.Include(x => x.Supplier).Where(x => x.Id == item.Id).FirstOrDefaultAsync(), $"Bill added successfully.");
             }
             catch (Exception ex)
             {
@@ -117,17 +119,17 @@ namespace MoneyManagement.Services
             }
         }
 
-        public async Task<Bill> DeleteBill(Bill item)
+        public async Task<ApiResponse<bool>> DeleteBill(int id)
         {
             try
             {
-                var existingBill = await _context.bills.Include(x => x.Supplier).Where(x => x.Id == item.Id)
+                var existingBill = await _context.bills.Include(x => x.Supplier).Where(x => x.Id == id)
                     .FirstOrDefaultAsync();
 
                 if (existingBill == null)
                 {
                     _logger.LogWarning("Bill not found for deletion.");
-                    return null;
+                    return new ApiResponse<bool>(false, $"Bill not found for deletion.");
                 }
 
                 existingBill.LastUpdatedDate = DateTime.Now;
@@ -136,12 +138,12 @@ namespace MoneyManagement.Services
                 _context.bills.Update(existingBill);
                 await _context.SaveChangesAsync();
 
-                return item;
+                return new ApiResponse<bool>(true, "Bill deleted successfully.");
             }
             catch (Exception ex)
             {
                 _logger.LogError($"Error deleting Bill {ex.Message}");
-                return null;
+                return new ApiResponse<bool>(false, $"Error deleting Bill: {ex.Message}");
             }
         }
     }

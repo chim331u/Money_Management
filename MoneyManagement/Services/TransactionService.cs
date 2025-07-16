@@ -3,6 +3,7 @@ using System.Security.Cryptography;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
 using MoneyManagement.AppContext;
+using MoneyManagement.Contract;
 using MoneyManagement.Interfaces;
 using MoneyManagement.Models.Transactions;
 
@@ -24,7 +25,7 @@ namespace MoneyManagement.Services
             _logger = logger;
         }
 
-        public async Task<ICollection<Transaction>> GetActiveTransactionList()
+        public async Task<ApiResponse<ICollection<Transaction>>> GetActiveTransactionList()
         {
             try
             {
@@ -32,31 +33,32 @@ namespace MoneyManagement.Services
                     .Where(x => x.IsActive).OrderByDescending(x => x.TxnDate).ToListAsync();
 
 
-                return result;
+                return new ApiResponse<ICollection<Transaction>>(result, $"Active transactions retrieved successfully. Total: {result.Count}");
             }
             catch (Exception ex)
             {
                 _logger.LogError($"Error retrieving active transactions: {ex.Message}");
-                return null;
+                return new ApiResponse<ICollection<Transaction>>(null, "Error retrieving active transactions");
+                
             }
         }
 
-        public async Task<Transaction> GetTransaction(int balanceId)
+        public async Task<ApiResponse<Transaction>> GetTransaction(int balanceId)
         {
             try
             {
                 var result = await _context.Transaction.Include(c => c.Account).Include(c => c.Account.Currency)
                     .Where(x => x.Id == balanceId).FirstOrDefaultAsync();
-                return result;
+                return new ApiResponse<Transaction>(result, $"Transaction with ID {balanceId} retrieved successfully.");
             }
             catch (Exception ex)
             {
                 _logger.LogError($"Error retrieving transaction with ID {balanceId}: {ex.Message}");
-                return null;
+                return new ApiResponse<Transaction>(null, $"Error retrieving transaction with ID {balanceId}");
             }
         }
 
-        public async Task<Transaction> UpdateTransaction(Transaction item)
+        public async Task<ApiResponse<Transaction>> UpdateTransaction(Transaction item)
         {
             try
             {
@@ -66,7 +68,7 @@ namespace MoneyManagement.Services
                 if (existingTransaction == null)
                 {
                     _logger.LogWarning($"Transaction with ID {item.Id} not found.");
-                    return null;
+                    return new ApiResponse<Transaction>(null, $"Transaction with ID {item.Id} not found.");
                 }
 
                 // Update the properties of the existing transaction
@@ -90,16 +92,16 @@ namespace MoneyManagement.Services
                 _context.Transaction.Update(existingTransaction);
                 await _context.SaveChangesAsync();
 
-                return item;
+                return new ApiResponse<Transaction>(existingTransaction, $"Transaction with ID {item.Id} updated successfully.");
             }
             catch (Exception ex)
             {
                 _logger.LogError($"Error updating transaction with ID {item.Id}: {ex.Message}");
-                return null;
+                return new ApiResponse<Transaction>(null, $"Error updating transaction with ID {item.Id}");
             }
         }
 
-        public async Task<Transaction> CategoryConfirmed(Transaction item)
+        public async Task<ApiResponse<Transaction>> CategoryConfirmed(Transaction item)
         {
             if (item.IsCatConfirmed)
             {
@@ -110,33 +112,31 @@ namespace MoneyManagement.Services
 
             try
             {
-                await UpdateTransaction(item);
-
-                return item;
+                return new ApiResponse<Transaction>(UpdateTransaction(item).Result.Data, $"Category confirmation for transaction with ID {item.Id} updated successfully.");
             }
             catch (Exception ex)
             {
                 _logger.LogError($"Error confirming category for transaction with ID {item.Id}: {ex.Message}");
-                return null;
+                return new ApiResponse<Transaction>(null,$"Error confirming category for transaction with ID {item.Id}");
             }
         }
 
-        public async Task<Transaction> CategorizeTransaction(Transaction item)
+        public async Task<ApiResponse<Transaction>> CategorizeTransaction(Transaction item)
         {
             try
             {
                 item.Area = _mlService.PredictCategory(item.Description).ToUpper();
-                await UpdateTransaction(item);
-                return item;
+                
+                return new ApiResponse<Transaction>(UpdateTransaction(item).Result.Data, $"Transaction with ID {item.Id} categorized successfully.");
             }
             catch (Exception ex)
             {
                 _logger.LogError($"Error categorizing transaction with ID {item.Id}: {ex.Message}");
-                return null;
+                return new ApiResponse<Transaction>(null, $"Error categorizing transaction with ID {item.Id}");
             }
         }
 
-        public async Task<string> CategorizeAllTransaction()
+        public async Task<ApiResponse<string>> CategorizeAllTransaction()
         {
             var transactionsToCat =
                 await _context.Transaction.Where(x => x.IsActive && x.IsCatConfirmed == false).ToListAsync();
@@ -163,25 +163,26 @@ namespace MoneyManagement.Services
                 }
             }
 
-            return $"File categorized: {ok}, with error: {ko} (check the log)";
+            return new ApiResponse<string>($"File categorized: {ok}, with error: {ko} (check the log)", $"Categorization completed. Total transactions processed: {transactionsToCat.Count}");
         }
 
-        public async Task<string> TrainModelTransaction()
+        public async Task<ApiResponse<string>> TrainModelTransaction()
         {
             try
             {
                 var result = _mlService.TrainAndSaveModel();
 
-                return !string.IsNullOrEmpty(result) ? result : "Error in train model: check the log";
+                
+                return !string.IsNullOrEmpty(result) ? new ApiResponse<string>(result, $"Model Trained successfully") : new ApiResponse<string>(String.Empty, "Error in train model: check the log");
             }
             catch (Exception ex)
             {
                 _logger.LogError($"Error training model: {ex.Message}");
-                return null;
+                return new ApiResponse<string>(string.Empty, $"Error training model: {ex.Message}");
             }
         }
 
-        public async Task<Transaction> AddTransaction(Transaction item)
+        public async Task<ApiResponse<Transaction>> AddTransaction(Transaction item)
         {
             var account = await _context.AccountMasterData.Include(c => c.Currency)
                 .Where(x => x.Id == item.Account.Id)
@@ -205,32 +206,32 @@ namespace MoneyManagement.Services
                 {
                     //record already present: Duplicate Record
                     item.Id = 0;
-                    return item;
+                    return new ApiResponse<Transaction>(null, "Transaction already exists with the same unique key.");
                 }
 
                 await _context.Transaction.AddAsync(item);
                 await _context.SaveChangesAsync();
 
-                return item;
+                return new ApiResponse<Transaction>(item, $"Transaction with ID {item.Id} added successfully.");
             }
             catch (Exception ex)
             {
                 _logger.LogError($"Error adding transaction: {ex.Message}");
-                return null;
+                return new ApiResponse<Transaction>(null, $"Error adding transaction: {ex.Message}");
             }
         }
 
-        public async Task<Transaction> DeleteTransaction(Transaction item)
+        public async Task<ApiResponse<bool>> DeleteTransaction(int id)
         {
             try
             {
                 var existingTransaction = await _context.Transaction.Include(c => c.Account)
-                    .Where(x => x.Id == item.Id).FirstOrDefaultAsync();
+                    .Where(x => x.Id == id).FirstOrDefaultAsync();
                 
                 if (existingTransaction == null)
                 {
-                    _logger.LogWarning($"Transaction with ID {item.Id} not found for deletion.");
-                    return null;
+                    _logger.LogWarning($"Transaction with ID {id} not found for deletion.");
+                    return new ApiResponse<bool>(false, $"Transaction with ID {id} not found for deletion.");
                 }
                 
                 existingTransaction.LastUpdatedDate = DateTime.Now;
@@ -239,21 +240,21 @@ namespace MoneyManagement.Services
                 _context.Transaction.Update(existingTransaction);
                 await _context.SaveChangesAsync();
 
-                return item;
+                return new ApiResponse<bool>(true, $"Transaction with ID {id} deleted successfully.");
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Error deleting transaction with ID {item.Id}: {ex.Message}");
-                return null;
+                _logger.LogError($"Error deleting transaction with ID {id}: {ex.Message}");
+                return new ApiResponse<bool>(false, $"Error deleting transaction with ID {id}: {ex.Message}");
             }
         }
 
-        public async Task<string> UploadCsv(IList<Transaction> transactions)
+        public async Task<ApiResponse<string>> UploadCsv(IList<Transaction> transactions)
         {
             if (transactions.Count==0)
             {
                 _logger.LogWarning("No transactions to upload.");
-                return string.Empty;
+                return new ApiResponse<string>(string.Empty, $"No transactions to upload.");
 
             }
 
@@ -271,19 +272,19 @@ namespace MoneyManagement.Services
                     notLoaded++;
                 }
 
-                if (result.Id < 1)
+                if (result.Data.Id < 1)
                 {
                     duplicated++;
                 }
 
-                if (result.Id > 0)
+                if (result.Data.Id > 0)
                 {
                     loaded++;
                 }
 
             }
 
-            return $"Loaded: {loaded} - Not Loaded: {notLoaded} - Duplicated: {duplicated}";
+            return new ApiResponse<string>($"Loaded: {loaded} - Not Loaded: {notLoaded} - Duplicated: {duplicated}, ${transactions.Count} transactions processed.",$"Transactions upload completed. Total: {transactions.Count}");
         }
 
         private string MD5UniqueKey(string accountName, string txnDate, string txnAmount, string txnDescription)
