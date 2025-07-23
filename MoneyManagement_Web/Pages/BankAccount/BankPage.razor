@@ -1,0 +1,309 @@
+﻿@page "/bankpage"
+<MM_WEB.Shared.Components.BreadCrumb path="bankpage"></MM_WEB.Shared.Components.BreadCrumb>
+@if (_accessService.IsAuthorized)
+{
+    @if (banks == null)
+    {
+        <p><em>Loading ...</em></p>
+    }
+    else
+    {
+        <RadzenMenu>
+            <RadzenMenuItem Text="New" Icon="add" Click="@InsertRow" Disabled=@(bankToInsert != null || bankToUpdate != null)></RadzenMenuItem>
+        </RadzenMenu>
+        <br />
+        <RadzenDataGrid AllowFiltering="true" AllowColumnResize="true" AllowAlternatingRows="true" @ref="bankGrid"
+                        FilterMode="FilterMode.Advanced" AllowSorting="true" PageSize="15" AllowPaging="true"
+                        PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true" ColumnWidth="250px"
+                        Data="@banks" TItem="BankMasterData" LogicalFilterOperator="LogicalFilterOperator.Or"
+                        EditMode="DataGridEditMode.Single" RowUpdate="@OnUpdateRow" RowCreate="@OnCreateRow"
+                        Sort="@Reset" Page="@Reset" Filter="@Reset" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" Density="Density.Compact">
+            <Columns>
+                <RadzenDataGridColumn TItem="BankMasterData" Property="Id" Filterable="false" Title="ID"
+                                      Frozen="true" Width="10px" TextAlign="TextAlign.Center" />
+
+                <RadzenDataGridColumn TItem="BankMasterData" Title="Name" Frozen="true" Width="50px">
+                    <Template Context="data">
+                        <p style="white-space:pre-wrap">@data.Name</p>
+                    </Template>
+                    <EditTemplate Context="bank">
+                        <RadzenTextBox @bind-Value="bank.Name" Style="width:100%; display: block" Name="Name" />
+                        <RadzenRequiredValidator Text="Name is required" Component="Name" Popup="false" />
+                    </EditTemplate>
+                </RadzenDataGridColumn>
+
+                <RadzenDataGridColumn TItem="BankMasterData" Title="Description" Frozen="true" Width="50px">
+                    <Template Context="data">
+                        <p style="white-space:pre-wrap">@data.Description</p>
+                    </Template>
+                    <EditTemplate Context="bank">
+                        <RadzenTextBox @bind-Value="bank.Description" Style="width:100%; display: block" Name="Description" />
+                    </EditTemplate>
+                </RadzenDataGridColumn>
+
+                <RadzenDataGridColumn TItem="BankMasterData" Property="Country.Name" Title="Country" Frozen="true" Width="50px">
+
+                    <EditTemplate Context="bank">
+                        <RadzenDropDown AllowClear="true" Name="Country.Name"
+                                        TValue="Country" Class="w-99" Placeholder="Select a Country"
+                                        FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                        AllowFiltering="true" TextProperty="Name"
+                                        Data=@countries @bind-Value="bank.Country" />
+                        @*<RadzenTextBox @bind-Value="bank.Country" Style="width:100%; display: block" Name="Country" />*@
+                        <RadzenRequiredValidator Text="Country is required" Component="Country.Name" Popup="false" />
+                    </EditTemplate>
+                </RadzenDataGridColumn>
+
+                <RadzenDataGridColumn TItem="BankMasterData" Title="WebUrl" Frozen="true" Width="50px">
+                    <Template Context="data">
+                        <p style="white-space:pre-wrap">@data.WebUrl</p>
+                    </Template>
+                    <EditTemplate Context="bank">
+                        <RadzenTextBox @bind-Value="bank.WebUrl" Style="width:100%; display: block" Name="WebUrl" />
+                        @*                    <RadzenRequiredValidator Text="Web Url" Component="WebUrl" Popup="false" />*@
+                    </EditTemplate>
+                </RadzenDataGridColumn>
+
+                <RadzenDataGridColumn TItem="BankMasterData" Property="Note" Title="Note" Frozen="true" Width="50px">
+                    <EditTemplate Context="bank">
+                        <RadzenTextBox @bind-Value="bank.Note" Style="width:100%; display: block" Name="Note" />
+                        @*<RadzenRequiredValidator Text="Note" Component="Note" Popup="false" />*@
+                    </EditTemplate>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="BankMasterData" Context="bank" Filterable="false" Sortable="false"
+                                      TextAlign="TextAlign.Right" Width="10%">
+                    <Template Context="bank">
+                        <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Small"
+                                      Click="@(args => EditRow(bank))" @onclick:stopPropagation="true">
+                        </RadzenButton>
+                        <RadzenButton ButtonStyle="ButtonStyle.Light" Icon="delete" Variant="Variant.Flat" Shade="Shade.Lighter"
+                                      Size="ButtonSize.Small" class="my-1 ms-1" Click="@(args => DeleteRow(bank))" @onclick:stopPropagation="true">
+                        </RadzenButton>
+                    </Template>
+                    <EditTemplate Context="bank">
+                        <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Success" Variant="Variant.Flat"
+                                      Size="ButtonSize.Small" Click="@((args) => SaveRow(bank))">
+                        </RadzenButton>
+                        <RadzenButton Icon="undo" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Small"
+                                      class="my-1 ms-1" Click="@((args) => CancelEdit(bank))">
+                        </RadzenButton>
+                    </EditTemplate>
+                </RadzenDataGridColumn>
+
+            </Columns>
+        </RadzenDataGrid>
+
+    }
+}
+else
+{
+    <NotAuthorizePage></NotAuthorizePage>
+}
+
+@code {
+    [Inject]
+    public IBankAccountService _service { get; set; }
+    [Inject]
+    public IAnchillaryService _anchillaryService { get; set; }
+    [Inject]
+    public IAccessServices _accessService { get; set; }
+
+
+    protected IList<BankMasterData>? banks;
+    protected IList<Country>? countries;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (_accessService.IsAuthorized)
+        {
+            await RefreshData();
+            countries = await _anchillaryService.GetActiveCountryList();
+
+        }
+    }
+
+    protected async Task RefreshData()
+    {
+        banks = await _service.GetActiveBankList();
+        StateHasChanged();
+
+    }
+
+    BankMasterData? bankToUpdate;
+    BankMasterData? bankToInsert;
+    RadzenDataGrid<BankMasterData>? bankGrid;
+
+    async Task EditRow(BankMasterData item)
+    {
+        bankToUpdate = item;
+
+        await bankGrid.EditRow(item);
+    }
+
+    async void OnUpdateRow(BankMasterData item)
+    {
+        if (item == bankToInsert)
+        {
+            bankToInsert = null;
+        }
+
+        bankToUpdate = null;
+
+        var result = await _service.UpdateBank(item);
+
+        if (result != null)
+        {
+            NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Success,
+                    Summary = "Bank Update",
+                    Detail = $"Bank {result.Name} updated",
+                    Duration = 4000
+
+                });
+        }
+        else
+        {
+            NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Error,
+                    Summary = "Error Update",
+                    Detail = $"Bank NOT updated",
+                    Duration = 4000
+
+                });
+        }
+    }
+
+    async void OnCreateRow(BankMasterData item)
+    {
+        var result = await _service.AddBank(item);
+
+        bankToInsert = null;
+
+        if (result != null)
+        {
+            NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Success,
+                    Summary = "New Bank Created",
+                    Detail = $"Bank {result.Name} created",
+                    Duration = 4000
+
+                });
+        }
+        else
+        {
+            NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Error,
+                    Summary = "Error",
+                    Detail = "Error adding New Bank",
+                    Duration = 4000
+
+                });
+        }
+
+        await RefreshData();
+    }
+
+    async Task SaveRow(BankMasterData item)
+    {
+        await bankGrid.UpdateRow(item);
+    }
+
+    async void CancelEdit(BankMasterData item)
+    {
+        if (bankToInsert != null)
+        {
+            bankToInsert = null;
+        }
+
+        bankToUpdate = null;
+
+        bankGrid.CancelEditRow(item);
+
+        item = await _service.GetBank(item.Id);
+        bankGrid.Reload();
+        StateHasChanged();
+
+    }
+
+    protected async Task InsertRow()
+    {
+        bankToInsert = new BankMasterData();
+
+        await bankGrid.InsertRow(bankToInsert);
+
+    }
+
+    async Task DeleteRow(BankMasterData item)
+    {
+        var dialogResult = await DialogService.OpenAsync("Confirm Delete", ds =>
+      @<RadzenStack Gap="1.5rem">
+          <p>Do you want delete the bank <b>@item.Name</b>?</p>
+          <RadzenStack Gap="2rem" Class="rz-p-4 rz-p-md-12">
+              <RadzenRow AlignItems="AlignItems.Center" Class="rz-mt-4">
+                  <RadzenButton Text="No" Click="() => ds.Close(false)" ButtonStyle="ButtonStyle.Light" />
+                  <RadzenButton Click="() => ds.Close(true)" Text="Yes" ButtonStyle="ButtonStyle.Secondary"></RadzenButton>
+              </RadzenRow>
+          </RadzenStack>
+        </RadzenStack>
+    );
+
+        if (dialogResult != null && dialogResult)
+        {
+
+            if (item == bankToInsert)
+            {
+                bankToInsert = null;
+            }
+
+            if (item == bankToUpdate)
+            {
+                bankToUpdate = null;
+            }
+
+            var result = await _service.DeleteBank(item);
+
+
+            if (result != null)
+            {
+                NotificationService.Notify(new NotificationMessage
+                    {
+                        Severity = NotificationSeverity.Success,
+                        Summary = "Bank Deleted",
+                        Detail = $"Bank {result.Name} deleted",
+                        Duration = 4000
+
+                    });
+            }
+            else
+            {
+                NotificationService.Notify(new NotificationMessage
+                    {
+                        Severity = NotificationSeverity.Error,
+                        Summary = "Error",
+                        Detail = "Error deleting Bank",
+                        Duration = 4000
+
+                    });
+            }
+            await bankGrid.Reload();
+            await RefreshData();
+        }
+    }
+
+    void Reset()
+    {
+        bankToInsert = null;
+        bankToUpdate = null;
+    }
+
+
+    #region Tooltips
+
+
+    #endregion
+
+}

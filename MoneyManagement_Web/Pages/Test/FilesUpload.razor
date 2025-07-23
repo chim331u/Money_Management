@@ -1,0 +1,274 @@
+﻿@page "/filesupload"
+@using System.IO
+@using Microsoft.AspNetCore.Http;
+@using Radzen.Blazor.Rendering;
+@using Tewr.Blazor.FileReader;
+
+@inject IFileReaderService fileReader;
+
+<h1>Upload File</h1>
+
+<div class="row">
+
+    <div class="col-4">
+        <div class="form-group">
+            <input type="file" @ref="inputReference" @onchange="async () => await OpenFileAsync()" />
+            <ul>
+                <li>FileName: @fileName</li>
+                <li>Size: @size </li>
+                <li>Type: @type </li>
+            </ul>
+        </div>
+        <button class="btn btn-block btn-success" @onclick="async ()=> await UploadFileAsync()">Upload File</button>
+
+        @if (!string.IsNullOrWhiteSpace(message))
+        {
+            <div class="alert">
+                File has been uploaded
+            </div>
+        }
+
+    </div>
+
+    <div class="col-4">
+        @if (imagePath != null)
+        {
+            <h4>imagePath</h4>
+            <img style="width:150px" src="@imagePath" />
+        }
+
+    </div>
+</div>
+<hr />
+
+<div class="row">
+    <div class="container-fluid">
+        <div class="row px-3">
+            <div class="col-lg-6 offset-lg-3 p-3">
+                <RadzenCard>
+                    <MM_WEB.Shared.Components.FileUploadComponent fileUpload="inputReference" _file="_file" _fileInfo="_fileInfo" )></MM_WEB.Shared.Components.FileUploadComponent>
+                @* Change=@(args => OnChange(args, "Manual Upload") *@
+                                 </RadzenCard>
+<br />
+                @*  <RadzenCard>
+                    <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Manual Upload</RadzenText>
+                    <RadzenUpload @ref="upload" Auto="false" Multiple="true" Url="upload/multiple" Change=@(args => OnChange(args, "Manual Upload"))
+                                  Progress=@(args => OnProgress(args, "Manual Upload")) class="w-100" />
+                    <RadzenButton Text="Upload" Click=TestUpload class="d-block mt-4" />
+                     Click=@(args => upload.Upload()) 
+                </RadzenCard>*@
+            </div>
+        </div>
+    </div>
+</div>
+
+@* <div class="row">
+    <div class="container-fluid">
+        <div class="row px-3">
+            <div class="col-lg-6 offset-lg-3 p-3">
+                <RadzenCard>
+
+                    <RadzenFileInput @bind-Value="_test" @bind-FileName=@fileName @bind-FileSize=@fileSize
+                                     TValue="string" class="w-100" Change=@(args => OnChange(args, "FileInput")) Error=@(args => OnError(args, "FileInput"))
+                                     Accept="pdf/*" ChooseText="Select File" />
+                </RadzenCard>
+
+                <RadzenCard>
+                    <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Manual Upload</RadzenText>
+                    <RadzenUpload @ref="upload" Auto="false" Multiple="true" Url="upload/multiple" Change=@(args => OnChange(args, "Manual Upload"))
+                                  Progress=@(args => OnProgress(args, "Manual Upload")) class="w-100" />
+                    <RadzenButton Text="Upload" Click=TestUpload class="d-block mt-4" />
+
+                </RadzenCard>
+            </div>
+        </div>
+    </div>
+</div> *@
+
+@code {
+    ClassList ChooseClassList => ClassList.Create("rz-fileupload-choose rz-button")
+                                      .AddDisabled(false);
+
+    public string Icon { get; set; }
+    public string IconColor { get; set; }
+    public string ChooseText { get; set; } = "Choose";
+
+    [Inject]
+    public ITestServices _testService { get; set; }
+
+    ElementReference inputReference;
+    string message = string.Empty;
+    string imagePath = null;
+
+    string fileName = string.Empty;
+    string size = string.Empty;
+    string type = string.Empty;
+
+
+    Stream? fileStream;
+
+    async Task OpenFileAsync()
+    {
+        var file = (await fileReader.CreateReference(inputReference).EnumerateFilesAsync()).FirstOrDefault();
+        if (file == null)
+            return;
+
+        var fileInfo = await file.ReadFileInfoAsync();
+
+        fileName = fileInfo.Name;
+        size = $"{fileInfo.Size / 1000} kb";
+        type = fileInfo.Type; 
+
+        using (var ms = await file.CreateMemoryStreamAsync((int)fileInfo.Size))
+        {
+            fileStream = new MemoryStream(ms.ToArray());
+        }
+    }
+
+    public IFileInfo? _fileInfo { get; set; }
+    public IFileReference? _file { get; set; }
+
+    async Task UploadFileAsync()
+    {
+        try
+        {
+            // using (var ms = await _file.CreateMemoryStreamAsync((int)_fileInfo.Size))
+            // {
+            //     fileStream = new MemoryStream(ms.ToArray());
+            // }
+
+
+            var content = new MultipartFormDataContent();
+
+            content.Headers.ContentDisposition = new System.Net.Http.Headers.ContentDispositionHeaderValue("form-data");
+
+            content.Add(new StreamContent(fileStream, (int)fileStream.Length), "image", fileName);
+
+            var _salary = new Salary() { ReferMonth = "10" };
+            // var _salaryWithFile = new SalaryWithFile() { Salary = _salary, FileUpload = content };
+
+            // var resultPost = await _testService.PostFileSalary(_salaryWithFile);
+
+            imagePath = await _testService.UploadFile(content);
+        }
+        catch (Exception ex)
+        {
+
+
+        }
+
+
+
+    }
+
+
+    /// /////////////////////
+
+    string _test = string.Empty;
+    long? fileSize;
+
+    void OnChange(string value, string name)
+    {
+        Console.WriteLine($"{name} value changed");
+    }
+
+    void OnError(UploadErrorEventArgs args, string name)
+    {
+        Console.WriteLine($"{args.Message}");
+    }
+
+    /// /////////////////////
+    RadzenUpload upload;
+
+    void OnChange(UploadChangeEventArgs args, string name)
+    {
+        var _stream = fileStream;
+        var _inputValue = inputReference;
+
+        foreach (var file in args.Files)
+        {
+            Console.WriteLine($"File: {file.Name} / {file.Size} bytes");
+        }
+
+        Console.WriteLine($"{name} changed");
+    }
+
+    void OnProgress(UploadProgressArgs args, string name)
+    {
+        Console.WriteLine($"{args.Progress}% '{name}' / {args.Loaded} of {args.Total} bytes.");
+
+        if (args.Progress == 100)
+        {
+            foreach (var file in args.Files)
+            {
+                Console.WriteLine($"Uploaded: {file.Name} / {file.Size} bytes");
+            }
+        }
+    }
+
+    void TrackProgress(UploadProgressArgs args)
+    {
+        // showProgress = true;
+        // showComplete = false;
+        // progress = args.Progress;
+
+        // // cancel upload
+        // args.Cancel = cancelUpload;
+
+        // // reset cancel flag
+        // cancelUpload = false;
+    }
+
+    void CompleteUpload(UploadCompleteEventArgs args)
+    {
+        // if (!args.Cancelled)
+        //     completionMessage = "Upload Complete!";
+        // else
+        //     completionMessage = "Upload Cancelled!";
+
+        // showProgress = false;
+        // showComplete = true;
+    }
+
+    async Task TestUpload()
+    {
+        try
+        {
+            var _inputReference = upload.Element;
+
+            var file = (await fileReader.CreateReference(_inputReference).EnumerateFilesAsync()).FirstOrDefault();
+            if (file == null)
+                return;
+
+            var fileInfo = await file.ReadFileInfoAsync();
+
+            fileName = fileInfo.Name;
+            size = $"{fileInfo.Size}b";
+            type = fileInfo.Type;
+
+            using (var ms = await file.CreateMemoryStreamAsync((int)fileInfo.Size))
+            {
+                fileStream = new MemoryStream(ms.ToArray());
+            }
+
+
+
+            var content = new MultipartFormDataContent();
+
+            content.Headers.ContentDisposition = new System.Net.Http.Headers.ContentDispositionHeaderValue("form-data");
+
+            // content.Add(new StreamContent(fileStream, (int)fileStream.Length), "image", fileName);
+            content.Add(new StreamContent(fileStream, (int)fileStream.Length), "file", fileName);
+
+            imagePath = await _testService.UploadFile(content);
+        }
+        catch (Exception ex)
+        {
+
+
+        }
+
+    }
+
+
+}

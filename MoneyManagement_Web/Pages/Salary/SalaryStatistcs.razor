@@ -1,0 +1,205 @@
+﻿@page "/salarystatistics"
+
+<MM_WEB.Shared.Components.BreadCrumb path="salarystatistics"></MM_WEB.Shared.Components.BreadCrumb>
+
+@if (_accessService.IsAuthorized)
+{
+    @if (salaryStatistics != null)
+    {
+        <RadzenMenu>
+            <RadzenStack Gap="2rem" Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Center">
+                <RadzenStack Gap="1rem" Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.Start">
+                    <RadzenText> Select a user:</RadzenText>
+                    <RadzenDropDown AllowClear="true"
+                                    TValue="ServiceUser" Class="w-99" Placeholder="Select a User"
+                                    FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                    AllowFiltering="true" TextProperty="Name" Bind-Value="@userId"
+                                    Data=@salaryUsers ValueProperty="Id" Change=@(args => userChange(args)) />
+                </RadzenStack>
+
+                <RadzenStack Gap="1rem" Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.Start">
+                    <RadzenText>Starting year:</RadzenText>
+                    <RadzenDropDown AllowClear="false"
+                                    TValue="string" Class="w-99" Placeholder="Starting year"
+                                    FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                    AllowFiltering="true" Value="@startingYear"
+                                    Data=@years Change=@(args => dataChange(args)) />
+                </RadzenStack>
+            </RadzenStack>
+        </RadzenMenu>
+        <br />
+        <RadzenStack Gap="1rem" Style="position: relative">
+
+            <RadzenRow>
+                <RadzenDataGrid AllowFiltering="false" AllowColumnResize="false" AllowAlternatingRows="true" AllowSorting="false" PageSize="5" AllowPaging="true" PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true"
+                                Data="@salaryCompare" TItem="SalaryCompare" ColumnWidth="250px">
+                    <Columns>
+                        <RadzenDataGridColumn TItem="SalaryCompare" Property="Year" Width="10px" Filterable="false" Title="Year" Frozen="true" TextAlign="TextAlign.Center" />
+                        <RadzenDataGridColumn TItem="SalaryCompare" Property="JanSalary" Width="10px" FormatString="{0:C0}" Filterable="false" Title="Jan" Frozen="true" TextAlign="TextAlign.Center" />
+                        <RadzenDataGridColumn TItem="SalaryCompare" Property="FebSalary" Width="10px" FormatString="{0:C0}" Filterable="false" Title="Feb" Frozen="true" TextAlign="TextAlign.Center" />
+                        <RadzenDataGridColumn TItem="SalaryCompare" Property="MarSalary" Width="10px" FormatString="{0:C0}" Filterable="false" Title="Mar" Frozen="true" TextAlign="TextAlign.Center" />
+                        <RadzenDataGridColumn TItem="SalaryCompare" Property="AprSalary" Width="10px" FormatString="{0:C0}" Filterable="false" Title="Apr" Frozen="true" TextAlign="TextAlign.Center" />
+                        <RadzenDataGridColumn TItem="SalaryCompare" Property="MaySalary" Width="10px" FormatString="{0:C0}" Filterable="false" Title="May" Frozen="true" TextAlign="TextAlign.Center" />
+                        <RadzenDataGridColumn TItem="SalaryCompare" Property="JunSalary" Width="10px" FormatString="{0:C0}" Filterable="false" Title="Jun" Frozen="true" TextAlign="TextAlign.Center" />
+                        <RadzenDataGridColumn TItem="SalaryCompare" Property="JulSalary" Width="10px" FormatString="{0:C0}" Filterable="false" Title="Jul" Frozen="true" TextAlign="TextAlign.Center" />
+                        <RadzenDataGridColumn TItem="SalaryCompare" Property="AugSalary" Width="10px" FormatString="{0:C0}" Filterable="false" Title="Aug" Frozen="true" TextAlign="TextAlign.Center" />
+                        <RadzenDataGridColumn TItem="SalaryCompare" Property="SepSalary" Width="10px" FormatString="{0:C0}" Filterable="false" Title="Sep" Frozen="true" TextAlign="TextAlign.Center" />
+                        <RadzenDataGridColumn TItem="SalaryCompare" Property="OctSalary" Width="10px" FormatString="{0:C0}" Filterable="false" Title="Oct" Frozen="true" TextAlign="TextAlign.Center" />
+                        <RadzenDataGridColumn TItem="SalaryCompare" Property="NovSalary" Width="10px" FormatString="{0:C0}" Filterable="false" Title="Nov" Frozen="true" TextAlign="TextAlign.Center" />
+                        <RadzenDataGridColumn TItem="SalaryCompare" Property="DecSalary" Width="10px" FormatString="{0:C0}" Filterable="false" Title="Dec" Frozen="true" TextAlign="TextAlign.Center" />
+                        <RadzenDataGridColumn TItem="SalaryCompare" Property="YearSalary" Width="10px" FormatString="{0:C0}" Filterable="false" Title="Tot" Frozen="true" TextAlign="TextAlign.Center" />
+
+                    </Columns>
+                </RadzenDataGrid>
+
+            </RadzenRow>
+            <RadzenRow>
+                @if (salaryStatistics.Count > 0)
+                {
+
+                    <RadzenColumn Size="12" SizeMD="12" SizeLG="12">
+                        <RadzenChart>
+                            <RadzenLineSeries Smooth="true" Data="@salaryStatistics" CategoryProperty="RefDate" Title="Salary"
+                                              LineType="LineType.Solid" ValueProperty="RefAmount">
+                                <RadzenMarkers MarkerType="MarkerType.Circle" />
+                                <RadzenSeriesDataLabels Visible="false" />
+                                <RadzenSeriesTrendLine Visible="true" Stroke="var(--rz-danger-dark)" LineType="LineType.Dashed" />
+                                @* <RadzenSeriesAnnotation Visible="true" TItem="BalanceLineChart" Data="@balances[0]" OffsetY="-16" Text="Current" /> *@
+                            </RadzenLineSeries>
+                            <RadzenValueAxis Visible="true" Formatter="@_utilityService.FormatAsEUR" />
+                            <RadzenCategoryAxis Visible="true" Formatter="@_utilityService.FormatAsDate" />
+                            <RadzenColumnOptions Margin="10" />
+                            <RadzenLegend Visible="false" />
+                        </RadzenChart>
+                    </RadzenColumn>
+                }
+            </RadzenRow>
+
+        </RadzenStack>
+    }
+}
+else
+{
+    <NotAuthorizePage></NotAuthorizePage>
+}
+
+@code {
+    [Inject]
+    public IStatisticService _service { get; set; }
+    [Inject]
+    public IAccessServices _accessService { get; set; }
+    [Inject]
+    public IAnchillaryService _anchillaryService { get; set; }    
+    [Inject]
+    public IUtilityServices _utilityService { get; set; }
+
+    protected IList<SalaryStats>? salaryStatistics;
+    private IList<SalaryCompare> salaryCompare;
+    private IList<ServiceUser> salaryUsers;
+    private List<string>? years;
+    int userId = 0;
+    string startingYear = DateTime.Now.AddYears(-4).Year.ToString();
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (_accessService.IsAuthorized)
+        {
+            salaryUsers = await _anchillaryService.GetActiveServiceUserList();
+            salaryUsers.Add(new ServiceUser { Id = 0, Name = "All" });
+            salaryUsers.OrderByDescending(x => x.Name).ToList();
+
+            await retriveData();
+
+        }
+    }
+
+    private class SalaryCompare
+    {
+        public string Year { get; set; }
+        public string Jan { get; set; }
+        public string Feb { get; set; }
+        public string Mar { get; set; }
+        public string Apr { get; set; }
+        public string May { get; set; }
+        public string Jun { get; set; }
+        public string Jul { get; set; }
+        public string Aug { get; set; }
+        public string Sep { get; set; }
+        public string Oct { get; set; }
+        public string Nov { get; set; }
+        public string Dec { get; set; }
+
+        public double YearSalary { get; set; }
+        public double JanSalary { get; set; }
+        public double FebSalary { get; set; }
+        public double MarSalary { get; set; }
+        public double AprSalary { get; set; }
+        public double MaySalary { get; set; }
+        public double JunSalary { get; set; }
+        public double JulSalary { get; set; }
+        public double AugSalary { get; set; }
+        public double SepSalary { get; set; }
+        public double OctSalary { get; set; }
+        public double NovSalary { get; set; }
+        public double DecSalary { get; set; }
+
+    }
+
+    private async Task retriveData()
+    {
+
+        _salaryStatistics = await _service.GetSalaryStatistic(userId);
+        years = _salaryStatistics.Select(x => x.RefYear).Distinct().ToList();
+
+        ManageData();
+
+
+    }
+    private List<SalaryStats>? _salaryStatistics;
+
+    private void ManageData()
+    {
+        salaryCompare = new List<SalaryCompare>();
+        salaryStatistics = _salaryStatistics.Where(x => x.RefDate >= new DateTime(Convert.ToInt32(startingYear), 1, 1)).ToList();
+
+        var _years = salaryStatistics.Select(x => x.RefYear).Distinct().ToList();
+
+        foreach (var item in _years)
+        {
+            var _compare = new SalaryCompare
+                {
+                    Year = item,
+                    JanSalary = salaryStatistics.Where(x => x.RefYear.Equals(item) && x.RefMonth == "1").Select(x => x.RefAmount).FirstOrDefault(),
+                    FebSalary = salaryStatistics.Where(x => x.RefYear.Equals(item) && x.RefMonth == "2").Select(x => x.RefAmount).FirstOrDefault(),
+                    MarSalary = salaryStatistics.Where(x => x.RefYear.Equals(item) && x.RefMonth == "3").Select(x => x.RefAmount).FirstOrDefault(),
+                    AprSalary = salaryStatistics.Where(x => x.RefYear.Equals(item) && x.RefMonth == "4").Select(x => x.RefAmount).FirstOrDefault(),
+                    MaySalary = salaryStatistics.Where(x => x.RefYear.Equals(item) && x.RefMonth == "5").Select(x => x.RefAmount).FirstOrDefault(),
+                    JunSalary = salaryStatistics.Where(x => x.RefYear.Equals(item) && x.RefMonth == "6").Select(x => x.RefAmount).FirstOrDefault(),
+                    JulSalary = salaryStatistics.Where(x => x.RefYear.Equals(item) && x.RefMonth == "7").Select(x => x.RefAmount).FirstOrDefault(),
+                    AugSalary = salaryStatistics.Where(x => x.RefYear.Equals(item) && x.RefMonth == "8").Select(x => x.RefAmount).FirstOrDefault(),
+                    SepSalary = salaryStatistics.Where(x => x.RefYear.Equals(item) && x.RefMonth == "9").Select(x => x.RefAmount).FirstOrDefault(),
+                    OctSalary = salaryStatistics.Where(x => x.RefYear.Equals(item) && x.RefMonth == "10").Select(x => x.RefAmount).FirstOrDefault(),
+                    NovSalary = salaryStatistics.Where(x => x.RefYear.Equals(item) && x.RefMonth == "11").Select(x => x.RefAmount).FirstOrDefault(),
+                    DecSalary = salaryStatistics.Where(x => x.RefYear.Equals(item) && x.RefMonth == "12").Select(x => x.RefAmount).FirstOrDefault(),
+                    YearSalary = salaryStatistics.Where(x => x.RefYear.Equals(item)).Sum(x => x.RefAmount)
+                };
+
+            salaryCompare.Add(_compare);
+        }
+    }
+
+    protected async Task userChange(object item)
+    {
+        userId = Convert.ToInt32(item);
+        await retriveData();
+
+    }
+
+    protected async Task dataChange(object item)
+    {
+        startingYear = item.ToString();
+        ManageData();
+
+    }
+
+}

@@ -1,0 +1,113 @@
+﻿@page "/login"
+
+
+<PageTitle>Login</PageTitle>
+
+
+
+
+<RadzenCard class="rz-my-12 rz-mx-auto rz-p-4 rz-p-md-12" style="max-width: 600px;">
+
+    <RadzenTemplateForm Data=@("LoginWithRemember")>
+        <RadzenLogin AllowRememberMe="true" AllowResetPassword="true" AllowRegister="false"
+                     ResetPassword=@OnResetPassword
+                     Login=@OnLogin />
+    </RadzenTemplateForm>
+
+</RadzenCard>
+@if (logging)
+{
+    @*         <RadzenProgressBarCircular ShowValue="true" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Medium">
+    <Template>Wait</Template>
+    </RadzenProgressBarCircular> *@
+    <RadzenProgressBar class="rz-my-12 rz-mx-auto" style="max-width: 600px;" ProgressBarStyle="ProgressBarStyle.Primary" Value="100" 
+    ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+
+}
+@* <h1>@loginResult</h1> *@
+
+
+@code {
+
+    [Inject]
+    public IAccessServices _accessService { get; set; }
+    [Inject]
+    public IUtilityServices _utilityServices { get; set; }
+    // private string loginResult;
+
+    private bool logging = false;
+
+    protected override void OnInitialized()
+    {
+        // loginResult = string.Empty;
+        _accessService.OnChange += StateHasChanged;
+        _accessService.IsAuthorized = false;
+        //todo check remember
+
+    }
+
+
+    private void OnResetPassword()
+    {
+        Console.WriteLine($"Is Authorized = {_accessService.IsAuthorized}");
+        Console.WriteLine($"Go To Reset psw");
+    }
+
+    private void OnRemember(bool remember)
+    {
+
+        Console.WriteLine($"Is Authorized = {_accessService.IsAuthorized}");
+    }
+
+    private async Task OnLogin(LoginArgs args)
+    {
+        logging = true;
+
+        var authResponse = await _accessService.Login(new Data.AuthRequest { Email = args.Username, Password = args.Password });
+
+        logging = false;
+        if (authResponse == null)
+        {
+            //login fail
+            Console.WriteLine("Login Failed");
+            NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Error,
+                    Summary = "Login failed",
+                    Detail = $"Please check user and password",
+                    Duration = 4000
+
+                });
+            // loginResult = "Login failed: check user and password";
+
+        }
+        else
+        {
+            // loginResult = string.Empty;
+            //logged in
+            NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Success,
+                    Summary = "Login success",
+                    Detail = $"Username: { authResponse.Username} logged",
+                    Duration = 4000
+
+                });
+            // Console.WriteLine($"Username: {authResponse.Username} - email: {authResponse.Email} - token = {authResponse.Token}");
+
+
+
+            NavManager.NavigateTo("/");
+
+
+        }
+
+        if (args.RememberMe)
+        {
+            //todo save values local
+        }
+
+
+    }
+
+}

@@ -1,0 +1,278 @@
+﻿@page "/serviceuser"
+<MM_WEB.Shared.Components.BreadCrumb path="serviceuser"></MM_WEB.Shared.Components.BreadCrumb>
+@if (_accessService.IsAuthorized)
+{
+    @if (serviceUsers == null)
+    {
+        <p><em>Loading ...</em></p>
+    }
+    else
+    {
+        <RadzenMenu>
+            <RadzenMenuItem Text="New" Icon="add" Click="@InsertRow" Disabled=@(serviceUserToInsert != null || serviceUserToUpdate != null)></RadzenMenuItem>
+        </RadzenMenu>
+        <br />
+        <RadzenDataGrid AllowFiltering="true" AllowColumnResize="true" AllowAlternatingRows="true" @ref="serviceUserGrid"
+                        FilterMode="FilterMode.Advanced" AllowSorting="true" PageSize="5" AllowPaging="true"
+                        PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true" ColumnWidth="250px"
+                        Data="@serviceUsers" TItem="ServiceUser" LogicalFilterOperator="LogicalFilterOperator.Or"
+                        EditMode="DataGridEditMode.Single" RowUpdate="@OnUpdateRow" RowCreate="@OnCreateRow"
+                        Sort="@Reset" Page="@Reset" Filter="@Reset" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" Density="Density.Compact">
+            <Columns>
+                <RadzenDataGridColumn TItem="ServiceUser" Property="Id" Filterable="false" Title="ID"
+                                      Frozen="true" Width="10px" TextAlign="TextAlign.Center" />
+
+                <RadzenDataGridColumn TItem="ServiceUser" Property="Name" Title="Name" Frozen="true" Width="50px">
+                    <EditTemplate Context="serviceUser">
+                        <RadzenTextBox @bind-Value="serviceUser.Name" Style="width:100%; display: block" Name="Name" />
+                        <RadzenRequiredValidator Text="Name is required" Component="Name" Popup="false" />
+                    </EditTemplate>
+                </RadzenDataGridColumn>
+
+                <RadzenDataGridColumn TItem="ServiceUser" Property="Surname" Title="Surname" Frozen="true" Width="50px">
+                    <EditTemplate Context="serviceUser">
+                        <RadzenTextBox @bind-Value="serviceUser.Surname" Style="width:100%; display: block" Name="Surname" />
+                        <RadzenRequiredValidator Text="Surname is required" Component="Surname" Popup="false" />
+                    </EditTemplate>
+                </RadzenDataGridColumn>
+
+                <RadzenDataGridColumn TItem="ServiceUser" Property="Note" Title="Note" Frozen="true" Width="50px">
+                    <EditTemplate Context="serviceUser">
+                        <RadzenTextBox @bind-Value="serviceUser.Note" Style="width:100%; display: block" Name="Note" />
+                    </EditTemplate>
+                </RadzenDataGridColumn>
+
+                <RadzenDataGridColumn TItem="ServiceUser" Context="serviceUser" Filterable="false" Sortable="false"
+                                      TextAlign="TextAlign.Right" Width="10%">
+                    <Template Context="serviceUser">
+                        <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Small"
+                                      Click="@(args => EditRow(serviceUser))" @onclick:stopPropagation="true">
+                        </RadzenButton>
+                        <RadzenButton ButtonStyle="ButtonStyle.Light" Icon="delete" Variant="Variant.Flat" Shade="Shade.Lighter"
+                                      Size="ButtonSize.Small" class="my-1 ms-1" Click="@(args => DeleteRow(serviceUser))" @onclick:stopPropagation="true">
+                        </RadzenButton>
+                    </Template>
+                    <EditTemplate Context="serviceUser">
+                        <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Success" Variant="Variant.Flat"
+                                      Size="ButtonSize.Small" Click="@((args) => SaveRow(serviceUser))">
+                        </RadzenButton>
+                        <RadzenButton Icon="undo" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Small"
+                                      class="my-1 ms-1" Click="@((args) => CancelEdit(serviceUser))">
+                        </RadzenButton>
+                    </EditTemplate>
+                </RadzenDataGridColumn>
+
+            </Columns>
+        </RadzenDataGrid>
+
+    }
+}
+else
+{
+    <NotAuthorizePage></NotAuthorizePage>
+}
+
+
+
+
+
+@code {
+
+    [Inject]
+    public IAccessServices _accessService { get; set; }
+    [Inject]
+    public IAnchillaryService _anchillaryService { get; set; }
+    [Inject]
+    public IUtilityServices _utilityService { get; set; }
+
+    protected IList<ServiceUser>? serviceUsers;
+
+    protected override async Task OnInitializedAsync()
+    {
+
+        if (_accessService.IsAuthorized)
+        {
+            await RefreshData();
+        }
+    }
+
+    protected async Task RefreshData()
+    {
+        serviceUsers = await _anchillaryService.GetActiveServiceUserList();
+        StateHasChanged();
+
+    }
+
+    ServiceUser? serviceUserToUpdate;
+    ServiceUser? serviceUserToInsert;
+    RadzenDataGrid<ServiceUser>? serviceUserGrid;
+
+    async Task EditRow(ServiceUser item)
+    {
+        serviceUserToUpdate = item;
+
+        await serviceUserGrid.EditRow(item);
+    }
+
+    async void OnUpdateRow(ServiceUser item)
+    {
+        Reset();
+
+        var result = await _anchillaryService.UpdateServiceUser(item);
+
+        if (result != null)
+        {
+            NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Success,
+                    Summary = "Service User Update",
+                    Detail = $"Service User {result.Name} updated",
+                    Duration = 4000
+
+                });
+        }
+        else
+        {
+            NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Error,
+                    Summary = "Error Update",
+                    Detail = $"Service User NOT updated",
+                    Duration = 4000
+
+                });
+        }
+    }
+
+    async void OnCreateRow(ServiceUser item)
+    {
+        var result = await _anchillaryService.AddServiceUser(item);
+
+        serviceUserToInsert = null;
+
+        if (result != null)
+        {
+            NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Success,
+                    Summary = "New Service User Created",
+                    Detail = $"Service User {result.Name} created",
+                    Duration = 4000
+
+                });
+        }
+        else
+        {
+            NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Error,
+                    Summary = "Error",
+                    Detail = "Error adding New Service User",
+                    Duration = 4000
+
+                });
+        }
+
+        await RefreshData();
+    }
+
+    async Task SaveRow(ServiceUser item)
+    {
+        await serviceUserGrid.UpdateRow(item);
+    }
+
+    async void CancelEdit(ServiceUser item)
+    {
+        Reset();
+
+        serviceUserGrid.CancelEditRow(item);
+
+        var orginalItem = await _anchillaryService.GetServiceUser(item.Id);
+
+        StateHasChanged();
+
+    }
+
+    protected async Task InsertRow()
+    {
+        serviceUserToInsert = new ServiceUser();
+
+        await serviceUserGrid.InsertRow(serviceUserToInsert);
+
+    }
+
+    async Task DeleteRow(ServiceUser item)
+    {
+
+        var dialogResult = await DialogService.OpenAsync("Confirm Delete", ds =>
+     @<RadzenStack Gap="1.5rem">
+         <p>Do you want delete the user <b>@item.Name</b>?</p>
+         <RadzenStack Gap="2rem" Class="rz-p-4 rz-p-md-12">
+             <RadzenRow AlignItems="AlignItems.Center" Class="rz-mt-4">
+                 <RadzenButton Text="No" Click="() => ds.Close(false)" ButtonStyle="ButtonStyle.Light" />
+                 <RadzenButton Click="() => ds.Close(true)" Text="Yes" ButtonStyle="ButtonStyle.Secondary"></RadzenButton>
+             </RadzenRow>
+         </RadzenStack>
+        </RadzenStack>
+    );
+
+        if (dialogResult != null && dialogResult)
+        {
+
+            if (item == serviceUserToInsert)
+            {
+                serviceUserToInsert = null;
+            }
+
+            if (item == serviceUserToUpdate)
+            {
+                serviceUserToUpdate = null;
+            }
+
+            var result = await _anchillaryService.DeleteServiceUser(item);
+
+
+            if (result != null)
+            {
+                NotificationService.Notify(new NotificationMessage
+                    {
+                        Severity = NotificationSeverity.Success,
+                        Summary = "Service User Deleted",
+                        Detail = $"Service User {result.Name} deleted",
+                        Duration = 4000
+
+                    });
+            }
+            else
+            {
+                NotificationService.Notify(new NotificationMessage
+                    {
+                        Severity = NotificationSeverity.Error,
+                        Summary = "Error",
+                        Detail = "Error deleting Service User",
+                        Duration = 4000
+
+                    });
+            }
+            await serviceUserGrid.Reload();
+            await RefreshData();
+        }
+    }
+
+    void Reset()
+    {
+        if (serviceUserToInsert != null)
+        {
+            serviceUserToInsert = null;
+        }
+
+        serviceUserToUpdate = null;
+    }
+
+
+    #region Tooltips
+
+
+    #endregion
+
+}

@@ -1,16 +1,161 @@
 ﻿@inherits LayoutComponentBase
-<div class="page">
-    <div class="sidebar">
-        <NavMenu/>
-    </div>
 
-    <main>
-        <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
-        </div>
+<RadzenLayout>
+    <RadzenHeader>
+        <RadzenRow AlignItems="AlignItems.Center" JustifyContent="JustifyContent.Center" Gap="0px">
+            <RadzenColumn Size="5">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0">
+                    <RadzenSidebarToggle Click="@(() => sidebar1Expanded = !sidebar1Expanded)" />
+                    @*                     <RadzenLabel Text="Header" /> *@
+                </RadzenStack>
+            </RadzenColumn>
+            <RadzenColumn Size="7">
+                @if (_accessService.IsAuthorized)
+                {
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.End" Gap="0">
+                        <p>Welcome, @_accessService.LoggedInfo.Username</p>
+                        <RadzenProfileMenu Click="@OnProfileClick">
+                            <Template>
+                                <RadzenGravatar Email=@_accessService.LoggedInfo.Email>
+                                </RadzenGravatar>
+                            </Template>
+                            <ChildContent>
+                                <RadzenProfileMenuItem Text="Profile" Path="profile" Icon="account_circle"></RadzenProfileMenuItem>
+                                <RadzenProfileMenuItem Text="Register" Path="register" Icon="person_add"></RadzenProfileMenuItem>
+                                <RadzenProfileMenuItem Text="Logout" Icon="logout"></RadzenProfileMenuItem>
+                            </ChildContent>
+                        </RadzenProfileMenu>
+                    </RadzenStack>
+                }
+                else
+                {
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.End" Gap="0">
+                        <div class="rz-display-none rz-display-sm-inline-flex align-items-center">
 
-        <article class="content px-4">
+                            <RadzenButton Click="@DebugLogin">Debug Login</RadzenButton>
+
+                            <a href="/login" title="Login" class="rz-mx-2 rz-mx-lg-4">Login</a>
+
+                            <a href="/about" title="About File Categorization"
+                               class="rz-text-nowrap rz-mx-2 rz-mx-lg-4">About</a>
+                        </div>
+                    </RadzenStack>
+                }
+            </RadzenColumn>
+        </RadzenRow>
+    </RadzenHeader>
+    <RadzenSidebar @bind-Expanded="@sidebar1Expanded">
+        <RadzenPanelMenu Match="NavLinkMatch.Prefix" Multiple="false">
+            <RadzenPanelMenuItem Text="Home" Icon="home" Path="/" />
+            <RadzenPanelMenuItem Text="Login" Icon="account_box" Path="login" />
+
+            <RadzenPanelMenuItem Text="BankAccount" Icon="account_balance">
+                <RadzenPanelMenuItem Text="Bank" Icon="savings" Path="bankpage" />
+                <RadzenPanelMenuItem Text="Account" Icon="badge" Path="accountpage" />
+            </RadzenPanelMenuItem>
+
+            <RadzenPanelMenuItem Text="Balance" Icon="list_alt" Path="balancepage">
+                <RadzenPanelMenuItem Text="Statistics" Icon="query_stats" Path="balancedashboard" />
+            </RadzenPanelMenuItem>
+
+            <RadzenPanelMenuItem Text="Transaction" Icon="list" Path="transactionpage">
+                <RadzenPanelMenuItem Text="Statistics" Icon="query_stats" Path="transactionstatistics" />
+                <RadzenPanelMenuItem Text="Upload" Icon="badge" Path="transactionupload" />
+            </RadzenPanelMenuItem>
+
+            <RadzenPanelMenuItem Text="Salary" Icon="euro" Path="salary">
+                <RadzenPanelMenuItem Text="Statistic" Icon="query_stats" Path="salarystatistics" />
+            </RadzenPanelMenuItem>
+
+            <RadzenPanelMenuItem Text="Identity Access" Icon="key" Path="identityaccess">
+            </RadzenPanelMenuItem>
+
+            <RadzenPanelMenuItem Text="House Things" Icon="other_houses" Path="housethingspage">
+                <RadzenPanelMenuItem Text="Room" Icon="foundation" Path="housethingsroompage" />
+            </RadzenPanelMenuItem>
+
+            <RadzenPanelMenuItem Text="Bills" Icon="payments" Path="billcrud">
+                <RadzenPanelMenuItem Text="Upload Bill" Icon="file_upload" Path="uploadbill" />
+                <RadzenPanelMenuItem Text="Statistics" Icon="query_stats" Path="billstatistic" />
+            </RadzenPanelMenuItem>
+
+            <RadzenPanelMenuItem Text="Ancillary" Icon="design_services">
+                <RadzenPanelMenuItem Text="Country" Icon="flag" Path="country" />
+                <RadzenPanelMenuItem Text="Currency" Icon="attach_money" Path="currency" />
+                <RadzenPanelMenuItem Text="Currency Rates" Icon="currency_exchange" Path="currencyrate" />
+                <RadzenPanelMenuItem Text="User" Icon="people" Path="serviceuser" />
+                <RadzenPanelMenuItem Text="Supplier" Icon="engineering" Path="supplier" />
+                <RadzenPanelMenuItem Text="Session Log" Icon="receipt_long" Path="locallog" />
+            </RadzenPanelMenuItem>
+
+            @* <RadzenPanelMenuItem Text="Test" Icon="science">
+                <RadzenPanelMenuItem Text="File Upload" Icon="file_upload" Path="filesupload" />
+                <RadzenPanelMenuItem Text="File PDF Upload" Icon="file_upload" Path="pdfupload" />
+                <RadzenPanelMenuItem Text="View PDF WASM" Icon="file_upload" Path="uploadpdf" />
+                <RadzenPanelMenuItem Text="LocalStorage" Icon="receipt_long" Path="testlocalstorage" />
+            </RadzenPanelMenuItem> *@
+        </RadzenPanelMenu>
+
+    </RadzenSidebar>
+    <RadzenBody>
+
+        <div>
             @Body
-        </article>
-    </main>
-</div>
+        </div>
+    </RadzenBody>
+    @*     <RadzenFooter>
+    Footer
+    </RadzenFooter> *@
+</RadzenLayout>
+
+@code {
+
+
+    [Inject]
+    public IAccessServices _accessService { get; set; }
+
+    bool sidebar1Expanded = true;
+
+
+
+
+    protected override void OnInitialized()
+    {
+
+        _accessService.OnChange += StateHasChanged;
+        System.Threading.Thread.CurrentThread.CurrentCulture = new System.Globalization.CultureInfo("it-IT");
+
+    }
+
+    private void OnProfileClick(RadzenProfileMenuItem menuItem)
+    {
+        if (menuItem.Text == "Logout")
+        {
+            _accessService.LoggedInfo = new RegistrationRequest();
+            _accessService.IsAuthorized = false;
+            _accessService._apiToken = string.Empty;
+
+            //todo  _accessService.Token = null;
+        }
+
+    }
+
+    private async Task DebugLogin()
+    {
+        var test = await _accessService.Login(new Data.AuthRequest { Email = "prova@prova.it", Password = "prova123456" });
+
+        if (test != null)
+        {
+            _accessService.IsAuthorized = true;
+            NavManager.NavigateTo("/");
+            StateHasChanged();
+        }
+    }
+
+
+}
+
+<RadzenDialog />
+<RadzenNotification />
+<RadzenContextMenu />
+<RadzenTooltip />

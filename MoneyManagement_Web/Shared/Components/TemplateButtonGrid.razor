@@ -1,0 +1,27 @@
+﻿<RadzenButton Icon="@Icon" ButtonStyle="@_buttonStyle" Variant="Variant.Flat" Size="ButtonSize.Small"
+@onclick="OnClickCallback">
+
+    @* @onclick:stopPropagation="true" *@
+</RadzenButton>
+
+@code {
+
+    [Parameter]
+    public string? Icon { get; set; }
+    [Parameter]
+    public EventCallback OnClickCallback { get; set; } // this is where to you pass the parent function to be executed as a callback
+
+    [Parameter]
+    public ButtonStyle? buttonStyle { get; set; }
+
+    protected ButtonStyle _buttonStyle;
+
+    protected override void OnInitialized()
+    {
+        if (buttonStyle==null)
+        {
+            _buttonStyle = ButtonStyle.Light;
+        }
+
+    }
+}

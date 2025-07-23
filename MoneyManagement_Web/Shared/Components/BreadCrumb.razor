@@ -1,0 +1,165 @@
+﻿@if (breadCrumbData != null)
+{
+    <RadzenRow AlignItems="AlignItems.Start" JustifyContent="JustifyContent.Left" Gap="0px">
+        <RadzenBreadCrumb>
+            @foreach (var item in breadCrumbData)
+            {
+                <RadzenBreadCrumbItem Path="@item.breadCrumbPath" Text="@item.breadCrumbText" />
+            }
+        </RadzenBreadCrumb>
+
+    </RadzenRow>
+}
+
+
+
+@code {
+
+    [Inject]
+    public IUtilityServices _utilityService { get; set; }
+
+    [Parameter]
+    public string? path { get; set; }
+
+    List<BreadCrumbData>? breadCrumbData;
+
+    protected override async Task OnInitializedAsync()
+    {
+        UpdateBreadCrumb(path);
+    }
+
+    public void UpdateBreadCrumb(string path)
+    {
+        switch (path)
+        {
+            case "/":
+                breadCrumbData = new List<BreadCrumbData>();
+                breadCrumbData.Add(new BreadCrumbData { breadCrumbPath = path, breadCrumbText = "Home" });
+                break;
+
+            case "login":
+                breadCrumbData = new List<BreadCrumbData>();
+                breadCrumbData.Add(new BreadCrumbData { breadCrumbPath = path, breadCrumbText = "Login" });
+                break;
+
+            case "bankpage":
+                breadCrumbData = new List<BreadCrumbData>();
+                breadCrumbData.Add(new BreadCrumbData { breadCrumbPath = path, breadCrumbText = "Bank" });
+                break;
+
+            case "accountpage":
+                breadCrumbData = new List<BreadCrumbData>();
+                breadCrumbData.Add(new BreadCrumbData { breadCrumbPath = path, breadCrumbText = "Account" });
+                break;
+
+            case "balancepage":
+                breadCrumbData = new List<BreadCrumbData>();
+                breadCrumbData.Add(new BreadCrumbData { breadCrumbPath = path, breadCrumbText = "Balance" });
+                break;
+
+            case "balancedashboard":
+                breadCrumbData = new List<BreadCrumbData>();
+                breadCrumbData.Add(new BreadCrumbData { breadCrumbPath = "balancepage", breadCrumbText = "Balance" });
+                breadCrumbData.Add(new BreadCrumbData { breadCrumbPath = path, breadCrumbText = "Statistics" });
+                break;
+
+            case "transactionpage":
+                breadCrumbData = new List<BreadCrumbData>();
+                breadCrumbData.Add(new BreadCrumbData { breadCrumbPath = path, breadCrumbText = "Transaction" });
+                break;
+
+            case "transactionstatistics":
+                breadCrumbData = new List<BreadCrumbData>();
+                breadCrumbData.Add(new BreadCrumbData { breadCrumbPath = "Transaction", breadCrumbText = "Transaction" });
+                breadCrumbData.Add(new BreadCrumbData { breadCrumbPath = path, breadCrumbText = "Statistics" });
+                break;
+
+            case "transactionupload":
+                breadCrumbData = new List<BreadCrumbData>();
+                breadCrumbData.Add(new BreadCrumbData { breadCrumbPath = "transactionpage", breadCrumbText = "Transaction" });
+                breadCrumbData.Add(new BreadCrumbData { breadCrumbPath = path, breadCrumbText = "Upload" });
+                break;
+
+            case "salary":
+                breadCrumbData = new List<BreadCrumbData>();
+                breadCrumbData.Add(new BreadCrumbData { breadCrumbPath = path, breadCrumbText = "Salary" });
+                break;
+
+            case "salarystatistics":
+                breadCrumbData = new List<BreadCrumbData>();
+                breadCrumbData.Add(new BreadCrumbData { breadCrumbPath = "salary", breadCrumbText = "Salary" });
+                breadCrumbData.Add(new BreadCrumbData { breadCrumbPath = path, breadCrumbText = "Statistics" });
+                break;
+
+            case "identityaccess":
+                breadCrumbData = new List<BreadCrumbData>();
+                breadCrumbData.Add(new BreadCrumbData { breadCrumbPath = path, breadCrumbText = "Identity" });
+                break;
+
+            case "housethingspage":
+                breadCrumbData = new List<BreadCrumbData>();
+                breadCrumbData.Add(new BreadCrumbData { breadCrumbPath = path, breadCrumbText = "House Things" });
+                break;
+
+            case "housethingsroompage":
+                breadCrumbData = new List<BreadCrumbData>();
+                breadCrumbData.Add(new BreadCrumbData { breadCrumbPath = "housethingspage", breadCrumbText = "House Things" });
+                breadCrumbData.Add(new BreadCrumbData { breadCrumbPath = path, breadCrumbText = "Room" });
+                break;
+
+            case "country":
+                breadCrumbData = new List<BreadCrumbData>();
+                breadCrumbData.Add(new BreadCrumbData { breadCrumbPath = "", breadCrumbText = "Anchillary" });
+                breadCrumbData.Add(new BreadCrumbData { breadCrumbPath = path, breadCrumbText = "Country" });
+                break;
+            case "currency":
+                breadCrumbData = new List<BreadCrumbData>();
+                breadCrumbData.Add(new BreadCrumbData { breadCrumbPath = "", breadCrumbText = "Anchillary" });
+                breadCrumbData.Add(new BreadCrumbData { breadCrumbPath = path, breadCrumbText = "Currency" });
+                break;
+            case "currencyrate":
+                breadCrumbData = new List<BreadCrumbData>();
+                breadCrumbData.Add(new BreadCrumbData { breadCrumbPath = "", breadCrumbText = "Anchillary" });
+                breadCrumbData.Add(new BreadCrumbData { breadCrumbPath = path, breadCrumbText = "Currency Rate" });
+                break;
+            case "supplier":
+                breadCrumbData = new List<BreadCrumbData>();
+                breadCrumbData.Add(new BreadCrumbData { breadCrumbPath = "", breadCrumbText = "Anchillary" });
+                breadCrumbData.Add(new BreadCrumbData { breadCrumbPath = path, breadCrumbText = "Supplier" });
+                break;
+            case "serviceuser":
+                breadCrumbData = new List<BreadCrumbData>();
+                breadCrumbData.Add(new BreadCrumbData { breadCrumbPath = "", breadCrumbText = "Anchillary" });
+                breadCrumbData.Add(new BreadCrumbData { breadCrumbPath = path, breadCrumbText = "Service User" });
+                break;
+
+            case "locallog":
+                breadCrumbData = new List<BreadCrumbData>();
+                breadCrumbData.Add(new BreadCrumbData { breadCrumbPath = "", breadCrumbText = "Anchillary" });
+                breadCrumbData.Add(new BreadCrumbData { breadCrumbPath = path, breadCrumbText = "Session Log" });
+                break;
+
+            case "billcrud":
+                breadCrumbData = new List<BreadCrumbData>();
+                breadCrumbData.Add(new BreadCrumbData { breadCrumbPath = "", breadCrumbText = "Bill" });
+                breadCrumbData.Add(new BreadCrumbData { breadCrumbPath = path, breadCrumbText = "Bill Crud" });
+                break;
+            case "uploadbill":
+                breadCrumbData = new List<BreadCrumbData>();
+                breadCrumbData.Add(new BreadCrumbData { breadCrumbPath = "", breadCrumbText = "Bill" });
+                breadCrumbData.Add(new BreadCrumbData { breadCrumbPath = path, breadCrumbText = "uploadbill" });
+                break;
+            case "billstatistic":
+                breadCrumbData = new List<BreadCrumbData>();
+                breadCrumbData.Add(new BreadCrumbData { breadCrumbPath = "", breadCrumbText = "Bill" });
+                breadCrumbData.Add(new BreadCrumbData { breadCrumbPath = path, breadCrumbText = "Statistics" });
+                break;
+            default:
+                breadCrumbData = new List<BreadCrumbData>();
+                breadCrumbData.Add(new BreadCrumbData { breadCrumbPath = "/", breadCrumbText = "Home" });
+                break;
+
+        }
+
+    }
+}

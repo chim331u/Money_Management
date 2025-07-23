@@ -1,0 +1,656 @@
+﻿@page "/transactionupload"
+@using System.Net.Http.Headers;
+@using System.Text.RegularExpressions;
+@using System.Globalization;
+
+<MM_WEB.Shared.Components.BreadCrumb path="transactionupload"></MM_WEB.Shared.Components.BreadCrumb>
+
+@if (_accessService.IsAuthorized)
+{
+    <RadzenRow Gap="2rem" Class="rz-p-0 rz-p-lg-4">
+        <RadzenColumn Size="12" SizeMD="6">
+            <RadzenStack>
+                <RadzenFieldset Text="File Info">
+                    <RadzenStack Gap="1rem">
+                        <RadzenRow AlignItems="AlignItems.Center">
+                            <RadzenColumn Size="12" SizeMD="4">
+                                <InputFile OnChange="@OnInputFileChange" class="btn btn-primary" />
+                            </RadzenColumn>
+                        </RadzenRow>
+                        @if (isFileLoaded)
+                        {
+                            <RadzenRow AlignItems="AlignItems.Center">
+                                <RadzenColumn Size="6" SizeMD="6">
+                                    <RadzenFormField Text="File Size" Variant="Variant.Text">
+                                        <RadzenTextBox @bind-Value="size" Disabled="true" />
+                                    </RadzenFormField>
+                                </RadzenColumn>
+                                <RadzenColumn Size="6" SizeMD="6">
+                                    <RadzenFormField Text="Content Type" Variant="Variant.Text">
+                                        <RadzenTextBox @bind-Value="contentType" Disabled="true" />
+                                    </RadzenFormField>
+
+                                </RadzenColumn>
+                            </RadzenRow>
+                            <RadzenRow AlignItems="AlignItems.Center">
+                                <RadzenColumn Size="6" SizeMD="6">
+                                    <RadzenFormField Text="Separator" Variant="Variant.Text">
+                                        <RadzenTextBox @bind-Value="separator" />
+
+                                        <RadzenButton Click="RefreshCsv" Icon="refresh" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" />
+                                    </RadzenFormField>
+                                </RadzenColumn>
+                                <RadzenColumn Size="6" SizeMD="6">
+                                    <RadzenFormField Text="Currency Separator" Variant="Variant.Text">
+                                        <RadzenTextBox @bind-Value="currencySeparator" />
+                                    </RadzenFormField>
+                                </RadzenColumn>
+                            </RadzenRow>
+                        }
+                    </RadzenStack>
+                </RadzenFieldset>
+            </RadzenStack>
+        </RadzenColumn>
+        <RadzenColumn Size="12" SizeMD="6">
+            <RadzenStack>
+                @if (isFileLoaded && csvFileContent != null)
+                {
+                    <RadzenFieldset Text="Configure File to Import">
+                        <RadzenStack Gap="1rem">
+                            <RadzenRow AlignItems="AlignItems.Center">
+                                <RadzenColumn Size="6" SizeMD="6">
+                                    <RadzenFormField Text="Account" Variant="Variant.Text">
+                                        <RadzenDropDown AllowClear="true" Name="Account"
+                                                        TValue="AccountMasterData" Class="w-99"
+                                                        FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                                        AllowFiltering="true" TextProperty="Name" Data=@accounts @bind-Value="selectedAccount" />
+                                        <RadzenRequiredValidator Component="Account" Text="Account is required" Style="position: absolute" />
+                                    </RadzenFormField>
+                                </RadzenColumn>
+
+                                <RadzenColumn Size="6" SizeMD="6">
+                                    <RadzenFormField Text="Transaction Date" Variant="Variant.Text">
+                                        <RadzenDropDown Data=@csvColumnsName @bind-Value="transactionDateColumn" />
+                                    </RadzenFormField>
+                                </RadzenColumn>
+                            </RadzenRow>
+                            <RadzenRow AlignItems="AlignItems.Center">
+                                <RadzenColumn Size="6" SizeMD="6">
+                                    <RadzenFormField Text="Amount" Variant="Variant.Text">
+                                        <RadzenDropDown Data=@csvColumnsName @bind-Value="transactionAmountColumn" />
+                                    </RadzenFormField>
+                                </RadzenColumn>
+
+                                <RadzenColumn Size="6" SizeMD="6">
+                                    <RadzenFormField Text="Description" Variant="Variant.Text">
+                                        <RadzenDropDown Data=@csvColumnsName @bind-Value="transactionDescriptionColumn" Name="CsvDescription" />
+                                    </RadzenFormField>
+                                </RadzenColumn>
+                            </RadzenRow>
+                            <RadzenRow AlignItems="AlignItems.Center">
+                                <RadzenText Visible="isCsvOptionsWithError" Style="color:red" TextStyle="TextStyle.Subtitle1">@csvOptionValidator</RadzenText>
+                            </RadzenRow>
+                            <RadzenRow AlignItems="AlignItems.Center">
+                                <RadzenColumn Size="6" SizeMD="6">
+                                    <RadzenButton Icon="clear" ButtonStyle="ButtonStyle.Light" Click="Cancel">Cancel</RadzenButton>
+                                </RadzenColumn>
+
+                                <RadzenColumn Size="6" SizeMD="6">
+                                    <RadzenButton ButtonStyle="ButtonStyle.Info" Icon="drag_indicator" Click="ConvertCsvIntoImport">Convert to Transaction</RadzenButton>
+                                </RadzenColumn>
+                            </RadzenRow>
+                        </RadzenStack>
+                    </RadzenFieldset>
+                }
+            </RadzenStack>
+        </RadzenColumn>
+    </RadzenRow>
+
+    @if (csvFileContent != null && csvModelList == null)
+    {
+
+        <RadzenDataGrid AllowFiltering="true" AllowColumnResize="true" AllowAlternatingRows="true" @ref="csvGrid"
+                        FilterMode="FilterMode.Advanced" AllowSorting="true" PageSize="15" AllowPaging="true"
+                        PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true" ColumnWidth="250px"
+                        Data="@csvFileContent" TItem="string[]" LogicalFilterOperator="LogicalFilterOperator.Or"
+                        EditMode="DataGridEditMode.Single" Sort="@Reset" Page="@Reset" Filter="@Reset" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive">
+            @*          RowUpdate="@OnUpdateRow" *@
+
+            <Columns>
+
+                @for (int i = 0; i < csvColumnsNumber; i++)
+                {
+                    int columnIndex = i;
+
+                    <RadzenDataGridColumn TItem="string[]" Title="@columnIndex.ToString()" Sortable="false" Filterable="false" Width="50px">
+                        <Template Context="data">
+                            @(data[columnIndex])
+                        </Template>
+                        <EditTemplate Context="data">
+                            <RadzenTextBox @bind-Value="data[columnIndex]" Style="width:100%; display: block" />
+                        </EditTemplate>
+                    </RadzenDataGridColumn>
+                }
+            </Columns>
+        </RadzenDataGrid>
+
+    }
+
+    @if (csvModelList != null)
+    {
+        <RadzenRow Size="12" SizeMD="12" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.Normal" Style="width: 100%;">
+
+            <RadzenColumn Size="2" SizeMD="2">
+                <RadzenFormField Variant="Variant.Outlined" Text="Field" Style="width: 100%;">
+                    <RadzenDropDown Data=@searchColumns @bind-Value="selectedSearchColumn" />
+                </RadzenFormField>
+            </RadzenColumn>
+            <RadzenColumn Size="2" SizeMD="2">
+                <RadzenFormField Variant="Variant.Outlined" Text="Operator" Style="width: 100%;">
+                    <RadzenDropDown Data=@operators @bind-Value="_operator" />
+                </RadzenFormField>
+            </RadzenColumn>
+            <RadzenColumn Size="5" SizeMD="5">
+                <RadzenFormField Variant="Variant.Outlined" Text="Text" Style="width: 100%;">
+                    <RadzenTextBox @bind-Value="_searchText" Style="width: 100%;" />
+                </RadzenFormField>
+            </RadzenColumn>
+            <RadzenColumn Size="1" SizeMD="1">
+                <RadzenButton Click="RemoveItems" Icon="delete" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Medium" />
+            </RadzenColumn>
+            <RadzenColumn Size="2" SizeMD="2">
+
+                <RadzenButton Click="UploadCsvToApi" Icon="file_upload" ButtonStyle="ButtonStyle.Secondary" IsBusy=@busy Text="Load" Size="ButtonSize.Medium" />
+            </RadzenColumn>
+
+        </RadzenRow>
+        <br />
+        <RadzenDataGrid AllowFiltering="true" AllowColumnResize="true" AllowAlternatingRows="true" @ref="csvModelGrid"
+                        FilterMode="FilterMode.Advanced" AllowSorting="true" PageSize="15" AllowPaging="true"
+                        PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true" ColumnWidth="250px"
+                        Data="@csvModelList" TItem="Transaction" LogicalFilterOperator="LogicalFilterOperator.Or"
+                        EditMode="DataGridEditMode.Single"
+                        Sort="@Reset" Page="@Reset" Filter="@Reset" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive">
+
+            <Columns>
+
+                <RadzenDataGridColumn TItem="Transaction" Property="TxnDate" Title="Data" Frozen="true" Width="50px">
+
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="Transaction" Property="TxnAmount" Title="Amount" Frozen="true" Width="50px">
+
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="Transaction" Property="Description" Title="Description" Frozen="true" Width="50px">
+
+                </RadzenDataGridColumn>
+
+
+
+
+            </Columns>
+        </RadzenDataGrid>
+    }
+
+}
+else
+{
+    <NotAuthorizePage></NotAuthorizePage>
+}
+
+
+@code {
+    [Inject]
+    public IBankAccountService _accountService { get; set; }
+    [Inject]
+    public IAccessServices _accessService { get; set; }
+    [Inject]
+    public ITransactionService _service { get; set; }
+    @inject NavigationManager NavManager
+    @inject NotificationService NotificationService
+
+    RadzenDataGrid<string[]>? csvGrid;
+    RadzenDataGrid<Transaction>? csvModelGrid;
+    MemoryStream ms;
+    string size = string.Empty;
+    string fileName = string.Empty;
+    string contentType = string.Empty;
+    bool isFileLoaded = false;
+    string separator = $";";
+    string currencySeparator = $",";
+    string transactionDateColumn = string.Empty;
+    string transactionAmountColumn = string.Empty;
+    string transactionDescriptionColumn = string.Empty;
+    string transactionAccountIdColumn = string.Empty;
+    protected IList<AccountMasterData>? accounts;
+    IList<string>? csvColumnsName;
+    AccountMasterData? selectedAccount;
+    int csvColumnsNumber = 0;
+    IList<string[]>? csvFileContent { get; set; } = new List<string[]>();
+
+    IList<string>? searchColumns;
+    IList<string>? operators;
+    string? selectedSearchColumn;
+    string? _operator;
+    string? _searchText;
+    bool busy = false;
+    bool isCsvOptionsWithError = false;
+    string csvOptionValidator = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (_accessService.IsAuthorized)
+        {
+            accounts = await _accountService.GetActiveAccountList();
+        }
+        SearchOptions();
+
+    }
+
+    private async void UploadCsvToApi()
+    {
+        busy = true;
+        var result = await _service.UploadCsv(csvModelList);
+        busy = false;
+        StateHasChanged();
+        NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Info,
+                Summary = "Items loaded",
+                Detail = result,
+                Duration = 4000
+
+            });
+        Console.WriteLine(result);
+    }
+
+    private void Cancel()
+    {
+        csvModelList = null;
+        transactionAmountColumn = string.Empty;
+        transactionDateColumn = string.Empty;
+        transactionDescriptionColumn = string.Empty;
+        selectedAccount = null;
+
+    }
+
+    private void RemoveItems()
+    {
+
+        IList<Transaction> itemsToRemove = new List<Transaction>();
+
+        switch (selectedSearchColumn)
+        {
+            case "DESCRIPTION":
+
+                switch (_operator)
+                {
+                    case "CONTAINS":
+                        foreach (var item in csvModelList)
+                        {
+                            if (item.Description.IndexOf(_searchText, StringComparison.OrdinalIgnoreCase) >= 0)
+                            {
+                                itemsToRemove.Add(item);
+                            }
+                        }
+                        break;
+                    case "NOT CONTAINS":
+                        foreach (var item in csvModelList)
+                        {
+                            if (item.Description.IndexOf(_searchText, StringComparison.OrdinalIgnoreCase) < 0)
+                            {
+                                itemsToRemove.Add(item);
+                            }
+                        }
+                        break;
+                    case "EQUALS":
+                        foreach (var item in csvModelList)
+                        {
+                            if (item.Description == _searchText)
+                            {
+                                itemsToRemove.Add(item);
+                            }
+                        }
+                        break;
+                    case "NOT EQUALS":
+                        foreach (var item in csvModelList)
+                        {
+                            if (item.Description != _searchText)
+                            {
+                                itemsToRemove.Add(item);
+                            }
+                        }
+                        break;
+                    default:
+                        break;
+                }
+
+                break;
+
+            //TODO
+            case "DATA":
+                switch (_operator)
+                {
+                    case "CONTAINS":
+                        break;
+                    case "NOT CONTAINS":
+                        break;
+                    case "EQUALS":
+                        break;
+                    case "NOT EQUALS":
+                        break;
+                    default:
+                        break;
+                }
+                break;
+            case "AMOUNT":
+                switch (_operator)
+                {
+                    case "CONTAINS":
+                        break;
+                    case "NOT CONTAINS":
+                        break;
+                    case "EQUALS":
+                        break;
+                    case "NOT EQUALS":
+                        break;
+                    default:
+                        break;
+                }
+                break;
+            default:
+                break;
+        }
+
+        foreach (var item in itemsToRemove)
+        {
+            csvModelList.Remove(item);
+        }
+
+        csvModelGrid.Reload();
+
+        NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Info,
+                Summary = "Items removed",
+                Detail = $"Removed {itemsToRemove.Count()} items",
+                Duration = 4000
+
+            });
+    }
+
+    private void SearchOptions()
+    {
+        searchColumns = new List<string>();
+        searchColumns.Add("DATA");
+        searchColumns.Add("AMOUNT");
+        searchColumns.Add("DESCRIPTION");
+
+        selectedSearchColumn = "DESCRIPTION";
+
+        operators = new List<string>();
+        operators.Add("CONTAINS");
+        operators.Add("NOT CONTAINS");
+        operators.Add("EQUALS");
+        operators.Add("NOT EQUALS");
+
+        _operator = "CONTAINS";
+    }
+
+    public async Task OnInputFileChange(InputFileChangeEventArgs e)
+    {
+        var singleFile = e.File;
+
+        //set file details
+        size = FileSizeFormatted(singleFile.Size);
+        fileName = singleFile.Name;
+        contentType = singleFile.ContentType;
+
+
+        Regex regex = new Regex(".+\\.csv", RegexOptions.Compiled);
+        if (!regex.IsMatch(singleFile.Name))
+        {
+            //show error invalidad format file
+        }
+        else
+        {
+            var stream = singleFile.OpenReadStream();
+            var csv = new List<string[]>();
+            ms = new MemoryStream();
+            await stream.CopyToAsync(ms);
+            stream.Close();
+
+            var outputFileString = System.Text.Encoding.UTF8.GetString(ms.ToArray());
+
+            //CSV columns header in dropDown
+            await CsvLoadAndSplit(ms);
+
+
+        }
+
+        isFileLoaded = true;
+    }
+
+    private async Task CsvLoadAndSplit(MemoryStream ms)
+    {
+
+        ms.Seek(0, SeekOrigin.Begin);
+
+        var reader = new System.IO.StreamReader(ms);
+        string line;
+
+        csvFileContent = new List<string[]>();
+
+        while ((line = await reader.ReadLineAsync()) != null)
+        {
+            var splittedLine = line.Split(separator, StringSplitOptions.RemoveEmptyEntries);
+
+            try
+            {
+                csvFileContent.Add(splittedLine);
+                csvColumnsNumber = splittedLine.Count();
+
+                CsvColumnsNameLoad(csvColumnsNumber);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error: {ex.Message}");
+
+            }
+        }
+    }
+
+    private async void RefreshCsv()
+    {
+        await CsvLoadAndSplit(ms);
+
+    }
+
+    private async Task CsvColumnsNameLoad(int csvColumnsNumber)
+    {
+        csvColumnsName = new List<string>();
+
+        for (int i = 0; i < csvColumnsNumber; i++)
+        {
+            csvColumnsName.Add(i.ToString());
+        }
+    }
+
+    private string FileSizeFormatted(double len)
+    {
+        string[] sizes = { "B", "KB", "MB", "GB", "TB" };
+
+        int order = 0;
+        while (len >= 1024 && order < sizes.Length - 1)
+        {
+            order++;
+            len = len / 1024;
+        }
+
+        // Adjust the format string to your preferences. For example "{0:0.#}{1}" would
+        // show a single decimal place, and no space.
+        string result = String.Format("{0:0.##} {1}", len, sizes[order]);
+        return result;
+    }
+
+    IList<Transaction>? csvModelList;
+
+    private bool CheckCsvOptions()
+    {
+        if (selectedAccount == null)
+        {
+            isCsvOptionsWithError = true;
+            csvOptionValidator = "Select an account";
+            return false;
+        }
+
+        if (String.IsNullOrEmpty(transactionDateColumn))
+        {
+            isCsvOptionsWithError = true;
+            csvOptionValidator = "Select the date column";
+            return false;
+        }
+
+        if (String.IsNullOrEmpty(transactionAmountColumn))
+        {
+            isCsvOptionsWithError = true;
+            csvOptionValidator = "Select the amount column";
+            return false;
+        }
+
+        if (String.IsNullOrEmpty(transactionDescriptionColumn))
+        {
+            isCsvOptionsWithError = true;
+            csvOptionValidator = "Select the description column";
+            return false;
+        }
+
+        csvOptionValidator = string.Empty;
+        isCsvOptionsWithError = false;
+        return true;
+    }
+
+    private void ConvertCsvIntoImport()
+    {
+        if (CheckCsvOptions())
+        {
+            csvModelList = new List<Transaction>();
+
+            var dataIndex = Convert.ToInt32(transactionDateColumn);
+            var amountIndex = Convert.ToInt32(transactionAmountColumn);
+            var descriptionIndex = Convert.ToInt32(transactionDescriptionColumn);
+
+            int totalItems = csvFileContent.Count();
+            int converted = 0;
+            int notConverted = 0;
+
+            foreach (var item in csvFileContent)
+            {
+                try
+                {
+                    var dateTrx = Convert.ToDateTime(item.GetValue(dataIndex));
+                    var amount = ConvertToDouble(item.GetValue(amountIndex).ToString());
+                    var desc = item.GetValue(descriptionIndex).ToString();
+
+                    csvModelList.Add(new Transaction
+                        {
+                            Account = selectedAccount,
+                            TxnDate = dateTrx,
+                            TxnAmount = amount,
+                            Description = desc
+                        });
+                    converted++;
+
+                }
+                catch (Exception ex)
+                {
+                    notConverted++;
+                    Console.WriteLine(ex.InnerException);
+                }
+
+            }
+
+            NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Info,
+                    Summary = "Csv File Converted",
+                    Detail = $"Converted {converted}/{totalItems} items",
+                    Duration = 4000
+
+                });
+        }
+
+
+
+    }
+
+    public double ConvertToDouble(string input)
+    {
+
+        var pointCulture = new CultureInfo("en")
+            {
+                NumberFormat = { NumberDecimalSeparator = currencySeparator }
+            };
+
+        input = input.Trim();
+
+        if (input == "0")
+        {
+            return 0;
+        }
+
+        if (currencySeparator == "," && input.Contains("."))
+        {
+            input = input.Replace(".", "");
+        }
+
+        if (currencySeparator == "." && input.Contains(","))
+        {
+            input = input.Replace(",", "");
+        }
+
+        return Convert.ToDouble(input, pointCulture);
+
+
+        throw new Exception("Invalid input!");
+    }
+
+
+
+    //here
+
+    async Task EditRow(string[] item)
+    {
+        //transactionToUpdate = item;
+
+        await csvGrid.EditRow(item);
+    }
+
+    async void OnUpdateRow(string[] item)
+    {
+
+    }
+
+
+    async Task SaveRow(string[] item)
+    {
+        //await transactionGrid.UpdateRow(item);
+    }
+
+    async void CancelEdit(string[] item)
+    {
+
+
+    }
+
+    void Reset()
+    {
+
+    }
+
+
+
+    async Task DeleteRow(string[] item)
+    {
+
+    }
+}

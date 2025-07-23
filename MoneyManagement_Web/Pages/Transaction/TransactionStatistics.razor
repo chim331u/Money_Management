@@ -1,0 +1,257 @@
+﻿@page "/transactionstatistics"
+
+<MM_WEB.Shared.Components.BreadCrumb path="transactionstatistics"></MM_WEB.Shared.Components.BreadCrumb>
+
+@if (_accessService.IsAuthorized)
+{
+    @if (transactions != null)
+    {
+        <RadzenMenu>
+            <RadzenStack Gap="2rem" Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Center">
+                <RadzenStack Gap="1rem" Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.Start">
+                    <RadzenText>Gruop by:</RadzenText>
+                    <RadzenSelectBar @bind-Value=@groupType TValue="int" Multiple="false" Change="@testChange">
+                        <Items>
+                            <RadzenSelectBarItem Text="Single" Value="1" />
+                            <RadzenSelectBarItem Text="Month" Value="2" />
+                            <RadzenSelectBarItem Text="Year" Value="3" />
+                        </Items>
+                    </RadzenSelectBar>
+
+                </RadzenStack>
+
+                <RadzenStack Gap="1rem" Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.Start">
+                    <RadzenText>Starting year:</RadzenText>
+                    <RadzenDropDown AllowClear="false"
+                                    TValue="string" Class="w-99" Placeholder="Starting year"
+                                    FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                    AllowFiltering="true" Value="@startingYear"
+                                    Data=@years Change=@(args => dataChange(args)) />
+                </RadzenStack>
+            </RadzenStack>
+        </RadzenMenu>
+        <br />
+        <RadzenStack Gap="1rem" Style="position: relative">
+
+            <RadzenRow>
+                <RadzenColumn Size="12" SizeMD="6" SizeLG="3">
+                    <div class="rz-p-12 rz-text-align-start">
+                        <RadzenCheckBoxList @bind-Value=@values AllowSelectAll="true" SelectAllText="Select all items" TValue="string"
+                                            Orientation="Orientation.Vertical" Change="@OnChange">
+                            <Items>
+                                @foreach (var item in areas)
+                                {
+                                    <RadzenCheckBoxListItem Text="@item" Value="item" />
+                                }
+                            </Items>
+                        </RadzenCheckBoxList>
+                    </div>
+                </RadzenColumn>
+
+                <RadzenColumn Size="12" SizeMD="6" SizeLG="9">
+                    <RadzenRow>
+                        <RadzenCard class="w-100 mb-6" Style="display: flex; align-items: center; gap: 0.5rem">
+                            <RadzenCheckBox @bind-Value="@trend" Name="trend"></RadzenCheckBox>
+                            <RadzenLabel Text="Trend" For="trend" Style="margin-right: 1rem;" class="rz-color-danger-dark" />
+                            <RadzenCheckBox @bind-Value="@median" Name="median"></RadzenCheckBox>
+                            <RadzenLabel Text="Median" For="median" Style="margin-right: 1rem;" class="rz-color-success-dark" />
+                            <RadzenCheckBox @bind-Value="@showDataLabels" Name="dataLabels"></RadzenCheckBox>
+                            <RadzenLabel Text="Show Data Labels" For="dataLabels" />
+                        </RadzenCard>
+
+                        <div Class="w-100 mb-6">
+                            @if (transactionsChart != null)
+                            {
+                                <RadzenChart>
+
+                                    @foreach (var item in transactionsChart)
+                                    {
+                                        <RadzenLineSeries Smooth="true" Data="@item" CategoryProperty="TxnDate" Title="@item.FirstOrDefault().Area"
+                                                          LineType="LineType.Solid" ValueProperty="TxnAmount">
+                                            <RadzenMarkers MarkerType="MarkerType.Circle" />
+                                            <RadzenSeriesDataLabels Visible="false" />
+                                            <RadzenSeriesTrendLine Visible="@trend" Stroke="var(--rz-danger-dark)" LineType="LineType.Dashed" />
+                                            <RadzenSeriesMedianLine Visible="@median" Stroke="var(--rz-success-dark)" LineType="LineType.Dotted" />
+                                            <RadzenSeriesDataLabels Visible="@showDataLabels" />
+                                            @* <RadzenSeriesAnnotation Visible="true" TItem="BalanceLineChart" Data="@balances[0]" OffsetY="-16" Text="Current" /> *@
+                                        </RadzenLineSeries>
+                                        <RadzenValueAxis Visible="true" Formatter="@_utilityService.FormatAsEUR" />
+                                        <RadzenCategoryAxis Visible="true" Formatter="@_utilityService.FormatAsDate" />
+                                        <RadzenColumnOptions Margin="10" />
+                                        <RadzenLegend Visible="false" />
+                                    }
+
+                                </RadzenChart>
+                            }
+                        </div>
+                    </RadzenRow>
+                    <hr>
+                    <RadzenRow>
+                        @if (transactionsList != null)
+                        {
+                            <RadzenDataGrid AllowFiltering="true" AllowColumnResize="true" AllowAlternatingRows="true" @ref="transactionGrid"
+                                            FilterMode="FilterMode.Advanced" AllowSorting="true" PageSize="15" AllowPaging="true"
+                                            PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true" ColumnWidth="250px"
+                                            Data="@transactionsList" TItem="Transaction" Density="Density.Compact">
+                                <Columns>
+                                    <RadzenDataGridColumn TItem="Transaction" Property="Id" Filterable="false" Title="ID"
+                                                          Frozen="true" TextAlign="TextAlign.Center" Width="20px" />
+
+                                    <RadzenDataGridColumn TItem="Transaction" Property="Account.Name" Title="Account" Frozen="true" Width="40px">
+
+                                    </RadzenDataGridColumn>
+
+                                    <RadzenDataGridColumn TItem="Transaction" Property="TxnDate" Title="Trx Date" Width="30px" Frozen="true" FormatString="{0:dd/MM/yyyy}">
+                                    </RadzenDataGridColumn>
+
+                                    @*        Property="Description"*@
+                                    <RadzenDataGridColumn TItem="Transaction" Title="Description" Frozen="true" Width="90px">
+                                        <Template Context="data">
+                                            <p style="white-space:pre-wrap">@data.Description</p>
+                                        </Template>
+                                    </RadzenDataGridColumn>
+
+                                    <RadzenDataGridColumn TItem="Transaction" Title="Amount" Frozen="true" Width="40px">
+                                        <Template Context="data">
+                                            @(string.Concat(data.TxnAmount.ToString("#.##"), " ", data.Account.Currency.CurrencyCodeALF3))
+                                        </Template>
+                                    </RadzenDataGridColumn>
+
+                                    <RadzenDataGridColumn TItem="Transaction" Title="Area" Frozen="true" Width="40px" Property="Area">
+                                    </RadzenDataGridColumn>
+                                    @*  <RadzenDataGridColumn TItem="Transaction" Property="Note" Title="Note" Frozen="true">
+                        </RadzenDataGridColumn>*@
+
+
+                                </Columns>
+                            </RadzenDataGrid>
+                        }
+                    </RadzenRow>
+
+                </RadzenColumn>
+
+            </RadzenRow>
+
+        </RadzenStack>
+    }
+    else
+    {
+        <p><em>Loading ...</em></p>
+    }
+}
+else
+{
+    <NotAuthorizePage></NotAuthorizePage>
+}
+
+@code {
+
+    [Inject]
+    public IAccessServices _accessService { get; set; }
+    [Inject]
+    public ITransactionService _service { get; set; }
+    [Inject]
+    public IUtilityServices _utilityService { get; set; }
+
+    protected IList<Transaction>? transactions;
+    protected IList<List<Transaction>>? transactionsChart;
+    protected IList<string>? areas;
+    IEnumerable<string>? values;
+    private List<string>? years;
+    string startingYear = DateTime.Now.AddYears(-4).Year.ToString();
+    IEnumerable<string>? selectedAreaList;
+    bool showDataLabels = false;
+    bool trend = true;
+    bool median = false;
+    int groupType = 1;
+    RadzenDataGrid<Transaction>? transactionGrid;
+    protected IList<Transaction>? transactionsList;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (_accessService.IsAuthorized)
+        {
+            await RefreshData();
+
+        }
+    }
+
+    protected async Task RefreshData()
+    {
+        transactions = await _service.GetActiveTransactionList();
+        if (transactions != null)
+        {
+            areas = transactions.OrderBy(e => e.Area).Select(x => x.Area).Distinct().ToList();
+            years = transactions.Select(x => x.TxnDate.Year.ToString()).Distinct().ToList();
+        }
+
+        StateHasChanged();
+    }
+
+    void OnChange(IEnumerable<string> value)
+    {
+        selectedAreaList = value;
+        LoadDataChart();
+
+    }
+
+    protected async Task dataChange(object item)
+    {
+        startingYear = item.ToString();
+        LoadDataChart();
+
+    }
+
+    private void LoadDataChart()
+    {
+        transactionsChart = new List<List<Transaction>>();
+
+        if (selectedAreaList != null)
+        {
+            //select items in transactions where areas in value
+            transactionsList = transactions.Where(x => selectedAreaList.Contains(x.Area)).ToList();
+
+            foreach (var item in selectedAreaList)
+            {
+                var result = transactions.Where(x => x.Area == item && x.TxnDate >= new DateTime(Convert.ToInt32(startingYear), 1, 1)).ToList();
+
+                switch (groupType)
+                {
+                    case 2: //month
+                        var grouperByMonth = result.GroupBy(y => new { y.TxnDate.Year, y.TxnDate.Month, y.Area })
+                            .Select(t => new Transaction { TxnDate = new DateTime(t.Key.Year, t.Key.Month, 1), TxnAmount = t.Sum(c => c.TxnAmount), Area = t.Key.Area })
+                            .OrderByDescending(i => i.TxnDate).ToList();
+                        transactionsChart.Add(grouperByMonth);
+                        break;
+                    case 3: //year
+                        var grouperByYear = result.GroupBy(y => new { y.TxnDate.Year, y.Area })
+                            .Select(t => new Transaction { TxnDate = new DateTime(t.Key.Year, 12, 1), TxnAmount = t.Sum(c => c.TxnAmount), Area = t.Key.Area })
+                            .OrderByDescending(i => i.TxnDate).ToList();
+                        transactionsChart.Add(grouperByYear);
+                        break;
+                    default:
+                        transactionsChart.Add(result);
+                        break;
+                }
+
+
+
+            }
+
+            //show stats and trx list
+
+
+            Console.WriteLine($"Value changed to {string.Join(", ", selectedAreaList)}");
+        }
+        else
+        {
+            Console.WriteLine($"No Areas selected");
+        }
+    }
+
+    private void testChange()
+    {
+        LoadDataChart();
+        Console.WriteLine($"Selected group type: {groupType}");
+    }
+}

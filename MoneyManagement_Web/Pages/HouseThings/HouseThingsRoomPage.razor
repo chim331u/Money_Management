@@ -1,0 +1,293 @@
+﻿@page "/housethingsroompage"
+<MM_WEB.Shared.Components.BreadCrumb path="housethingsroompage"></MM_WEB.Shared.Components.BreadCrumb>
+@if (_accessService.IsAuthorized)
+{
+    @if (rooms == null)
+    {
+        <p><em>Loading ...</em></p>
+    }
+    else
+    {
+        <RadzenMenu>
+            <RadzenMenuItem Text="New" Icon="add" Click="@InsertRow" Disabled=@(roomToInsert != null || roomToUpdate != null)></RadzenMenuItem>
+        </RadzenMenu>
+        <br />
+        <RadzenDataGrid AllowFiltering="true" AllowColumnResize="true" AllowAlternatingRows="true" @ref="roomGrid"
+                        FilterMode="FilterMode.Advanced" AllowSorting="true" PageSize="15" AllowPaging="true"
+                        PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true" ColumnWidth="250px"
+                        Data="@rooms" TItem="HouseThingsRooms" LogicalFilterOperator="LogicalFilterOperator.Or"
+                        EditMode="DataGridEditMode.Single" RowUpdate="@OnUpdateRow" RowCreate="@OnCreateRow"
+                        Sort="@Reset" Page="@Reset" Filter="@Reset" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" Density="Density.Compact">
+            <Columns>
+                <RadzenDataGridColumn TItem="HouseThingsRooms" Property="Id" Filterable="false" Title="ID"
+                                      Frozen="true" Width="20px" TextAlign="TextAlign.Center" />
+
+                <RadzenDataGridColumn TItem="HouseThingsRooms" Property="Name" Title="Name" Frozen="true" Width="40px">
+                    <EditTemplate Context="data">
+                        <RadzenTextBox @bind-Value="data.Name" Style="width:100%; display: block" Name="Name" />
+                        <RadzenRequiredValidator Text="Name is required" Component="Name" Popup="false" />
+                    </EditTemplate>
+                </RadzenDataGridColumn>
+
+                <RadzenDataGridColumn TItem="HouseThingsRooms" Property="Description" Title="Description" Frozen="true" Width="60px">
+                    <EditTemplate Context="data">
+                        <RadzenTextBox @bind-Value="data.Description" Style="width:100%; display: block" Name="Description" />
+                    </EditTemplate>
+                </RadzenDataGridColumn>
+
+                <RadzenDataGridColumn TItem="HouseThingsRooms" Property="Icon" Title="Icon" Frozen="true" Width="20px" TextAlign="TextAlign.Center">
+                    <Template Context="room">
+                        <RadzenIcon Icon="@room.Icon"></RadzenIcon>
+                    </Template>
+                    <EditTemplate Context="room">
+                        <RadzenTextBox @bind-Value="room.Icon" Style="width:100%; display: block" Name="Icon" />
+                    </EditTemplate>
+                </RadzenDataGridColumn>
+
+                <RadzenDataGridColumn TItem="HouseThingsRooms" Property="Note" Title="Note" Frozen="true" Width="30px">
+                    <EditTemplate Context="data">
+                        <RadzenTextBox @bind-Value="data.Note" Style="width:100%; display: block" Name="Note" />
+                        @*<RadzenRequiredValidator Text="Note" Component="Note" Popup="false" />*@
+                    </EditTemplate>
+                </RadzenDataGridColumn>
+
+                <RadzenDataGridColumn TItem="HouseThingsRooms" Context="data" Filterable="false" Sortable="false"
+                                      TextAlign="TextAlign.Right" Width="10%">
+                    <Template Context="data">
+                        <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Small"
+                                      Click="@(args => EditRow(data))" @onclick:stopPropagation="true">
+                        </RadzenButton>
+                        <RadzenButton ButtonStyle="ButtonStyle.Light" Icon="delete" Variant="Variant.Flat" Shade="Shade.Lighter"
+                                      Size="ButtonSize.Small" class="my-1 ms-1" Click="@(args => DeleteRow(data))" @onclick:stopPropagation="true">
+                        </RadzenButton>
+                    </Template>
+                    <EditTemplate Context="data">
+                        <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Success" Variant="Variant.Flat"
+                                      Size="ButtonSize.Small" Click="@((args) => SaveRow(data))">
+                        </RadzenButton>
+                        <RadzenButton Icon="undo" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Small"
+                                      class="my-1 ms-1" Click="@((args) => CancelEdit(data))">
+                        </RadzenButton>
+                    </EditTemplate>
+                </RadzenDataGridColumn>
+
+
+            </Columns>
+        </RadzenDataGrid>
+    }
+}
+else
+{
+    <NotAuthorizePage></NotAuthorizePage>
+}
+
+
+@code {
+
+    [Inject]
+    public IAccessServices _accessService { get; set; }
+    [Inject]
+    public IHouseThingsService _service { get; set; }
+
+    @inject NavigationManager NavManager
+    @inject NotificationService NotificationService
+    @inject DialogService DialogService
+
+    protected IList<HouseThings>? houseThings;
+    protected IList<HouseThingsRooms>? rooms;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (_accessService.IsAuthorized)
+        {
+            await RefreshData();
+
+        }
+    }
+
+    protected async Task RefreshData()
+    {
+        rooms = await _service.GetActiveHouseThingsRoomsList();
+        StateHasChanged();
+
+    }
+
+    HouseThingsRooms? roomToUpdate;
+    HouseThingsRooms? roomToInsert;
+    RadzenDataGrid<HouseThingsRooms>? roomGrid;
+
+    async Task EditRow(HouseThingsRooms item)
+    {
+        roomToUpdate = item;
+
+        await roomGrid.EditRow(item);
+    }
+
+    async void OnUpdateRow(HouseThingsRooms item)
+    {
+        Reset();
+
+        var result = await _service.UpdateHouseThingsRooms(item);
+
+        if (result != null)
+        {
+            NotificationService.Notify(new NotificationMessage
+                    {
+                        Severity = NotificationSeverity.Info,
+                        Summary = "Room Update",
+                        Detail = $"Room {result.Name} updated",
+                        Duration = 4000
+
+                    });
+        }
+        else
+        {
+            NotificationService.Notify(new NotificationMessage
+                    {
+                        Severity = NotificationSeverity.Error,
+                        Summary = "Error Update",
+                        Detail = $"Room NOT updated",
+                        Duration = 4000
+
+                    });
+        }
+    }
+
+    async void OnCreateRow(HouseThingsRooms item)
+    {
+        var result = await _service.AddHouseThingsRooms(item);
+
+        roomToInsert = null;
+
+        if (result != null)
+        {
+            NotificationService.Notify(new NotificationMessage
+                    {
+                        Severity = NotificationSeverity.Info,
+                        Summary = "New Room Created",
+                        Detail = $"Room {result.Name} created",
+                        Duration = 4000
+
+                    });
+        }
+        else
+        {
+            NotificationService.Notify(new NotificationMessage
+                    {
+                        Severity = NotificationSeverity.Error,
+                        Summary = "Error",
+                        Detail = "Error adding New Room",
+                        Duration = 4000
+
+                    });
+        }
+
+        await RefreshData();
+    }
+
+    async Task SaveRow(HouseThingsRooms item)
+    {
+        await roomGrid.UpdateRow(item);
+    }
+
+    async void CancelEdit(HouseThingsRooms item)
+    {
+        Reset();
+
+        roomGrid.CancelEditRow(item);
+
+        var orginalItem = await _service.GetHouseThingsRooms(item.Id);
+
+        StateHasChanged();
+
+    }
+
+    protected async Task InsertRow()
+    {
+        roomToInsert = new HouseThingsRooms();
+
+        await roomGrid.InsertRow(roomToInsert);
+
+    }
+
+    async Task DeleteRow(HouseThingsRooms item)
+    {
+
+        //confirm delete
+        var dialogResult = await DialogService.OpenAsync("Confirm Delete", ds =>
+    @<RadzenStack Gap="1.5rem">
+        <p>Do you want delete the room <b>@item.Name</b>?</p>
+        <RadzenStack Gap="2rem" Class="rz-p-4 rz-p-md-12">
+            <RadzenRow AlignItems="AlignItems.Center" Class="rz-mt-4">
+                <RadzenButton Text="No" Click="() => ds.Close(false)" ButtonStyle="ButtonStyle.Light" />
+                <RadzenButton Click="() => ds.Close(true)" Text="Yes" ButtonStyle="ButtonStyle.Secondary"></RadzenButton>
+            </RadzenRow>
+        </RadzenStack>
+    </RadzenStack>
+    );
+
+        if (dialogResult != null && dialogResult)
+        {
+
+            if (item == roomToInsert)
+            {
+                roomToInsert = null;
+            }
+
+            if (item == roomToUpdate)
+            {
+                roomToUpdate = null;
+            }
+
+            var result = await _service.DeleteHouseThingsRooms(item);
+
+
+            if (result != null)
+            {
+                NotificationService.Notify(new NotificationMessage
+                    {
+                        Severity = NotificationSeverity.Info,
+                        Summary = "Room Deleted",
+                        Detail = $"Room {result.Name} deleted",
+                        Duration = 4000
+
+                    });
+            }
+            else
+            {
+                NotificationService.Notify(new NotificationMessage
+                    {
+                        Severity = NotificationSeverity.Error,
+                        Summary = "Error",
+                        Detail = "Error deleting Room",
+                        Duration = 4000
+
+                    });
+            }
+            await roomGrid.Reload();
+            await RefreshData();
+        }
+    }
+
+    void Reset()
+    {
+        if (roomToInsert != null)
+        {
+            roomToInsert = null;
+        }
+
+        roomToUpdate = null;
+    }
+
+    async Task RowRoomRender(HouseThingsRooms item)
+    {
+        // args.Expandable = args..Data.ShipCountry == "France" || args.Data.ShipCountry == "Brazil";
+        houseThings = await _service.GetActiveHouseThingsListByRoom(item.Id);
+    }
+
+    #region Tooltips
+
+
+    #endregion
+}

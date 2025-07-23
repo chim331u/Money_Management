@@ -1,0 +1,304 @@
+﻿@page "/balancepage"
+<MM_WEB.Shared.Components.BreadCrumb path="balancepage"></MM_WEB.Shared.Components.BreadCrumb>
+@if (_accessService.IsAuthorized)
+{
+    @if (balances == null)
+    {
+        <p><em>Loading ...</em></p>
+    }
+    else
+    {
+        <RadzenMenu>
+            <RadzenMenuItem Text="New" Icon="add" Click="@InsertRow" Disabled=@(balanceToInsert != null || balanceToUpdate != null)></RadzenMenuItem>
+        </RadzenMenu>
+        <br />
+        <RadzenDataGrid AllowFiltering="true" AllowColumnResize="true" AllowAlternatingRows="true" @ref="balanceGrid"
+                        FilterMode="FilterMode.Advanced" AllowSorting="true" PageSize="10" AllowPaging="true"
+                        PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true" ColumnWidth="250px"
+                        Data="@balances" TItem="Balance" LogicalFilterOperator="LogicalFilterOperator.Or"
+                        EditMode="DataGridEditMode.Single" RowUpdate="@OnUpdateRow" RowCreate="@OnCreateRow"
+                        Sort="@Reset" Page="@Reset" Filter="@Reset" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" Density="Density.Compact">
+            <Columns>
+                <RadzenDataGridColumn TItem="Balance" Property="Id" Filterable="false" Title="ID"
+                                      Frozen="true" Width="20px" TextAlign="TextAlign.Center" />
+
+                <RadzenDataGridColumn TItem="Balance" Property="DateBalance" Title="Date" Frozen="true" Width="40px" FormatString="{0:MM/yyyy}">
+                    <EditTemplate Context="balance">
+                        <RadzenDatePicker @bind-Value=@balance.DateBalance ShowTime="false" HourFormat="12" DateFormat="dd/MM/yyyy"
+                                          Style="width:100%; display: block" Name="DateBalance">
+                            @*                            <FooterTemplate>
+                    <RadzenButton Click=@(args => balance.DateBalance = DateTime.Now) Text="Today" class="my-3 w-100" />
+                    </FooterTemplate>*@
+                        </RadzenDatePicker>
+                        <RadzenRequiredValidator Text="Date is required" Component="DateBalance" Popup="false" />
+                    </EditTemplate>
+                </RadzenDataGridColumn>
+
+                <RadzenDataGridColumn TItem="Balance" Property="Account.Name" Title="Account" Frozen="true" Width="60px">
+                    <EditTemplate Context="balance">
+                        <RadzenDropDown AllowClear="true" Name="Account.Name"
+                                        TValue="AccountMasterData" Class="w-99" Placeholder="Select an Account"
+                                        FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                        AllowFiltering="true" TextProperty="Name"
+                                        Data=@accounts @bind-Value="balance.Account" />
+                        <RadzenRequiredValidator Text="Account is required" Component="Account.Name" Popup="false" />
+                    </EditTemplate>
+                </RadzenDataGridColumn>
+
+                <RadzenDataGridColumn TItem="Balance" Property="BalanceValue" Title="Balance" Frozen="true" Width="60px">
+                    <Template Context="data">
+                        @data.Account.Currency.CurrencyCodeALF3 @String.Format(new System.Globalization.CultureInfo("it-IT"), "{0:N2}", data.BalanceValue)
+                    </Template>
+                    <EditTemplate Context="balance">
+                        <RadzenNumeric @bind-Value="balance.BalanceValue" Style="width:100%; display: block" Name="BalanceValue" />
+                    </EditTemplate>
+                </RadzenDataGridColumn>
+
+                <RadzenDataGridColumn TItem="Balance" Property="Note" Title="Note" Frozen="true" Width="30px">
+                    <EditTemplate Context="balance">
+                        <RadzenTextBox @bind-Value="balance.Note" Style="width:100%; display: block" Name="Note" />
+                        @*<RadzenRequiredValidator Text="Note" Component="Note" Popup="false" />*@
+                    </EditTemplate>
+                </RadzenDataGridColumn>
+
+                <RadzenDataGridColumn TItem="Balance" Context="balance" Filterable="false" Sortable="false"
+                                      TextAlign="TextAlign.Right" Width="10%">
+                    <Template Context="balance">
+                        <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Small"
+                                      Click="@(args => EditRow(balance))" @onclick:stopPropagation="true">
+                        </RadzenButton>
+                        <RadzenButton ButtonStyle="ButtonStyle.Light" Icon="delete" Variant="Variant.Flat" Shade="Shade.Lighter"
+                                      Size="ButtonSize.Small" class="my-1 ms-1" Click="@(args => DeleteRow(balance))" @onclick:stopPropagation="true">
+                        </RadzenButton>
+                    </Template>
+                    <EditTemplate Context="balance">
+                        <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Success" Variant="Variant.Flat"
+                                      Size="ButtonSize.Small" Click="@((args) => SaveRow(balance))">
+                        </RadzenButton>
+                        <RadzenButton Icon="undo" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Small"
+                                      class="my-1 ms-1" Click="@((args) => CancelEdit(balance))">
+                        </RadzenButton>
+                    </EditTemplate>
+                </RadzenDataGridColumn>
+
+            </Columns>
+
+        </RadzenDataGrid>
+
+    }
+}
+else
+{
+    <NotAuthorizePage></NotAuthorizePage>
+}
+
+@code {
+    [Inject]
+    public IBalanceService _service { get; set; }
+    [Inject]
+    public IBankAccountService _accountService { get; set; }
+    [Inject]
+    public IAccessServices _accessService { get; set; }    
+    [Inject]
+    public IUtilityServices _utilityService { get; set; }
+
+    protected IList<Balance>? balances;
+    protected IList<AccountMasterData>? accounts;
+
+    protected override async Task OnInitializedAsync()
+    {
+
+        if (_accessService.IsAuthorized)
+        {
+            await RefreshData();
+            var _accounts = await _accountService.GetActiveAccountList();
+            accounts = _accounts.OrderBy(x => x.Name).ToList();
+        }
+    }
+
+    protected async Task RefreshData()
+    {
+        balances = await _service.GetActiveBalanceList();
+        StateHasChanged();
+
+    }
+
+    Balance? balanceToUpdate;
+    Balance? balanceToInsert;
+    RadzenDataGrid<Balance>? balanceGrid;
+
+    async Task EditRow(Balance item)
+    {
+        balanceToUpdate = item;
+
+        await balanceGrid.EditRow(item);
+    }
+
+    async void OnUpdateRow(Balance item)
+    {
+        if (item == balanceToInsert)
+        {
+            balanceToInsert = null;
+        }
+
+        balanceToUpdate = null;
+
+        var result = await _service.UpdateBalance(item);
+
+        if (result != null)
+        {
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Success,
+                Summary = "Balance Update",
+                Detail = $"Balance updated",
+                Duration = 4000
+
+            });
+        }
+        else
+        {
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Error Update",
+                Detail = $"Balance NOT updated",
+                Duration = 4000
+
+            });
+        }
+    }
+
+    async void OnCreateRow(Balance item)
+    {
+        var result = await _service.AddBalance(item);
+
+        if (result != null)
+        {
+            balanceToInsert = null;
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Success,
+                Summary = "New Balance Created",
+                Detail = $"Balance created",
+                Duration = 4000
+
+            });
+            await RefreshData();
+        }
+        else
+        {
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Error",
+                Detail = "Error adding New Balance",
+                Duration = 4000
+
+            });
+        }
+
+
+    }
+
+    async Task SaveRow(Balance item)
+    {
+        await balanceGrid.UpdateRow(item);
+    }
+
+    async void CancelEdit(Balance item)
+    {
+        if (balanceToInsert != null)
+        {
+            balanceToInsert = null;
+        }
+
+        balanceToUpdate = null;
+
+        balanceGrid.CancelEditRow(item);
+
+        //item = await _service.GetBalance(item.Id);
+        balanceGrid.Reload();
+        StateHasChanged();
+
+    }
+
+    protected async Task InsertRow()
+    {
+        balanceToInsert = new Balance();
+        balanceToInsert.DateBalance = DateTime.Now;
+
+        await balanceGrid.InsertRow(balanceToInsert);
+
+    }
+
+    async Task DeleteRow(Balance item)
+    {
+        var dialogResult = await DialogService.OpenAsync("Confirm Delete", ds =>
+        @<RadzenStack Gap="1.5rem">
+            <p>Do you want delete the balance <b>@item.Id</b>?</p>
+            <RadzenStack Gap="2rem" Class="rz-p-4 rz-p-md-12">
+                <RadzenRow AlignItems="AlignItems.Center" Class="rz-mt-4">
+                    <RadzenButton Text="No" Click="() => ds.Close(false)" ButtonStyle="ButtonStyle.Light" />
+                    <RadzenButton Click="() => ds.Close(true)" Text="Yes" ButtonStyle="ButtonStyle.Secondary"></RadzenButton>
+                </RadzenRow>
+            </RadzenStack>
+        </RadzenStack>
+    );
+
+        if (dialogResult != null && dialogResult)
+        {
+
+            if (item == balanceToInsert)
+            {
+                balanceToInsert = null;
+            }
+
+            if (item == balanceToUpdate)
+            {
+                balanceToUpdate = null;
+            }
+
+            var result = await _service.DeleteBalance(item);
+
+
+            if (result != null)
+            {
+                NotificationService.Notify(new NotificationMessage
+                    {
+                        Severity = NotificationSeverity.Success,
+                        Summary = "Balance Deleted",
+                        Detail = $"Balance deleted",
+                        Duration = 4000
+
+                    });
+            }
+            else
+            {
+                NotificationService.Notify(new NotificationMessage
+                    {
+                        Severity = NotificationSeverity.Error,
+                        Summary = "Error",
+                        Detail = "Error deleting Balance",
+                        Duration = 4000
+
+                    });
+            }
+            await balanceGrid.Reload();
+            await RefreshData();
+        }
+    }
+
+    void Reset()
+    {
+        balanceToInsert = null;
+        balanceToUpdate = null;
+    }
+
+
+    #region Tooltips
+
+
+    #endregion
+
+}

@@ -1,0 +1,210 @@
+﻿@page "/pdfupload"
+@using System.Text.RegularExpressions;
+@using System.Text.Json;
+@using System.Net.Http.Headers;
+
+
+
+<InputFile OnChange="@OnInputFileChange" class="btn btn-primary" multiple />
+
+@if (files.Count > 0)
+{
+    <RadzenCard>
+@*         <div class="card-body"> *@
+            <ul>
+                @foreach (var file in files)
+                {
+                    <li>
+                        File: @file.Name
+                        <br>
+                        @if (FileUpload(uploadResults, file.Name, out var result))
+                        {
+                            <span>
+                                Stored File Name: @result.StoredFileName
+                            </span>
+                        }
+                        else
+                        {
+                            <span>
+                                There was an error uploading the file
+                                (Error: @result.ErrorCode).
+                            </span>
+                        }
+                    </li>
+                }
+            </ul>
+        @* </div> *@
+
+    </RadzenCard>
+}
+@code {
+
+    [Inject]
+    public ITestServices _testService { get; set; }
+
+    private List<File> files = new List<File>();
+    private List<UploadResult> uploadResults = new();
+    private int maxAllowedFiles = 3;
+    private bool shouldRender;
+    protected override bool ShouldRender() => shouldRender;
+
+    private async Task OnInputFileChange(InputFileChangeEventArgs e)
+    {
+        shouldRender = false;
+        long maxFileSize = 1024 * 150;
+        var upload = false;
+
+        //using
+        var content = new MultipartFormDataContent();
+
+        foreach (var file in e.GetMultipleFiles(maxAllowedFiles))
+        {
+            if (uploadResults.SingleOrDefault(
+                f => f.FileName == file.Name) is null)
+            {
+                try
+                {
+                    files.Add(new() { Name = file.Name });
+
+                    var fileContent =
+                        new StreamContent(file.OpenReadStream(maxFileSize));
+
+                    fileContent.Headers.ContentType =
+                        new MediaTypeHeaderValue(file.ContentType);
+
+                    content.Add(
+                        content: fileContent,
+                        name: "\"files\"",
+                        fileName: file.Name);
+
+                    upload = true;
+                }
+                catch (Exception ex)
+                {
+                    // Logger.LogInformation(
+                    //     "{FileName} not uploaded (Err: 6): {Message}",
+                    //     file.Name, ex.Message);
+
+                    uploadResults.Add(
+                        new()
+                            {
+                                FileName = file.Name,
+                                ErrorCode = 6,
+                                Uploaded = false
+                            });
+                }
+            }
+        }
+
+        if (upload)
+        {
+            var response = await _testService.UploadFile(content);
+
+            // var response = await Http.PostAsync("/Filesave", content);
+
+            // var newUploadResults = await response.Content
+            //     .ReadFromJsonAsync<IList<UploadResult>>();
+
+            // if (newUploadResults is not null)
+            // {
+            //     uploadResults = uploadResults.Concat(newUploadResults).ToList();
+            // }
+        }
+
+        shouldRender = true;
+    }
+    
+    private static bool FileUpload(IList<UploadResult> uploadResults, string? fileName, out UploadResult result)
+    {
+        result = uploadResults.SingleOrDefault(f => f.FileName == fileName) ?? new();
+
+        if (!result.Uploaded)
+        {
+            // logger.LogInformation("{FileName} not uploaded (Err: 5)", fileName);
+            result.ErrorCode = 5;
+        }
+
+        return result.Uploaded;
+    }
+
+    private class File
+    {
+        public string? Name { get; set; }
+    }
+
+    // public async Task OnInputFileChange(InputFileChangeEventArgs e)
+    // {
+    //     var content = new MultipartFormDataContent();
+
+    //     var file = e.File;
+    //     // var files = e.GetMultipleFiles();
+
+    //     // foreach (var file in files)
+    //     // {
+    //     size = FileSizeFormatted(file.Size);
+    //     fileName = file.Name;
+    //     contentType = file.ContentType;
+
+    //     try
+    //     {
+    //         using (var ms = file.OpenReadStream())
+    //         {
+    //             content = new MultipartFormDataContent();
+    //             // content.Headers.ContentDisposition = new ContentDispositionHeaderValue("form-data");
+    //             // var contentType = content.Headers.ContentType.Parameters.First();
+
+    //             // contentType.Value = contentType.Value.Replace("\"", String.Empty);
+
+    //             // content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(contentType);
+    //             // content.Add(new StreamContent(ms, Convert.ToInt32(size)), "test", fileName);
+
+    //             var streamContent = new StreamContent(File.Open(fileName, FileMode.Open));
+
+    //             content.Add(content: content, fileName: fileName, name: "\"files\"");
+
+    //             var _fileToupload = new FileUpload { file = content };
+    //             var result = await _testService.UploadFile(_fileToupload);
+    //         }
+
+    //     }
+    //     catch (Exception ex)
+    //     {
+
+    //     }
+
+    //         // try
+    //     // {
+    //     //     // var path = Path.Combine("c:/Temp/MMdata", "upload", "test.pdf");
+
+    //     //     var path = "C:\\Temp\\MMdata\\upload\\test.pdf";
+    //     //     await using var fs = new FileStream(path, FileMode.Create);
+
+    //     //     await content.FirstOrDefault().CopyToAsync(fs);
+
+    //     //     isFileLoaded = true;
+    //     // }
+    //     // catch (Exception ex)
+    //     // {
+
+    //     // }
+
+
+    // }
+
+    private string FileSizeFormatted(double len)
+    {
+        string[] sizes = { "B", "KB", "MB", "GB", "TB" };
+
+        int order = 0;
+        while (len >= 1024 && order < sizes.Length - 1)
+        {
+            order++;
+            len = len / 1024;
+        }
+
+        // Adjust the format string to your preferences. For example "{0:0.#}{1}" would
+        // show a single decimal place, and no space.
+        string result = String.Format("{0:0.##} {1}", len, sizes[order]);
+        return result;
+    }
+}

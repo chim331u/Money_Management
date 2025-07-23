@@ -1,0 +1,385 @@
+﻿@page "/salary"
+<MM_WEB.Shared.Components.BreadCrumb path="salary"></MM_WEB.Shared.Components.BreadCrumb>
+@if (_accessService.IsAuthorized)
+{
+    @if (salaries == null)
+    {
+        <p><em>Loading ...</em></p>
+    }
+    else
+    {
+        <RadzenMenu>
+            <RadzenMenuItem Text="New" Icon="add" Click="@InsertRow" Disabled=@(salaryToInsert != null || salaryToUpdate != null)></RadzenMenuItem>
+        </RadzenMenu>
+        <br />
+        <RadzenDataGrid AllowFiltering="true" AllowColumnResize="true" AllowAlternatingRows="true" @ref="salaryGrid"
+                        FilterMode="FilterMode.Advanced" AllowSorting="true" PageSize="15" AllowPaging="true"
+                        PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true" ColumnWidth="250px"
+                        Data="@salaries" TItem="Salary" LogicalFilterOperator="LogicalFilterOperator.Or"
+                        EditMode="DataGridEditMode.Single" RowUpdate="@OnUpdateRow" RowCreate="@OnCreateRow"
+                        Sort="@Reset" Page="@Reset" Filter="@Reset" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" Density="Density.Compact">
+            <Columns>
+                <RadzenDataGridColumn TItem="Salary" Property="Id" Filterable="false" Title="ID"
+                                      Frozen="true" Width="20px" TextAlign="TextAlign.Center" />
+
+                <RadzenDataGridColumn TItem="Salary" Property="User.Name" Title="User" Frozen="true" Width="60px">
+                    <EditTemplate Context="salary">
+                        <RadzenDropDown AllowClear="true" Name="User.Name"
+                                        TValue="ServiceUser" Class="w-99" Placeholder="Select a User"
+                                        FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                        AllowFiltering="true"
+                                        Data=@users @bind-Value="salary.User"
+                                        TextProperty="Name" />
+                        <RadzenRequiredValidator Text="User is required" Component="User.Name" Popup="false" />
+                    </EditTemplate>
+                </RadzenDataGridColumn>
+
+                <RadzenDataGridColumn TItem="Salary" Property="SalaryDate" Title="Salary Date" Frozen="true" Width="50px" FormatString="{0:yyyy_MM}">
+                    <EditTemplate Context="salary">
+                        <RadzenDatePicker @bind-Value="salary.SalaryDate" ShowTime="false" HourFormat="12" DateFormat="dd/MM/yyyy" Style="width:100%; display: block" Name="SalaryDate" />
+                        <RadzenRequiredValidator Text="Date is required" Component="SalaryDate" Popup="false" />
+                    </EditTemplate>
+                </RadzenDataGridColumn>
+
+                <RadzenDataGridColumn TItem="Salary" Property="ReferYear" Title="Year" Frozen="true" Width="30px">
+                    <EditTemplate Context="salary">
+                        <RadzenTextBox @bind-Value="salary.ReferYear" Style="width:100%; display: block" Name="ReferYear" />
+                        <RadzenRequiredValidator Text="Year is required" Component="ReferYear" Popup="false" />
+                    </EditTemplate>
+                </RadzenDataGridColumn>
+
+                <RadzenDataGridColumn TItem="Salary" Property="ReferMonth" Title="Month" Frozen="true" Width="30px">
+                    <Template Context="data">
+                        @data.ReferMonth
+                    </Template>
+                    <EditTemplate Context="salary">
+                        <RadzenTextBox @bind-Value="salary.ReferMonth" Style="width:100%; display: block" Name="ReferMonth" />
+                        <RadzenRequiredValidator Text="Month is required" Component="ReferMonth" Popup="false" />
+                    </EditTemplate>
+                </RadzenDataGridColumn>
+
+                <RadzenDataGridColumn TItem="Salary" Title="Curr (Rate)" Frozen="true" Width="40px">
+                    <Template Context="data">
+                        @if (@data.Currency.CurrencyCodeALF3 != "EUR")
+                        {
+                            <RadzenText TextStyle="TextStyle.Body2" class=" mb-0">@data.Currency.CurrencyCodeALF3 (@data.ExcengeRate)</RadzenText>
+                        }
+                        else
+                        {
+                            <RadzenText TextStyle="TextStyle.Body2" class=" mb-0">@data.Currency.CurrencyCodeALF3</RadzenText>
+                        }
+                    </Template>
+                    <EditTemplate Context="salary">
+                        <RadzenDropDown AllowClear="true" Name="User.Name"
+                                        TValue="Currency" Class="w-99" Placeholder="Select a Currency"
+                                        FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                        AllowFiltering="true"
+                                        Data=@currencies @bind-Value="salary.Currency"
+                                        TextProperty="CurrencyCodeALF3" />
+                        <RadzenRequiredValidator Text="User is required" Component="User.Name" Popup="false" />
+                    </EditTemplate>
+                </RadzenDataGridColumn>
+
+                <RadzenDataGridColumn TItem="Salary" Title="Amount (Euro)" Frozen="true" Width="60px">
+                    <Template Context="data">
+                        @if (data.Currency.CurrencyCodeALF3 != "EUR")
+                        {
+                            <RadzenText TextStyle="TextStyle.Body2" class="mb-0">@String.Format(new System.Globalization.CultureInfo("it-IT"), "{0:N2}", data.SalaryValue) (@String.Format(new System.Globalization.CultureInfo("it-IT"), "{0:C2}", data.SalaryValueEur))</RadzenText>
+
+                        }
+                        else
+                        {
+                            <RadzenText TextStyle="TextStyle.Body2" class="mb-0">@String.Format(new System.Globalization.CultureInfo("it-IT"), "{0:N2}", data.SalaryValue)</RadzenText>
+
+                        }
+
+                    </Template>
+                    <EditTemplate Context="salary">
+                        <RadzenNumeric @bind-Value="salary.SalaryValue" Style="width:100%; display: block" Name="SalaryValue" />
+                        <RadzenRequiredValidator Text="Salary is required" Component="SalaryValue" Popup="false" />
+                    </EditTemplate>
+                </RadzenDataGridColumn>
+
+                <RadzenDataGridColumn TItem="Salary" Property="FileName" Title="File" Frozen="true" Width="50px">
+@*                     <Template Context="data">
+                        <input type="file" @ref="inputReference" @onchange="async () => await OpenFileAsync()" />
+                    </Template> *@
+                    <Template Context="data">
+
+                        <RadzenFileInput @bind-FileName=@data.FileName TValue="string" class="w-100" Change=@(args => OnChange(args, "FileInput")) />
+
+                        @* @bind-FileSize=@fileSize  Change=@(args => OnChange(args, "FileInput")) Error=@(args => OnError(args, "FileInput")) *@
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <RadzenDataGridColumn TItem="Salary" Property="Note" Title="Note" Frozen="true" Width="50px">
+                    <EditTemplate Context="salary">
+                        <RadzenTextBox @bind-Value="salary.Note" Style="width:100%; display: block" Name="Note" />
+
+                    </EditTemplate>
+                </RadzenDataGridColumn>
+
+                <RadzenDataGridColumn TItem="Salary" Context="salary" Filterable="false" Sortable="false"
+                                      TextAlign="TextAlign.Right" Width="10%">
+                    <Template Context="salary">
+                        <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Small"
+                                      Click="@(args => EditRow(salary))" @onclick:stopPropagation="true">
+                        </RadzenButton>
+                        <RadzenButton ButtonStyle="ButtonStyle.Light" Icon="delete" Variant="Variant.Flat" Shade="Shade.Lighter"
+                                      Size="ButtonSize.Small" class="my-1 ms-1" Click="@(args => DeleteRow(salary))" @onclick:stopPropagation="true">
+                        </RadzenButton>
+                    </Template>
+                    <EditTemplate Context="salary">
+                        <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Success" Variant="Variant.Flat"
+                                      Size="ButtonSize.Small" Click="@((args) => SaveRow(salary))">
+                        </RadzenButton>
+                        <RadzenButton Icon="undo" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Small"
+                                      class="my-1 ms-1" Click="@((args) => CancelEdit(salary))">
+                        </RadzenButton>
+                    </EditTemplate>
+                </RadzenDataGridColumn>
+
+            </Columns>
+        </RadzenDataGrid>
+
+    }
+}
+else
+{
+    <NotAuthorizePage></NotAuthorizePage>
+}
+
+
+
+
+
+@code {
+    [Inject]
+    public ISalaryService _service { get; set; }
+    [Inject]
+    public IAccessServices _accessService { get; set; }
+    [Inject]
+    public IAnchillaryService _anchillaryService { get; set; }
+
+    protected IList<Salary>? salaries;
+    IList<ServiceUser>? users;
+    IList<Currency>? currencies;
+
+    Salary? salaryToUpdate;
+    Salary? salaryToInsert;
+    RadzenDataGrid<Salary>? salaryGrid;
+
+    ElementReference inputReference;
+    async Task OpenFileAsync()
+    {
+        // var file = (await fileReader.CreateReference(inputReference).EnumerateFilesAsync()).FirstOrDefault();
+        // if (file == null)
+        //     return;
+
+        // var fileInfo = await file.ReadFileInfoAsync();
+
+        // fileName = fileInfo.Name;
+        // size = $"{fileInfo.Size}b";
+        // type = fileInfo.Type;
+
+        // using (var ms = await file.CreateMemoryStreamAsync((int)fileInfo.Size))
+        // {
+        //     fileStream = new MemoryStream(ms.ToArray());
+        // }
+    }
+    void OnChange(string value, string name)
+    {
+        Console.WriteLine($"{name} value changed");
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (_accessService.IsAuthorized)
+        {
+            await RefreshData();
+            users = await _anchillaryService.GetActiveServiceUserList();
+            currencies = await _anchillaryService.GetActiveCurrencyList();
+        }
+    }
+
+    protected async Task RefreshData()
+    {
+        salaries = await _service.GetActiveSalaryList();
+        StateHasChanged();
+
+    }
+
+
+
+    async Task EditRow(Salary item)
+    {
+        salaryToUpdate = item;
+
+        await salaryGrid.EditRow(item);
+    }
+
+    async void OnUpdateRow(Salary item)
+    {
+        Reset();
+
+        var result = await _service.UpdateSalary(item);
+
+        if (result != null)
+        {
+            NotificationService.Notify(new NotificationMessage
+                    {
+                        Severity = NotificationSeverity.Success,
+                        Summary = "Salary Update",
+                        Detail = $"Salary updated",
+                        Duration = 4000
+
+                    });
+        }
+        else
+        {
+            NotificationService.Notify(new NotificationMessage
+                    {
+                        Severity = NotificationSeverity.Error,
+                        Summary = "Error Update",
+                        Detail = $"Salary NOT updated",
+                        Duration = 4000
+
+                    });
+        }
+    }
+
+    async void OnCreateRow(Salary item)
+    {
+        var result = await _service.AddSalary(item);
+
+        salaryToInsert = null;
+
+        if (result != null)
+        {
+            NotificationService.Notify(new NotificationMessage
+                    {
+                        Severity = NotificationSeverity.Success,
+                        Summary = "New Salary Created",
+                        Detail = $"Salary created",
+                        Duration = 4000
+
+                    });
+            await RefreshData();
+        }
+        else
+        {
+            NotificationService.Notify(new NotificationMessage
+                    {
+                        Severity = NotificationSeverity.Error,
+                        Summary = "Error",
+                        Detail = "Error adding New Salary",
+                        Duration = 4000
+
+                    });
+        }
+
+
+    }
+
+    async Task SaveRow(Salary item)
+    {
+        await salaryGrid.UpdateRow(item);
+    }
+
+    async void CancelEdit(Salary item)
+    {
+        Reset();
+
+        salaryGrid.CancelEditRow(item);
+
+        var orginalItem = await _service.GetSalary(item.Id);
+
+        StateHasChanged();
+
+    }
+
+    protected async Task InsertRow()
+    {
+        salaryToInsert = new Salary();
+        salaryToInsert.SalaryDate = DateTime.Now;
+        salaryToInsert.ReferYear = DateTime.Now.Year.ToString();
+        salaryToInsert.ReferMonth = DateTime.Now.Month.ToString();
+
+        await salaryGrid.InsertRow(salaryToInsert);
+
+    }
+
+    async Task DeleteRow(Salary item)
+    {
+        var dialogResult = await DialogService.OpenAsync("Confirm Delete", ds =>
+    @<RadzenStack Gap="1.5rem">
+        <p>Do you want delete salary <b>@item.Id</b>?</p>
+        <RadzenStack Gap="2rem" Class="rz-p-4 rz-p-md-12">
+            <RadzenRow AlignItems="AlignItems.Center" Class="rz-mt-4">
+                <RadzenButton Text="No" Click="() => ds.Close(false)" ButtonStyle="ButtonStyle.Light" />
+                <RadzenButton Click="() => ds.Close(true)" Text="Yes" ButtonStyle="ButtonStyle.Secondary"></RadzenButton>
+            </RadzenRow>
+        </RadzenStack>
+    </RadzenStack>
+    );
+
+        if (dialogResult != null && dialogResult)
+        {
+
+            if (item == salaryToInsert)
+            {
+                salaryToInsert = null;
+            }
+
+            if (item == salaryToUpdate)
+            {
+                salaryToUpdate = null;
+            }
+
+            var result = await _service.DeleteSalary(item);
+
+
+            if (result != null)
+            {
+                NotificationService.Notify(new NotificationMessage
+                    {
+                        Severity = NotificationSeverity.Success,
+                        Summary = "Salary Deleted",
+                        Detail = $"Salary deleted",
+                        Duration = 4000
+
+                    });
+            }
+            else
+            {
+                NotificationService.Notify(new NotificationMessage
+                    {
+                        Severity = NotificationSeverity.Error,
+                        Summary = "Error",
+                        Detail = "Error deleting Salary",
+                        Duration = 4000
+
+                    });
+            }
+            await salaryGrid.Reload();
+            await RefreshData();
+        }
+    }
+
+    void Reset()
+    {
+        if (salaryToInsert != null)
+        {
+            salaryToInsert = null;
+        }
+
+        salaryToUpdate = null;
+    }
+
+
+    #region Tooltips
+
+
+    #endregion
+
+}

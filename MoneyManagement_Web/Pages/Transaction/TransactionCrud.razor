@@ -1,0 +1,453 @@
+﻿@page "/transactionpage"
+<MM_WEB.Shared.Components.BreadCrumb path="transactionpage"></MM_WEB.Shared.Components.BreadCrumb>
+@if (_accessService.IsAuthorized)
+{
+    @if (transactions == null)
+    {
+        <p><em>Loading ...</em></p>
+    }
+    else
+    {
+        <RadzenMenu>
+            <RadzenMenuItem Text="New" Icon="add" Click="@InsertRow" Disabled=@(transactionToInsert != null || transactionToUpdate != null)></RadzenMenuItem>
+            <RadzenButton Variant="Variant.Text" ButtonStyle="ButtonStyle.Light" Text="Categorize" Icon="category" Click="@Categorize" IsBusy=@isCategorizing BusyText="Wait ..."></RadzenButton>
+            <RadzenButton Variant="Variant.Text" ButtonStyle="ButtonStyle.Light" Text="Train" Icon="model_training" Click="@TrainModel" IsBusy=@isModelTraining BusyText="Wait ..."></RadzenButton>
+
+        </RadzenMenu>
+        <br />
+        <RadzenDataGrid AllowFiltering="true" AllowColumnResize="true" AllowAlternatingRows="true" @ref="transactionGrid"
+                        FilterMode="FilterMode.Advanced" AllowSorting="true" PageSize="15" AllowPaging="true"
+                        PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true" ColumnWidth="250px"
+                        Data="@transactions" TItem="Transaction" LogicalFilterOperator="LogicalFilterOperator.Or"
+                        EditMode="DataGridEditMode.Single" RowUpdate="@OnUpdateRow" RowCreate="@OnCreateRow"
+                        Sort="@Reset" Page="@Reset" Filter="@Reset" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" Density="Density.Compact">
+            <Columns>
+                <RadzenDataGridColumn TItem="Transaction" Property="Id" Filterable="false" Title="ID"
+                                      Frozen="true" Width="20px" TextAlign="TextAlign.Center" />
+
+                <RadzenDataGridColumn TItem="Transaction" Property="Account.Name" Title="Account" Frozen="true" Width="50px">
+                    <EditTemplate Context="data">
+                        <RadzenDropDown AllowClear="true" Name="Account.Name"
+                                        TValue="AccountMasterData" Class="w-99" Placeholder="Select an Account"
+                                        FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                        AllowFiltering="true" TextProperty="Name"
+                                        Data=@accountsList @bind-Value="data.Account" />
+                        <RadzenRequiredValidator Text="Account is required" Component="Account.Name" Popup="false" />
+                    </EditTemplate>
+                </RadzenDataGridColumn>
+
+                <RadzenDataGridColumn TItem="Transaction" Property="TxnDate" Title="Trx Date" Frozen="true" Width="50px" FormatString="{0:dd/MM/yyyy}">
+                    <EditTemplate Context="transaction">
+                        <RadzenDatePicker @bind-Value="transaction.TxnDate" ShowTime="false" HourFormat="12"
+                                          DateFormat="dd/MM/yyyy" Style="width:100%; display: block" Name="TxnDate" />
+                        <RadzenRequiredValidator Text="Date is required" Component="TxnDate" Popup="false" />
+                    </EditTemplate>
+                </RadzenDataGridColumn>
+
+                @*        Property="Description"*@
+                <RadzenDataGridColumn TItem="Transaction" Title="Description" Frozen="true" Width="90px">
+                    <Template Context="data">
+                        <p style="white-space:pre-wrap">@data.Description</p>
+                    </Template>
+                    <EditTemplate Context="transaction">
+                        <RadzenTextBox @bind-Value="transaction.Description" Style="width:100%; display: block" Placeholder="Insert a description" Name="Description" />
+                        <RadzenRequiredValidator Text="Description is required" Component="Description" Popup="false" />
+                    </EditTemplate>
+                </RadzenDataGridColumn>
+
+                <RadzenDataGridColumn TItem="Transaction" Title="Amount" Frozen="true" Width="40px">
+                    <Template Context="data">
+                        @(string.Concat(data.TxnAmount.ToString("#.##"), " ", data.Account.Currency.CurrencyCodeALF3))
+                    </Template>
+                    <EditTemplate Context="transaction">
+                        <RadzenNumeric @bind-Value="transaction.TxnAmount" Style="width:100%; display: block" Name="TxnAmount" />
+                        <RadzenRequiredValidator Text="Amount is required" Component="TxnAmount" Popup="false" />
+                    </EditTemplate>
+                </RadzenDataGridColumn>
+
+                <RadzenDataGridColumn TItem="Transaction" Title="Area" Frozen="true" Width="60px">
+                    <Template Context="data">
+                        <RadzenBadge IsPill="true" Variant="Variant.Outlined" BadgeStyle="BadgeStyle.Secondary" Text="@data.Area" />
+                    </Template>
+                    <EditTemplate Context="transaction">
+                        @*<RadzenTextBox @bind-Value="transaction.Area" Style="width:100%; display: block" Name="Area" Placeholder="Select a Tag" />*@
+                        <RadzenAutoComplete @bind-Value=@transaction.Area Data=@areas
+                                            FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                            Name="Area" Style="width: 13rem" />
+
+                        <RadzenRequiredValidator Text="Area is required" Component="Area" Popup="false" />
+                    </EditTemplate>
+                </RadzenDataGridColumn>
+
+                <RadzenDataGridColumn TItem="Transaction" Property="IsCatConfirmed" Title="Confirm" Frozen="true" Width="40px">
+                    <Template Context="data">
+                        <RadzenSwitch @bind-Value=@data.IsCatConfirmed Change=@(args => OnConfirm(args, data))></RadzenSwitch>
+                    </Template>
+                    <EditTemplate Context="transaction">
+                        <RadzenSwitch @bind-Value=@transaction.IsCatConfirmed Change=@(args => OnConfirm(args, transaction))></RadzenSwitch>
+                    </EditTemplate>
+                </RadzenDataGridColumn>
+
+
+
+                <RadzenDataGridColumn TItem="Transaction" Property="Note" Title="Note" Frozen="true" Width="40px">
+                    <EditTemplate Context="transaction">
+                        <RadzenTextBox @bind-Value="transaction.Note" Style="width:100%; display: block" Name="Note" />
+
+                    </EditTemplate>
+                </RadzenDataGridColumn>
+
+                <RadzenDataGridColumn TItem="Transaction" Context="transaction" Filterable="false" Sortable="false"
+                                      TextAlign="TextAlign.Right" Width="10%">
+                    <Template Context="transaction">
+                        <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Small"
+                                      Click="@(args => EditRow(transaction))" @onclick:stopPropagation="true">
+                        </RadzenButton>
+                        <RadzenButton ButtonStyle="ButtonStyle.Light" Icon="delete" Variant="Variant.Flat" Shade="Shade.Lighter"
+                                      Size="ButtonSize.Small" class="my-1 ms-1" Click="@(args => DeleteRow(transaction))" @onclick:stopPropagation="true">
+                        </RadzenButton>
+                    </Template>
+                    <EditTemplate Context="transaction">
+                        <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Success" Variant="Variant.Flat"
+                                      Size="ButtonSize.Small" Click="@((args) => SaveRow(transaction))">
+                        </RadzenButton>
+                        <RadzenButton Icon="undo" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Small"
+                                      class="my-1 ms-1" Click="@((args) => CancelEdit(transaction))">
+                        </RadzenButton>
+                    </EditTemplate>
+                </RadzenDataGridColumn>
+
+            </Columns>
+        </RadzenDataGrid>
+
+    }
+}
+else
+{
+    <NotAuthorizePage></NotAuthorizePage>
+}
+
+
+
+
+
+@code {
+    [Inject]
+    public ITransactionService _service { get; set; }
+    [Inject]
+    public IAccessServices _accessService { get; set; }
+    [Inject]
+    public IAnchillaryService _anchillaryService { get; set; }
+    [Inject]
+    public IBankAccountService _accountService { get; set; }
+
+    protected IList<Transaction>? transactions;
+    protected IList<AccountMasterData>? accountsList;
+    protected IList<string>? areas;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (_accessService.IsAuthorized)
+        {
+            await RefreshData();
+            accountsList = await _accountService.GetActiveAccountList();
+            if (transactions != null)
+            {
+                areas = transactions.Select(x => x.Area).Distinct().ToList();
+            }
+
+
+        }
+    }
+
+    protected async Task RefreshData()
+    {
+        transactions = await _service.GetActiveTransactionList();
+
+        StateHasChanged();
+
+    }
+
+    Transaction? transactionToUpdate;
+    Transaction? transactionToInsert;
+    RadzenDataGrid<Transaction>? transactionGrid;
+
+    async Task EditRow(Transaction item)
+    {
+        transactionToUpdate = item;
+
+        await transactionGrid.EditRow(item);
+    }
+
+    async void OnUpdateRow(Transaction item)
+    {
+        Reset();
+
+        var result = await _service.UpdateTransaction(item);
+
+        if (result != null)
+        {
+
+            NotificationService.Notify(new NotificationMessage
+                    {
+                        Severity = NotificationSeverity.Success,
+                        Summary = "Transaction Update",
+                        Detail = $"Transaction updated",
+                        Duration = 4000
+
+                    });
+            //await RefreshData();
+        }
+        else
+        {
+            NotificationService.Notify(new NotificationMessage
+                    {
+                        Severity = NotificationSeverity.Error,
+                        Summary = "Error Update",
+                        Detail = $"Transaction NOT updated",
+                        Duration = 4000
+
+                    });
+        }
+    }
+
+    async void OnCreateRow(Transaction item)
+    {
+        var result = await _service.AddTransaction(item);
+
+        if (result != null)
+        {
+            transactionToInsert = null;
+
+            NotificationService.Notify(new NotificationMessage
+                    {
+                        Severity = NotificationSeverity.Success,
+                        Summary = "New Transaction Created",
+                        Detail = $"Transaction created",
+                        Duration = 4000
+
+                    });
+            await RefreshData();
+
+        }
+        else
+        {
+            NotificationService.Notify(new NotificationMessage
+                    {
+                        Severity = NotificationSeverity.Error,
+                        Summary = "Error",
+                        Detail = "Error adding New Transaction",
+                        Duration = 4000
+
+                    });
+        }
+
+
+    }
+
+    async Task SaveRow(Transaction item)
+    {
+        await transactionGrid.UpdateRow(item);
+    }
+
+    async void CancelEdit(Transaction item)
+    {
+        Reset();
+
+        transactionGrid.CancelEditRow(item);
+
+        var orginalItem = await _service.GetTransaction(item.Id);
+
+        StateHasChanged();
+
+    }
+
+    protected async Task InsertRow()
+    {
+        transactionToInsert = new Transaction();
+
+        transactionToInsert.TxnDate = DateTime.Now;
+
+        await transactionGrid.InsertRow(transactionToInsert);
+
+    }
+
+    async Task DeleteRow(Transaction item)
+    {
+        var dialogResult = await DialogService.OpenAsync("Confirm Delete", ds =>
+    @<RadzenStack Gap="1.5rem">
+        <p>Do you want delete the transaction <b>@item.Id</b>?</p>
+        <RadzenStack Gap="2rem" Class="rz-p-4 rz-p-md-12">
+            <RadzenRow AlignItems="AlignItems.Center" Class="rz-mt-4">
+                <RadzenButton Text="No" Click="() => ds.Close(false)" ButtonStyle="ButtonStyle.Light" />
+                <RadzenButton Click="() => ds.Close(true)" Text="Yes" ButtonStyle="ButtonStyle.Secondary"></RadzenButton>
+            </RadzenRow>
+        </RadzenStack>
+    </RadzenStack>
+    );
+
+        if (dialogResult != null && dialogResult)
+        {
+            if (item == transactionToInsert)
+            {
+                transactionToInsert = null;
+            }
+
+            if (item == transactionToUpdate)
+            {
+                transactionToUpdate = null;
+            }
+
+            var result = await _service.DeleteTransaction(item);
+
+
+            if (result != null)
+            {
+                NotificationService.Notify(new NotificationMessage
+                    {
+                        Severity = NotificationSeverity.Success,
+                        Summary = "Transaction Deleted",
+                        Detail = $"Transaction deleted",
+                        Duration = 4000
+
+                    });
+            }
+            else
+            {
+                NotificationService.Notify(new NotificationMessage
+                    {
+                        Severity = NotificationSeverity.Error,
+                        Summary = "Error",
+                        Detail = "Error deleting Transaction",
+                        Duration = 4000
+
+                    });
+            }
+            await transactionGrid.Reload();
+            await RefreshData();
+        }
+    }
+
+    void Reset()
+    {
+        if (transactionToInsert != null)
+        {
+            transactionToInsert = null;
+        }
+
+        transactionToUpdate = null;
+    }
+
+    protected async Task OnConfirm(bool value, Transaction item)
+    {
+        item.IsCatConfirmed = value;
+
+        var result = await _service.CategoryConfirmed(item);
+
+        if (result != null)
+        {
+
+            NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Success,
+                    Summary = "Transaction Update",
+                    Detail = $"Transaction updated",
+                    Duration = 4000
+
+                });
+
+        }
+        else
+        {
+            NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Error,
+                    Summary = "Error Update",
+                    Detail = $"Transaction NOT updated",
+                    Duration = 4000
+
+                });
+            item.IsCatConfirmed = !value;
+        }
+
+    }
+
+    #region ML
+    private bool isModelTraining = false;
+
+    protected async Task TrainModel()
+    {
+        isModelTraining = true;
+
+        var result = await _service.TrainModel();
+
+        if (result != null)
+        {
+            NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Success,
+                    Summary = "Model Train",
+                    Detail = $"{result}",
+                    Duration = 4000
+
+                });
+        }
+        else
+        {
+            NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Error,
+                    Summary = "Error",
+                    Detail = "Error training model",
+                    Duration = 4000
+
+                });
+        }
+
+        isModelTraining = false;
+
+    }
+
+    private bool isCategorizing = false;
+
+    protected async Task Categorize()
+    {
+        isCategorizing = true;
+
+        var result = await _service.CategorizeAllTransaction();
+
+        if (result != null)
+        {
+            NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Success,
+                    Summary = "Categorize Complete",
+                    Detail = $"{result}",
+                    Duration = 4000
+
+                });
+            await RefreshData();
+        }
+        else
+        {
+            NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Error,
+                    Summary = "Error",
+                    Detail = "Error Categorize transactions",
+                    Duration = 4000
+
+                });
+        }
+
+        isCategorizing = false;
+
+    }
+    #endregion
+
+    #region Tooltips
+
+
+    #endregion
+
+}

@@ -9,6 +9,11 @@
     <ItemGroup>
         <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="8.0.17"/>
         <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="8.0.17" PrivateAssets="all"/>
+        <PackageReference Include="Append.Blazor.Clipboard" Version="1.0.0" />
+        <PackageReference Include="Radzen.Blazor" Version="7.1.4" />
+        <PackageReference Include="Microsoft.AspNetCore.Http.Features" Version="5.0.17" />
+        <PackageReference Include="PdfPig" Version="0.1.10" />
+        <PackageReference Include="Tewr.Blazor.FileReader" Version="3.4.0.24340" />
     </ItemGroup>
 
 </Project>

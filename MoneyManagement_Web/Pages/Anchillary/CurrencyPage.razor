@@ -1,0 +1,285 @@
+﻿@page "/currency"
+
+
+
+<MM_WEB.Shared.Components.BreadCrumb path="currency"></MM_WEB.Shared.Components.BreadCrumb>
+@if (_accessService.IsAuthorized)
+{
+    @if (currencies == null)
+    {
+        <p><em>Loading ...</em></p>
+    }
+    else
+    {
+        <RadzenMenu>
+            <RadzenMenuItem Text="New" Icon="add" Click="@InsertRow" Disabled=@(CurrencyToInsert != null || CurrencyToUpdate != null)></RadzenMenuItem>
+        </RadzenMenu>
+        <br />
+
+        <RadzenDataGrid AllowFiltering="true" AllowColumnResize="true" AllowAlternatingRows="true" @ref="CurrencyGrid"
+                        FilterMode="FilterMode.Advanced" AllowSorting="true" PageSize="15" AllowPaging="true"
+                        PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true" ColumnWidth="250px"
+                        Data="@currencies" TItem="Currency" LogicalFilterOperator="LogicalFilterOperator.Or"
+                        EditMode="DataGridEditMode.Single" RowUpdate="@OnUpdateRow" RowCreate="@OnCreateRow"
+                        Sort="@Reset" Page="@Reset" Filter="@Reset" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                        Density="Density.Compact">
+            <Columns>
+                <RadzenDataGridColumn TItem="Currency" Property="Id" Filterable="false" Title="ID"
+                                      Frozen="true" Width="10px" TextAlign="TextAlign.Center" />
+
+                <RadzenDataGridColumn TItem="Currency" Property="Name" Title="Name" Frozen="true" Width="50px">
+                    <EditTemplate Context="Currency">
+                        <RadzenTextBox @bind-Value="Currency.Name" Style="width:100%; display: block" Name="Name" />
+                        <RadzenRequiredValidator Text="Name is required" Component="Name" Popup="false" />
+                    </EditTemplate>
+                </RadzenDataGridColumn>
+
+                <RadzenDataGridColumn TItem="Currency" Property="CurrencyCodeALF3" Title="Alpha Code" Frozen="true" Width="50px">
+                    <EditTemplate Context="Currency">
+                        <RadzenTextBox @bind-Value="Currency.CurrencyCodeALF3" Style="width:100%; display: block" Name="CurrencyCodeALF3" />
+                        <RadzenRequiredValidator Text="Code is required" Component="CurrencyCodeALF3" Popup="false" />
+                    </EditTemplate>
+                </RadzenDataGridColumn>
+
+                <RadzenDataGridColumn TItem="Currency" Property="CurrencyCodeNum3" Title="NUM Code" Frozen="true" Width="50px">
+                    <EditTemplate Context="Currency">
+                        <RadzenTextBox @bind-Value="Currency.CurrencyCodeNum3" Style="width:100%; display: block" Name="CurrencyCodeNum3" />
+                        <RadzenRequiredValidator Text="Code is required" Component="CurrencyCodeNum3" Popup="false" />
+                    </EditTemplate>
+                </RadzenDataGridColumn>
+
+                <RadzenDataGridColumn TItem="Currency" Context="Currency" Filterable="false" Sortable="false"
+                                      TextAlign="TextAlign.Right" Width="10%">
+                    <Template Context="Currency">
+                        <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Small"
+                                      Click="@(args => EditRow(Currency))" @onclick:stopPropagation="true">
+                        </RadzenButton>
+                        <RadzenButton ButtonStyle="ButtonStyle.Light" Icon="delete" Variant="Variant.Flat" Shade="Shade.Lighter"
+                                      Size="ButtonSize.Small" class="my-1 ms-1" Click="@(args => DeleteRow(Currency))" @onclick:stopPropagation="true">
+                        </RadzenButton>
+                    </Template>
+                    <EditTemplate Context="Currency">
+                        <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Success" Variant="Variant.Flat"
+                                      Size="ButtonSize.Small" Click="@((args) => SaveRow(Currency))">
+                        </RadzenButton>
+                        <RadzenButton Icon="undo" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Small"
+                                      class="my-1 ms-1" Click="@((args) => CancelEdit(Currency))">
+                        </RadzenButton>
+                    </EditTemplate>
+                </RadzenDataGridColumn>
+
+            </Columns>
+        </RadzenDataGrid>
+
+    }
+}
+else
+{
+    <NotAuthorizePage></NotAuthorizePage>
+}
+
+
+@code {
+    [Inject]
+    public IAnchillaryService _service { get; set; }
+    [Inject]
+    public IAccessServices _accessService { get; set; }
+    [Inject]
+    public IUtilityServices _utilityService { get; set; }
+
+    protected IList<Currency>? currencies;
+
+    protected override async Task OnInitializedAsync()
+    {
+
+        if (_accessService.IsAuthorized)
+        {
+            await RefreshData();
+        }
+
+    }
+
+    protected async Task RefreshData()
+    {
+        currencies = await _service.GetActiveCurrencyList();
+        StateHasChanged();
+
+    }
+
+    Currency? CurrencyToUpdate;
+    Currency? CurrencyToInsert;
+    RadzenDataGrid<Currency>? CurrencyGrid;
+
+    async Task EditRow(Currency item)
+    {
+        CurrencyToUpdate = item;
+
+        await CurrencyGrid.EditRow(item);
+    }
+
+    async void OnUpdateRow(Currency item)
+    {
+        if (item == CurrencyToInsert)
+        {
+            CurrencyToInsert = null;
+        }
+
+        CurrencyToUpdate = null;
+
+        var result = await _service.UpdateCurrency(item);
+
+        if (result != null)
+        {
+            NotificationService.Notify(new NotificationMessage
+                   {
+                       Severity = NotificationSeverity.Info,
+                       Summary = "Currency Update",
+                       Detail = $"Currency {result.Name} updated",
+                       Duration = 4000
+
+                   });
+        }
+        else
+        {
+            NotificationService.Notify(new NotificationMessage
+                   {
+                       Severity = NotificationSeverity.Error,
+                       Summary = "Error Update",
+                       Detail = $"Currency NOT updated",
+                       Duration = 4000
+
+                   });
+        }
+    }
+
+    async void OnCreateRow(Currency item)
+    {
+        var result = await _service.AddCurrency(item);
+
+        CurrencyToInsert = null;
+
+        if (result != null)
+        {
+            NotificationService.Notify(new NotificationMessage
+                   {
+                       Severity = NotificationSeverity.Info,
+                       Summary = "New Currency Created",
+                       Detail = $"Currency {result.Name} created",
+                       Duration = 4000
+
+                   });
+        }
+        else
+        {
+            NotificationService.Notify(new NotificationMessage
+                   {
+                       Severity = NotificationSeverity.Error,
+                       Summary = "Error",
+                       Detail = "Error adding New Currency",
+                       Duration = 4000
+
+                   });
+        }
+
+        await RefreshData();
+    }
+    async Task SaveRow(Currency item)
+    {
+        await CurrencyGrid.UpdateRow(item);
+    }
+
+    async void CancelEdit(Currency item)
+    {
+        if (CurrencyToInsert != null)
+        {
+            CurrencyToInsert = null;
+        }
+
+        CurrencyToUpdate = null;
+
+
+
+        CurrencyGrid.CancelEditRow(item);
+        item = await _service.GetCurrency(item.Id);
+        StateHasChanged();
+
+    }
+
+    protected async Task InsertRow()
+    {
+        CurrencyToInsert = new Currency();
+
+        await CurrencyGrid.InsertRow(CurrencyToInsert);
+
+    }
+
+    async Task DeleteRow(Currency item)
+    {
+        var dialogResult = await DialogService.OpenAsync("Confirm Delete", ds =>
+    @<RadzenStack Gap="1.5rem">
+        <p>Do you want delete the currency <b>@item.Name</b>?</p>
+        <RadzenStack Gap="2rem" Class="rz-p-4 rz-p-md-12">
+            <RadzenRow AlignItems="AlignItems.Center" Class="rz-mt-4">
+                <RadzenButton Text="No" Click="() => ds.Close(false)" ButtonStyle="ButtonStyle.Light" />
+                <RadzenButton Click="() => ds.Close(true)" Text="Yes" ButtonStyle="ButtonStyle.Secondary"></RadzenButton>
+            </RadzenRow>
+        </RadzenStack>
+    </RadzenStack>
+    );
+
+        if (dialogResult != null && dialogResult)
+        {
+
+            if (item == CurrencyToInsert)
+            {
+                CurrencyToInsert = null;
+            }
+
+            if (item == CurrencyToUpdate)
+            {
+                CurrencyToUpdate = null;
+            }
+
+            var result = await _service.DeleteCurrency(item);
+
+
+            if (result != null)
+            {
+                NotificationService.Notify(new NotificationMessage
+                    {
+                        Severity = NotificationSeverity.Info,
+                        Summary = "Currency Deleted",
+                        Detail = $"Currency {result.Name} deleted",
+                        Duration = 4000
+
+                    });
+            }
+            else
+            {
+                NotificationService.Notify(new NotificationMessage
+                    {
+                        Severity = NotificationSeverity.Error,
+                        Summary = "Error",
+                        Detail = "Error deleting Currency",
+                        Duration = 4000
+
+                    });
+            }
+            await CurrencyGrid.Reload();
+            await RefreshData();
+        }
+    }
+
+    void Reset()
+    {
+        CurrencyToInsert = null;
+        CurrencyToUpdate = null;
+    }
+
+
+    #region Tooltips
+
+
+    #endregion
+
+}

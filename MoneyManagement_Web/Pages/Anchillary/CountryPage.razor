@@ -1,0 +1,279 @@
+﻿@page "/country"
+<MM_WEB.Shared.Components.BreadCrumb path="country"></MM_WEB.Shared.Components.BreadCrumb>
+@if (_accessService.IsAuthorized)
+{
+    @if (countries == null)
+    {
+        <p><em>Loading ...</em></p>
+    }
+    else
+    {
+        <RadzenMenu>
+            <RadzenMenuItem Text="New" Icon="add" Click="@InsertRow" Disabled=@(countryToInsert != null || countryToUpdate != null)></RadzenMenuItem>
+        </RadzenMenu>
+        <br />
+        <RadzenDataGrid AllowFiltering="true" AllowColumnResize="true" AllowAlternatingRows="true" @ref="countryGrid"
+                        FilterMode="FilterMode.Advanced" AllowSorting="true" PageSize="15" AllowPaging="true"
+                        PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true" ColumnWidth="250px"
+                        Data="@countries" TItem="Country" LogicalFilterOperator="LogicalFilterOperator.Or"
+                        EditMode="DataGridEditMode.Single" RowUpdate="@OnUpdateRow" RowCreate="@OnCreateRow"
+                        Sort="@Reset" Page="@Reset" Filter="@Reset" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" Density="Density.Compact">
+            <Columns>
+                <RadzenDataGridColumn TItem="Country" Property="Id" Filterable="false" Title="ID"
+                                      Frozen="true" Width="10px" TextAlign="TextAlign.Center" />
+
+                <RadzenDataGridColumn TItem="Country" Property="Name" Title="Name" Frozen="true" Width="50px">
+                    <EditTemplate Context="country">
+                        <RadzenTextBox @bind-Value="country.Name" Style="width:100%; display: block" Name="Name" />
+                        <RadzenRequiredValidator Text="Name is required" Component="Name" Popup="false" />
+                    </EditTemplate>
+                </RadzenDataGridColumn>
+
+                <RadzenDataGridColumn TItem="Country" Property="CountryCodeALF3" Title="Alpha Code" Frozen="true" Width="50px">
+                    <EditTemplate Context="country">
+                        <RadzenTextBox @bind-Value="country.CountryCodeALF3" Style="width:100%; display: block" Name="CountryCodeALF3" />
+                        <RadzenRequiredValidator Text="Code is required" Component="CountryCodeALF3" Popup="false" />
+                    </EditTemplate>
+                </RadzenDataGridColumn>
+
+                <RadzenDataGridColumn TItem="Country" Property="CountryCodeNum3" Title="NUM Code" Frozen="true" Width="50px">
+                    <EditTemplate Context="country">
+                        <RadzenTextBox @bind-Value="country.CountryCodeNum3" Style="width:100%; display: block" Name="CountryCodeNum3" />
+                        <RadzenRequiredValidator Text="Code is required" Component="CountryCodeNum3" Popup="false" />
+                    </EditTemplate>
+                </RadzenDataGridColumn>
+
+                <RadzenDataGridColumn TItem="Country" Context="country" Filterable="false" Sortable="false"
+                                      TextAlign="TextAlign.Right" Width="10%">
+                    <Template Context="country">
+                        <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Small"
+                                      Click="@(args => EditRow(country))" @onclick:stopPropagation="true">
+                        </RadzenButton>
+                        <RadzenButton ButtonStyle="ButtonStyle.Light" Icon="delete" Variant="Variant.Flat" Shade="Shade.Lighter"
+                                      Size="ButtonSize.Small" class="my-1 ms-1" Click="@(args => DeleteRow(country))" @onclick:stopPropagation="true">
+                        </RadzenButton>
+                    </Template>
+                    <EditTemplate Context="country">
+                        <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Success" Variant="Variant.Flat"
+                                      Size="ButtonSize.Small" Click="@((args) => SaveRow(country))">
+                        </RadzenButton>
+                        <RadzenButton Icon="undo" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Small"
+                                      class="my-1 ms-1" Click="@((args) => CancelEdit(country))">
+                        </RadzenButton>
+                    </EditTemplate>
+                </RadzenDataGridColumn>
+
+            </Columns>
+        </RadzenDataGrid>
+
+    }
+}
+else
+{
+    <NotAuthorizePage></NotAuthorizePage>
+}
+
+
+
+
+
+@code {
+    [Inject]
+    public IAnchillaryService _service { get; set; }
+    [Inject]
+    public IAccessServices _accessService { get; set; }
+    [Inject]
+    public IUtilityServices _utilityService { get; set; }
+
+    protected IList<Country>? countries;
+
+    protected override async Task OnInitializedAsync()
+    {
+
+        if (_accessService.IsAuthorized)
+        {
+            await RefreshData();
+        }
+    }
+
+    protected async Task RefreshData()
+    {
+        countries = await _service.GetActiveCountryList();
+        StateHasChanged();
+
+    }
+
+    Country? countryToUpdate;
+    Country? countryToInsert;
+    RadzenDataGrid<Country>? countryGrid;
+
+    async Task EditRow(Country item)
+    {
+        countryToUpdate = item;
+
+        await countryGrid.EditRow(item);
+    }
+
+    async void OnUpdateRow(Country item)
+    {
+        Reset();
+
+        var result = await _service.UpdateCountry(item);
+
+        if (result != null)
+        {
+            NotificationService.Notify(new NotificationMessage
+                    {
+                        Severity = NotificationSeverity.Info,
+                        Summary = "Country Update",
+                        Detail = $"Country {result.Name} updated",
+                        Duration = 4000
+
+                    });
+        }
+        else
+        {
+            NotificationService.Notify(new NotificationMessage
+                    {
+                        Severity = NotificationSeverity.Error,
+                        Summary = "Error Update",
+                        Detail = $"Country NOT updated",
+                        Duration = 4000
+
+                    });
+        }
+    }
+
+    async void OnCreateRow(Country item)
+    {
+        var result = await _service.AddCountry(item);
+
+        countryToInsert = null;
+
+        if (result != null)
+        {
+            NotificationService.Notify(new NotificationMessage
+                    {
+                        Severity = NotificationSeverity.Info,
+                        Summary = "New Country Created",
+                        Detail = $"Country {result.Name} created",
+                        Duration = 4000
+
+                    });
+        }
+        else
+        {
+            NotificationService.Notify(new NotificationMessage
+                    {
+                        Severity = NotificationSeverity.Error,
+                        Summary = "Error",
+                        Detail = "Error adding New Country",
+                        Duration = 4000
+
+                    });
+        }
+
+        await RefreshData();
+    }
+
+    async Task SaveRow(Country item)
+    {
+        await countryGrid.UpdateRow(item);
+    }
+
+    async void CancelEdit(Country item)
+    {
+        Reset();
+
+        countryGrid.CancelEditRow(item);
+
+        var orginalItem = await _service.GetCountry(item.Id);
+
+        StateHasChanged();
+
+    }
+
+    protected async Task InsertRow()
+    {
+        countryToInsert = new Country();
+
+        await countryGrid.InsertRow(countryToInsert);
+
+    }
+
+    async Task DeleteRow(Country item)
+    {
+
+        //confirm delete
+        var dialogResult = await DialogService.OpenAsync("Confirm Delete", ds =>
+    @<RadzenStack Gap="1.5rem">
+        <p>Do you want delete the country <b>@item.Name</b>?</p>
+        <RadzenStack Gap="2rem" Class="rz-p-4 rz-p-md-12">
+            <RadzenRow AlignItems="AlignItems.Center" Class="rz-mt-4">
+                <RadzenButton Text="No" Click="() => ds.Close(false)" ButtonStyle="ButtonStyle.Light" />
+                <RadzenButton Click="() => ds.Close(true)" Text="Yes" ButtonStyle="ButtonStyle.Secondary"></RadzenButton>
+            </RadzenRow>
+        </RadzenStack>
+    </RadzenStack>
+    );
+
+        if (dialogResult != null && dialogResult)
+        {
+
+            if (item == countryToInsert)
+            {
+                countryToInsert = null;
+            }
+
+            if (item == countryToUpdate)
+            {
+                countryToUpdate = null;
+            }
+
+            var result = await _service.DeleteCountry(item);
+
+
+            if (result != null)
+            {
+                NotificationService.Notify(new NotificationMessage
+                    {
+                        Severity = NotificationSeverity.Info,
+                        Summary = "Country Deleted",
+                        Detail = $"Country {result.Name} deleted",
+                        Duration = 4000
+
+                    });
+            }
+            else
+            {
+                NotificationService.Notify(new NotificationMessage
+                    {
+                        Severity = NotificationSeverity.Error,
+                        Summary = "Error",
+                        Detail = "Error deleting Country",
+                        Duration = 4000
+
+                    });
+            }
+            await countryGrid.Reload();
+            await RefreshData();
+        }
+    }
+
+    void Reset()
+    {
+        if (countryToInsert != null)
+        {
+            countryToInsert = null;
+        }
+
+        countryToUpdate = null;
+    }
+
+
+    #region Tooltips
+
+
+    #endregion
+
+}

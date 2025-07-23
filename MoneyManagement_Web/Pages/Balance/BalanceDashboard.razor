@@ -1,0 +1,503 @@
+﻿@page "/balancedashboard"
+<MM_WEB.Shared.Components.BreadCrumb path="balancedashboard"></MM_WEB.Shared.Components.BreadCrumb>
+@if (_accessService.IsAuthorized)
+{
+@if (balances == null)
+{
+    <p><em>Loading ...</em></p>
+}
+else
+{
+    <RadzenStack Gap="1rem" Style="position: relative">
+
+        <RadzenRow>
+            <RadzenColumn Size="12" SizeMD="6" SizeLG="4">
+                <RadzenCard Style="position: relative; ">
+                    <RadzenStack AlignItems="AlignItems.Center"><h5>Available (@availableDate): @_utilityService.FormatAsEUR(totalAvailable)</h5></RadzenStack>
+                    <RadzenChart Style="width: 100%; height: 250px; margin-bottom: -30px;">
+                        <RadzenPieSeries Data="@availableBalancesDetails" Title="Available € (now)"
+                                         CategoryProperty="AccountName"
+                                         ValueProperty="BalanceAmount">
+
+                            <TooltipTemplate Context="data">
+                                @data.AccountName: @_utilityService.FormatAsEUR(data.BalanceAmount)
+                            </TooltipTemplate>
+                        </RadzenPieSeries>
+                    </RadzenChart>
+                </RadzenCard>
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeMD="6" SizeLG="4">
+                <RadzenCard Style="position: relative;">
+                    <RadzenStack AlignItems="AlignItems.Center"><h5>Others (@otherDate): @_utilityService.FormatAsEUR(totalOther)</h5></RadzenStack>
+                    <RadzenChart Style="width: 100%; height: 250px; margin-bottom: -30px;">
+                        <RadzenPieSeries Data="@otherBalancesDetails" Title="Other € (now)"
+                                         CategoryProperty="AccountType"
+                                         ValueProperty="BalanceAmount">
+
+                            <TooltipTemplate Context="data">
+                                @data.AccountType: @_utilityService.FormatAsEUR(data.BalanceAmount)
+                            </TooltipTemplate>
+                        </RadzenPieSeries>
+                    </RadzenChart>
+                </RadzenCard>
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeMD="6" SizeLG="4">
+                <RadzenCard Style="position: relative;">
+                    <RadzenStack AlignItems="AlignItems.Center"><h5>Total (@totalDate): @_utilityService.FormatAsEUR(grandTotal)</h5></RadzenStack>
+                    <RadzenChart Style="width: 100%; height: 250px; margin-bottom: -30px;">
+                        <RadzenPieSeries Data="@totalBalancesDetails" Title="Total € (now)"
+                                         CategoryProperty="AccountName"
+                                         ValueProperty="BalanceAmount">
+
+                            <TooltipTemplate Context="data">
+                                @data.AccountName: @_utilityService.FormatAsEUR(data.BalanceAmount)
+                            </TooltipTemplate>
+                        </RadzenPieSeries>
+                    </RadzenChart>
+                </RadzenCard>
+            </RadzenColumn>
+        </RadzenRow>
+        <RadzenRow AlignItems="AlignItems.Start" JustifyContent="JustifyContent.Start">
+            <RadzenColumn Size="12" SizeMD="6" SizeLG="4">
+                <RadzenDataGrid AllowFiltering="false" AllowColumnResize="false" AllowAlternatingRows="true"
+                                AllowSorting="false" AllowPaging="false"
+                                PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="false"
+                                Data="@summaryBalance" TItem="BalancesSummary" Density="Density.Compact">
+                    <Columns>
+
+                        <RadzenDataGridColumn TItem="BalancesSummary" Title="Account" Frozen="false">
+                            <Template Context="data">
+                                @if (data.AccountName == "Grand Total")
+                                {
+                                    <h4 style="white-space:pre-wrap">@data.AccountName</h4>
+                                }
+                                else
+                                {
+                                    <h6 style="white-space:pre-wrap">@data.AccountName</h6>
+                                }
+
+                            </Template>
+                        </RadzenDataGridColumn>
+
+                        <RadzenDataGridColumn TItem="BalancesSummary" Title="Type" Frozen="false">
+                            <Template Context="data">
+                                @if (data.AccountName == "Grand Total")
+                                {
+                                    <h4 style="white-space:pre-wrap">@data.AccountType</h4>
+                                }
+                                else
+                                {
+                                    <h6 style="white-space:pre-wrap">@data.AccountType</h6>
+                                }
+
+                            </Template>
+                        </RadzenDataGridColumn>
+
+                        <RadzenDataGridColumn TItem="BalancesSummary" Title="Date" Frozen="false">
+                            <Template Context="data">
+                                @if (data.AccountName == "Grand Total")
+                                {
+                                    <h4>@_utilityService.FormatAsDate(data.BalanceDate)</h4>
+                                }
+                                else
+                                {
+                                    <h6>@_utilityService.FormatAsDate(data.BalanceDate)</h6>
+                                }
+
+                            </Template>
+                        </RadzenDataGridColumn>
+
+                        <RadzenDataGridColumn TItem="BalancesSummary" Title="Amount" Frozen="false">
+                            <Template Context="data">
+                                @if (data.AccountName == "Grand Total")
+                                {
+                                    <h4>@_utilityService.FormatAsEUR(data.BalanceAmount)</h4>
+                                }
+                                else
+                                {
+                                    <h6>@_utilityService.FormatAsEUR(data.BalanceAmount)</h6>
+                                }
+
+                            </Template>
+                        </RadzenDataGridColumn>
+
+
+                    </Columns>
+                </RadzenDataGrid>
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeMD="6" SizeLG="8" AlignItems="AlignItems.Center">
+                <RadzenStack Gap="1rem" Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.Start">
+                    <RadzenCard class="w-100 mb-2" Style="display: flex; align-items: center; gap: 0.5rem">
+                        <RadzenText> Account:</RadzenText>
+                        <RadzenDropDown AllowClear="true"
+                                        TValue="AccountMasterData" Class="w-99" Placeholder="Select an Account"
+                                        FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                        AllowFiltering="true" TextProperty="Name" Bind-Value="accountName"
+                                        Data=@accounts ValueProperty="Name" Change=@(args => accountChange(args)) />
+                    </RadzenCard>
+                    <RadzenCard class="w-100 mb-2" Style="display: flex; align-items: center; gap: 0.5rem">
+                        <RadzenText>Starting year:</RadzenText>
+                        <RadzenDropDown AllowClear="false"
+                                        TValue="string" Class="w-99" Placeholder="Starting year"
+                                        FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                        AllowFiltering="true" Value="@startingYear"
+                                        Data=@years Change=@(args => dataChange(args)) />
+                    </RadzenCard>
+                    <RadzenCard class="w-100 mb-4" Style="display: flex; align-items: center; gap: 0.5rem">
+                        <RadzenCheckBox @bind-Value="@trend" Name="trend"></RadzenCheckBox>
+                        <RadzenLabel Text="Trend" For="trend" Style="margin-right: 1rem;" class="rz-color-danger-dark" />
+                        <RadzenCheckBox @bind-Value="@median" Name="median"></RadzenCheckBox>
+                        <RadzenLabel Text="Median" For="median" Style="margin-right: 1rem;" class="rz-color-success-dark" />
+                        @*                         <RadzenCheckBox @bind-Value="@mean" Name="mean"></RadzenCheckBox>
+                    <RadzenLabel Text="Mean" For="mean" Style="margin-right: 1rem;" class="rz-color-info-dark" />
+                    <RadzenCheckBox @bind-Value="@mode" Name="mode"></RadzenCheckBox>
+                    <RadzenLabel Text="Mode" For="mode" class="rz-color-warning-darker" /> *@
+                    </RadzenCard>
+                </RadzenStack>
+                <RadzenChart>
+                    <RadzenLineSeries Smooth="true" Data="@summaryBalanceChart" CategoryProperty="BalanceDate" Title="Balance"
+                                      LineType="LineType.Solid" ValueProperty="BalanceAmount">
+                        <RadzenMarkers MarkerType="MarkerType.Circle" />
+                        <RadzenSeriesDataLabels Visible="false" />
+                        <RadzenSeriesTrendLine Visible="@trend" Stroke="var(--rz-danger-dark)" LineType="LineType.Dashed" />
+                        <RadzenSeriesMedianLine Visible="@median" Stroke="var(--rz-success-dark)" LineType="LineType.Dotted" />
+                        @*                         <RadzenSeriesMeanLine Visible="@mean" Stroke="var(--rz-info-dark)" LineType="LineType.Dotted" />
+                    <RadzenSeriesModeLine Visible="@mode" Stroke="var(--rz-warning-darker)" LineType="LineType.Dotted" /> *@
+                    </RadzenLineSeries>
+                    <RadzenValueAxis Visible="true" Formatter="@_utilityService.FormatAsEUR" />
+                    <RadzenCategoryAxis Visible="true" Formatter="@_utilityService.FormatAsDate" />
+                    <RadzenColumnOptions Margin="10" />
+                    <RadzenLegend Visible="false" />
+                </RadzenChart>
+            </RadzenColumn>
+        </RadzenRow>
+    </RadzenStack>
+}
+}
+else
+{
+    <NotAuthorizePage></NotAuthorizePage>
+}
+@code {
+
+    [Inject]
+    public IBalanceService _service { get; set; }
+    [Inject]
+    public IAccessServices _accessService { get; set; }
+    [Inject]
+    public IAnchillaryService _anchillaryService { get; set; }
+    [Inject]
+    public IUtilityServices _utilityService { get; set; }
+
+    protected IList<Balance>? balances;
+    List<BalancesSummary>? availableBalancesDetails;
+    List<BalancesSummary>? otherBalancesDetails;
+    List<BalancesSummary>? totalBalancesDetails;
+    List<BalancesSummary>? summaryBalance;
+    List<BalancesSummary>? summaryBalanceChart;
+    List<BalancesSummary>? balanceTotalChart;
+    IList<AccountMasterData>? accounts;
+
+
+    decimal CHFRate = 1;
+    double totalAvailable = 0;
+    double totalOther = 0;
+    double grandTotal = 0;
+    string availableDate;
+    string otherDate;
+    string totalDate;
+
+    private List<string>? years;
+    string startingYear = DateTime.Now.AddYears(-4).Year.ToString();
+    string accountName = "ALL";
+    bool trend = true;
+    bool median = false;
+    bool mean = false;
+    bool mode = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (_accessService.IsAuthorized)
+        {
+            CHFRate = (await _anchillaryService.GetCurrencyRate("CHF")).RateValue;
+            await GetBalances();
+
+            await GetAvailableBalancesDetail();
+            await GetOthersBalancesDetail();
+            await GetTotalBalancesDetail();
+            await GetBalanceSummary();
+            await GetBalanceSummaryChart(accountName, startingYear);
+
+        }
+    }
+
+
+    private async Task GetBalances()
+    {
+
+        var _balances = await _service.GetActiveBalanceList();
+
+        await GetTotalBalancesChart(_balances);
+
+        balances = new List<Balance>();
+
+        foreach (var item in _balances.Where(x => x.Account.IsActive))
+        {
+            if (item.Account.Currency.CurrencyCodeALF3 == "CHF")
+            {
+                item.BalanceValue = item.BalanceValue / Convert.ToDouble(CHFRate);
+            }
+
+            if (item.Account.Currency.CurrencyCodeALF3 != "CHF" & item.Account.Currency.CurrencyCodeALF3 != "EUR")
+            {
+                item.BalanceValue = item.BalanceValue / Convert.ToDouble((await _anchillaryService.GetCurrencyRate(item.Account.Currency.CurrencyCodeALF3)).RateValue);
+            }
+
+            balances.Add(item);
+        }
+    }
+
+    private async Task GetAvailableBalancesDetail()
+    {
+        //only AvailableBalances
+
+        var _availableBalances = balances.Where(x => x.Account.AccountType == "Available" && x.Account.IsActive).OrderBy(x => x.Account.Name).ToList();
+
+        var _accounts = _availableBalances.Select(x => x.Account).DistinctBy(x => x.Name).ToList();
+
+        availableBalancesDetails = new List<BalancesSummary>();
+
+        foreach (var item in _accounts)
+        {
+            var balance = _availableBalances.Where(x => x.Account == item).OrderByDescending(x => x.DateBalance).FirstOrDefault();
+
+            var balanceSummary = new BalancesSummary
+                {
+                    AccountName = item.Name,
+                    BalanceAmount = balance.BalanceValue,
+                    BalanceDate = balance.DateBalance,
+                    Currency = "EUR"
+                };
+
+            availableBalancesDetails.Add(balanceSummary);
+        }
+
+        totalAvailable = availableBalancesDetails.Sum(x => x.BalanceAmount);
+        availableDate = _utilityService.FormatAsDate(availableBalancesDetails.Select(x => x.BalanceDate).Distinct().FirstOrDefault());
+
+
+    }
+
+    private async Task GetOthersBalancesDetail()
+    {
+        //others Balances
+
+        var _otherBalances = balances.Where(x => x.Account.AccountType != "Available" && x.Account.IsActive).OrderBy(x => x.Account.Name).ToList();
+
+        var _otherAccounts = _otherBalances.Select(x => x.Account).DistinctBy(x => x.Name).ToList();
+
+        otherBalancesDetails = new List<BalancesSummary>();
+
+        foreach (var item in _otherAccounts)
+        {
+            var balance = _otherBalances.Where(x => x.Account == item).OrderByDescending(x => x.DateBalance).FirstOrDefault();
+
+            var balanceSummary = new BalancesSummary
+                {
+                    AccountType = item.Name,
+                    BalanceAmount = balance.BalanceValue,
+                    BalanceDate = balance.DateBalance,
+                    Currency = "EUR"
+                };
+
+            otherBalancesDetails.Add(balanceSummary);
+        }
+
+        totalOther = otherBalancesDetails.Sum(x => x.BalanceAmount);
+        otherDate = _utilityService.FormatAsDate((otherBalancesDetails.Select(x => x.BalanceDate).Distinct()).OrderByDescending(x => x).FirstOrDefault());
+    }
+
+    private async Task GetTotalBalancesDetail()
+    {
+        //total Balances
+
+        var _totalBalances = balances.Where(x => x.Account.IsActive).OrderBy(x => x.Account.Name).ToList();
+
+        var _totalAccounts = _totalBalances.Select(x => x.Account).DistinctBy(x => x.Name).ToList();
+
+        totalBalancesDetails = new List<BalancesSummary>();
+        var _totalBalance = new List<BalancesSummary>();
+
+        foreach (var item in _totalAccounts)
+        {
+            var balance = _totalBalances.Where(x => x.Account == item).OrderByDescending(x => x.DateBalance).FirstOrDefault();
+
+            switch (item.AccountType)
+            {
+                case "Available":
+                    _totalBalance.Add(new BalancesSummary
+                        {
+                            AccountName = item.AccountType,
+                            BalanceAmount = balance.BalanceValue,
+                            BalanceDate = balance.DateBalance,
+                            Currency = "EUR"
+                        });
+                    break;
+
+                case "Block":
+                    _totalBalance.Add(new BalancesSummary
+                        {
+                            AccountName = item.AccountType,
+                            BalanceAmount = balance.BalanceValue,
+                            BalanceDate = balance.DateBalance,
+                            Currency = "EUR"
+                        });
+                    break;
+
+                case "Credit":
+                    _totalBalance.Add(new BalancesSummary
+                        {
+                            AccountName = item.AccountType,
+                            BalanceAmount = balance.BalanceValue,
+                            BalanceDate = balance.DateBalance,
+                            Currency = "EUR"
+                        });
+                    break;
+
+                default:
+                    break;
+            }
+
+        }
+
+        totalBalancesDetails = _totalBalance.GroupBy(x => x.AccountName).Select(r => new BalancesSummary
+            {
+                AccountName = r.First().AccountName,
+                BalanceAmount = r.Sum(c => c.BalanceAmount),
+                BalanceDate = r.First().BalanceDate,
+                Currency = "EUR"
+            }).ToList();
+
+        grandTotal = totalBalancesDetails.Sum(x => x.BalanceAmount);
+        totalDate = _utilityService.FormatAsDate(totalBalancesDetails.Select(x => x.BalanceDate).Distinct().FirstOrDefault());
+    }
+
+    private async Task GetBalanceSummary()
+    {
+        var _totalAccounts = balances.Select(x => x.Account).DistinctBy(x => x.Name).ToList();
+
+        summaryBalance = new List<BalancesSummary>();
+        double _grandTotal = 0;
+        foreach (var item in _totalAccounts)
+        {
+            var _balance = balances.Where(x => x.Account == item).OrderByDescending(x => x.DateBalance).FirstOrDefault();
+
+            _grandTotal += _balance.BalanceValue;
+            summaryBalance.Add(new BalancesSummary
+                {
+                    AccountName = _balance.Account.Name,
+                    AccountType = _balance.Account.AccountType,
+                    BalanceAmount = _balance.BalanceValue,
+                    BalanceDate = _balance.DateBalance,
+                    Currency = "EUR"
+                });
+        }
+
+        summaryBalance.Add(new BalancesSummary
+            {
+                AccountName = "Grand Total",
+                BalanceAmount = _grandTotal,
+                BalanceDate = DateTime.Now,
+                Currency = "EUR"
+            });
+    }
+
+
+    private async Task GetBalanceSummaryChart(string accountName, string startingYear)
+    {
+        if (accountName == "ALL")
+        {
+            summaryBalanceChart = balanceTotalChart.Where(x => x.BalanceDate >= new DateTime(Convert.ToInt32(startingYear), 1, 1)).ToList();
+        }
+        else
+        {
+            summaryBalanceChart = balances.Where(x => x.Account.Name == accountName & x.DateBalance >= new DateTime(Convert.ToInt32(startingYear), 1, 1))
+        .Select(x => new BalancesSummary()
+            {
+                AccountName = x.Account.Name,
+                AccountType = x.Account.AccountType,
+                BalanceAmount = x.BalanceValue,
+                BalanceDate = x.DateBalance,
+                Currency = "EUR"
+            }).ToList();
+        }
+    }
+
+    private async Task GetTotalBalancesChart(List<Balance> balances)
+    {
+        years = balances.Select(x => x.DateBalance.Year.ToString()).Distinct().ToList();
+
+        var _balances = new List<BalancesSummary>();
+
+        accounts = balances.Where(x => x.Account.IsActive).Select(x => x.Account).DistinctBy(x => x.Name).ToList();
+        accounts.Add(new AccountMasterData { Id = 0, AccountType = "Grand Total", Name = "ALL" });
+
+        accounts.OrderBy(x => x.Name);
+
+        foreach (var item in balances.Where(x => x.Account.AccountType == "Available"))
+        {
+            if (item.Account.Currency.CurrencyCodeALF3 == "CHF")
+            {
+                item.BalanceValue = item.BalanceValue / Convert.ToDouble(CHFRate);
+            }
+
+            if (item.Account.Currency.CurrencyCodeALF3 != "CHF" & item.Account.Currency.CurrencyCodeALF3 != "EUR")
+            {
+                item.BalanceValue = item.BalanceValue / Convert.ToDouble((await _anchillaryService.GetCurrencyRate(item.Account.Currency.CurrencyCodeALF3)).RateValue);
+            }
+
+            _balances.Add(new BalancesSummary
+                {
+                    AccountName = item.Account.Name,
+                    AccountType = item.Account.AccountType,
+                    BalanceAmount = item.BalanceValue,
+                    BalanceDate = new DateTime(item.DateBalance.Year, item.DateBalance.Month, 1),
+                    Currency = "EUR"
+
+                });
+        }
+
+        balanceTotalChart = _balances.GroupBy(x => x.BalanceDate)
+        .Select(y => new BalancesSummary
+            {
+                AccountName = "ALL",
+                BalanceAmount = y.Sum(c => c.BalanceAmount),
+                BalanceDate = y.First().BalanceDate,
+                Currency = "EUR"
+            }).ToList();
+
+    }
+
+
+    protected async Task accountChange(object item)
+    {
+        if (item == null)
+        {
+            accountName = "ALL";
+        }
+        else
+        {
+            accountName = item.ToString();
+        }
+
+        await GetBalanceSummaryChart(accountName, startingYear);
+
+    }
+
+    protected async Task dataChange(object item)
+    {
+        startingYear = item.ToString();
+        await GetBalanceSummaryChart(accountName, startingYear);
+    }
+
+}

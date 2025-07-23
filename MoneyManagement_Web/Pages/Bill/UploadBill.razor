@@ -1,0 +1,775 @@
+﻿@page "/uploadbill"
+@using System.Net.Http.Headers
+@using System.Text
+@using UglyToad.PdfPig
+@using UglyToad.PdfPig.Content
+@using System.Text.RegularExpressions
+
+<MM_WEB.Shared.Components.BreadCrumb path="uploadbill"></MM_WEB.Shared.Components.BreadCrumb>
+
+<RadzenMenu>
+    <InputFile OnChange="HandleFileChange" />
+    @if (selectedFile != null)
+    {
+        <RadzenLabel Gap="1rem">File Size: </RadzenLabel>
+        <RadzenLabel Style="@($"color: {((selectedFile.Size <= maxFileSize) ? "green" : " red")}")"> @_utilityService.FileSizeFormatted(selectedFile.Size) </RadzenLabel>
+        @if (selectedFile.Size <= maxFileSize)
+        {
+            <RadzenMenuItem Icon="picture_as_pdf" Text="View PDF" Click=@ShowPdf Gap="1rem" />
+            <RadzenMenuItem Icon="wysiwyg" Text="View text" Click=@ViewText Gap="1rem" />
+            <RadzenMenuItem Icon="data_saver_on" Text="Add to Bill" Click=@NewBill IsBusy=@convertToText BusyText="converting ..." />
+            @if (convertToText)
+            {
+                <RadzenLabel Style="color: yellow"> Converting PDF to text...</RadzenLabel>
+            }
+        }
+        else
+        {
+            <RadzenLabel Gap="1rem">File exceeds max size : @_utilityService.FileSizeFormatted(maxFileSize) </RadzenLabel>
+        }
+
+    }
+</RadzenMenu>
+<hr />
+
+@if (viewSupplierList && bill.Supplier == null)
+{
+    <div class="rz-p-sm-12 rz-text-align-start">
+        <RadzenDropDown AllowClear="true" Name="Supplier.Name"
+                        TValue="Supplier" Class="w-99" Placeholder="Select a Supplier"
+                        FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                        AllowFiltering="true" TextProperty="Name"
+                        Data=@suppliers @bind-Value="bill.Supplier" Change="@(args => supplierSelected(args))" />
+    </div>
+
+}
+
+@if (bill != null && bill.Supplier != null)
+{
+    <RadzenRow Gap="1rem">
+        <RadzenColumn Size="12" SizeSM="1">
+            <RadzenStack>
+                <RadzenFormField Text="Supplier Name" Variant="Variant.Text">
+                    <RadzenTextBox @bind-Value="@bill.Supplier.Name" />
+                </RadzenFormField>
+            </RadzenStack>
+        </RadzenColumn>
+        <RadzenColumn Size="12" SizeSM="2">
+            <RadzenStack>
+                <RadzenFormField Text="Bill Number" Variant="Variant.Text">
+                    <RadzenTextBox @bind-Value="@bill.BillNumber" />
+                </RadzenFormField>
+            </RadzenStack>
+        </RadzenColumn>
+        <RadzenColumn Size="12" SizeSM="2">
+            <RadzenStack>
+                <RadzenFormField Text="Paid Date" Variant="Variant.Text">
+                    <RadzenDatePicker @bind-Value=@bill.PaidDate ShowTime="false" HourFormat="12" DateFormat="dd/MM/yyyy"
+                                      Style="width:100%; display: block" Name="PaidDate">
+                    </RadzenDatePicker>
+                </RadzenFormField>
+            </RadzenStack>
+        </RadzenColumn>
+        <RadzenColumn Size="12" SizeSM="1">
+            <RadzenStack>
+                <RadzenFormField Text="Amount" Variant="Variant.Text">
+                    <RadzenNumeric @bind-Value="bill.Amount" Style="width:100%; display: block" Name="Amount" />
+                </RadzenFormField>
+            </RadzenStack>
+        </RadzenColumn>
+        <RadzenColumn Size="12" SizeSM="2">
+            <RadzenStack>
+                <RadzenFormField Text="Period Start" Variant="Variant.Text">
+                    <RadzenDatePicker @bind-Value=@bill.RefPeriodStart ShowTime="false" HourFormat="12" DateFormat="dd/MM/yyyy"
+                                      Style="width:100%; display: block" Name="RefPeriodStart">
+                    </RadzenDatePicker>
+                </RadzenFormField>
+            </RadzenStack>
+        </RadzenColumn>
+        <RadzenColumn Size="12" SizeSM="2">
+            <RadzenStack>
+                <RadzenFormField Text="Period End" Variant="Variant.Text">
+                    <RadzenDatePicker @bind-Value=@bill.RefPeriodEnd ShowTime="false" HourFormat="12" DateFormat="dd/MM/yyyy"
+                                      Style="width:100%; display: block" Name="RefPeriodEnd">
+                    </RadzenDatePicker>
+                </RadzenFormField>
+            </RadzenStack>
+        </RadzenColumn>
+        <RadzenColumn Size="12" SizeSM="1">
+            <RadzenStack>
+                <RadzenFormField Text="Consumption" Variant="Variant.Text">
+                    <RadzenNumeric @bind-Value="bill.Consumption" Style="width:100%; display: block" Name="Consumption" />
+                </RadzenFormField>
+            </RadzenStack>
+        </RadzenColumn>
+        @*         <RadzenColumn Size="12" SizeSM="1">
+    <RadzenStack>
+    <RadzenFormField Text="Note" Variant="Variant.Text">
+    <RadzenTextBox @bind-Value="bill.Note" Style="width:100%; display: block" Name="Note" />
+    </RadzenFormField>
+    </RadzenStack>
+    </RadzenColumn> *@
+        <RadzenColumn Size="12" SizeSM="1">
+            <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Success" Variant="Variant.Flat"
+                          Size="ButtonSize.Small" ButtonType="ButtonType.Submit" Text="Save" Click="@SaveBill"></RadzenButton>
+        </RadzenColumn>
+    </RadzenRow>
+
+    if (selectedSupplier != null)
+    {
+        <hr />
+        @*         <RadzenRow Gap="1rem"> *@
+        <RadzenMenu>
+            Supplier: @selectedSupplier.Name
+            <RadzenMenuItem Text="New" Icon="add" Click="@InsertRowReadInBill" Gap="1rem"></RadzenMenuItem>
+            <RadzenMenuItem Text="Refresh" Icon="autorenew" Click="@RefreshCompiledBill" Gap="1rem"></RadzenMenuItem>
+            <RadzenMenuItem Text="Regex Help" Icon="info" Click="@openRegexHelper" Gap="1rem"></RadzenMenuItem>
+        </RadzenMenu>
+        @*         </RadzenRow> *@
+        <br />
+        <RadzenRow Gap="1rem">
+            <RadzenDataGrid AllowFiltering="false" AllowColumnResize="true" AllowAlternatingRows="true" @ref="readInBillGrid"
+                            AllowSorting="true" PageSize="15" AllowPaging="true"
+                            PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true" ColumnWidth="250px"
+                            Data="@readInBill"
+                            TItem="ReadInBill" LogicalFilterOperator="LogicalFilterOperator.Or"
+                            EditMode="DataGridEditMode.Single" RowUpdate="@OnUpdateRowReadInBill" RowCreate="@OnCreateRowReadInBill"
+                            Sort="@ResetReadInBill" Page="@ResetReadInBill" Filter="@ResetReadInBill"
+                            FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" Density="Density.Compact">
+
+                <Columns>
+                    <RadzenDataGridColumn TItem="ReadInBill" Property="Id" Filterable="false" Title="ID"
+                                          Frozen="true" Width="20px" TextAlign="TextAlign.Center" />
+
+                    <RadzenDataGridColumn TItem="ReadInBill" Property="BillProperty" Title="Property" Frozen="true" Width="50px">
+                        <EditTemplate Context="readInBill">
+                            <RadzenDropDown AllowClear="true" Name="readInBill.BillProperty"
+                                            TValue="string" Class="w-99" Placeholder="Select a Property"
+                                            AllowFiltering="true"
+                                            Data=@billProperties @bind-Value="readInBill.BillProperty" />
+                            <RadzenRequiredValidator Text="Property is required" Component="readInBill.BillProperty" Popup="false" />
+                        </EditTemplate>
+                    </RadzenDataGridColumn>
+
+                    <RadzenDataGridColumn TItem="ReadInBill" Property="PropertyDataType" Title="Data Type" Frozen="true" Width="50px">
+                        <EditTemplate Context="readInBill">
+                            <RadzenDropDown AllowClear="true" Name="readInBill.PropertyDataType"
+                                            TValue="string" Class="w-99" Placeholder="Select a DataType"
+                                            AllowFiltering="true"
+                                            Data=@billTypes @bind-Value="readInBill.PropertyDataType" />
+                            <RadzenRequiredValidator Text="DataType is required" Component="readInBill.PropertyDataType" Popup="false" />
+                        </EditTemplate>
+                    </RadzenDataGridColumn>
+
+                    <RadzenDataGridColumn TItem="ReadInBill" Property="KeyWord" Title="KeyWord" Frozen="true" Width="50px">
+                        <EditTemplate Context="readInBill">
+                            <RadzenTextBox @bind-Value="readInBill.KeyWord" Style="width:100%; display: block" Name="KeyWord" />
+                            <RadzenRequiredValidator Text="KeyWord is required" Component="KeyWord" Popup="false" />
+                        </EditTemplate>
+                    </RadzenDataGridColumn>
+
+                    <RadzenDataGridColumn TItem="ReadInBill" Property="RegexString" Title="RegexString" Frozen="true" Width="50px">
+                        <EditTemplate Context="readInBill">
+                            <RadzenTextBox @bind-Value="readInBill.RegexString" Style="width:100%; display: block" Name="RegexString" />
+                            <RadzenRequiredValidator Text="RegexString is required" Component="RegexString" Popup="false" />
+                        </EditTemplate>
+                    </RadzenDataGridColumn>
+
+
+                    <RadzenDataGridColumn TItem="ReadInBill" Property="Note" Title="Note" Frozen="true" Width="40px">
+                        <EditTemplate Context="readInBill">
+                            <RadzenTextBox @bind-Value="readInBill.Note" Style="width:100%; display: block" Name="Note" />
+                        </EditTemplate>
+                    </RadzenDataGridColumn>
+
+                    <RadzenDataGridColumn TItem="ReadInBill" Context="readInBill" Filterable="false" Sortable="false"
+                                          TextAlign="TextAlign.Center" Width="10%">
+                        <Template Context="readInBill">
+                            <RadzenButton Icon="search" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Small"
+                                          Click="@(args => SearchRowReadInBill(readInBill))" @onclick:stopPropagation="true">
+                            </RadzenButton>
+                            <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Small"
+                                          Click="@(args => EditRowReadInBill(readInBill))" @onclick:stopPropagation="true">
+                            </RadzenButton>
+                            <RadzenButton Icon="delete" Variant="Variant.Flat" Shade="Shade.Lighter" ButtonStyle="ButtonStyle.Dark"
+                                          Size="ButtonSize.Small" class="my-1 ms-1" Click="@(args => DeleteRowReadInBill(readInBill))" @onclick:stopPropagation="true">
+                            </RadzenButton>
+                        </Template>
+                        <EditTemplate Context="readInBill">
+                            <RadzenButton Icon="search" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Small"
+                                          Click="@(args => SearchRowReadInBill(readInBill))" @onclick:stopPropagation="true">
+                            </RadzenButton>
+                            <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Success" Variant="Variant.Flat"
+                                          Size="ButtonSize.Small" Click="@((args) => SaveRowReadInBill(readInBill))">
+                            </RadzenButton>
+                            <RadzenButton Icon="undo" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Small"
+                                          class="my-1 ms-1" Click="@((args) => CancelEditReadInBill(readInBill))">
+                            </RadzenButton>
+                        </EditTemplate>
+                    </RadzenDataGridColumn>
+
+                </Columns>
+            </RadzenDataGrid>
+        </RadzenRow>
+
+    }
+    <hr />
+    <!-- View file -->
+    <RadzenRow Gap="1rem">
+        <RadzenColumn Size="12" SizeSM="9">
+            <RadzenStack>
+                <!-- Display uploaded file content -->
+                @if (!string.IsNullOrEmpty(pdfBase64))
+                {
+                    <RadzenHtml>
+                        <iframe style="width: 100%; height:700px" srcdoc="@($"<iframe style='width: 100%; height:700px' src='data:application/pdf;base64,{pdfBase64}'></iframe>")"></iframe>
+                    </RadzenHtml>
+                }
+            </RadzenStack>
+        </RadzenColumn>
+        <RadzenColumn Size="12" SizeSM="3">
+            <RadzenStack>
+                <!-- Display text readed -->
+                @if (viewText)
+                {
+                    <RadzenTextArea Disabled="true" @bind-Value=@stringContent Rows="34" />
+                }
+            </RadzenStack>
+        </RadzenColumn>
+    </RadzenRow>
+}
+
+
+@code {
+
+    [Inject]
+    public IBillService? _service { get; set; }
+    [Inject]
+    public IAnchillaryService? _anchillaryService { get; set; }
+    [Inject]
+    public IUtilityServices? _utilityService { get; set; }
+
+    private IBrowserFile? selectedFile;
+    private string? pdfBase64;
+    long maxFileSize = 1024 * 1200; //120mb
+    StringBuilder? textContent;
+    string? stringContent;
+
+    bool viewText = false;
+    bool convertToText = false;
+    bool viewSupplierList = false;
+    Bill? bill;
+    Supplier? selectedSupplier;
+
+    protected IList<Supplier>? suppliers;
+
+
+    private void HandleFileChange(InputFileChangeEventArgs e)
+    {
+        selectedFile = e.File;
+    }
+
+    private async Task ShowPdf()
+    {
+
+        if (selectedFile != null)
+        {
+            // Read the file content
+            using (var stream = selectedFile.OpenReadStream(maxFileSize))
+            using (var ms = new MemoryStream())
+            {
+                await stream.CopyToAsync(ms);
+                var pdfBytes = ms.ToArray();
+                pdfBase64 = Convert.ToBase64String(pdfBytes);
+
+                // await ShowInlineDialog();
+            }
+        }
+    }
+
+    private async Task ViewText()
+    {
+        if (textContent == null)
+        {
+            await PdfToText();
+        }
+
+        stringContent = textContent.ToString();
+        viewText = true;
+    }
+
+    private async Task NewBill()
+    {
+        convertToText = true;
+
+        await PdfToText();
+        suppliers = await _anchillaryService.GetActiveSupplierList();
+        bill = new Bill();
+        viewSupplierList = true;
+        convertToText = false;
+        //open new bill form
+
+
+    }
+
+    private async Task PdfToText()
+    {
+        try
+        {
+
+            Console.WriteLine($"{DateTime.Now} - Start read pdf ");
+
+            if (selectedFile == null)
+            {
+                Console.WriteLine($"{DateTime.Now} - Please select a pdf file");
+                return;
+            }
+            using (Stream pdfStream = selectedFile.OpenReadStream(maxFileSize))
+            {
+                // Console.WriteLine($"{DateTime.Now} - Stream opened");
+                using (var memoryStream = new MemoryStream())
+                {
+
+                    await pdfStream.CopyToAsync(memoryStream);
+                    // Console.WriteLine($"{DateTime.Now} - Pdf in memorystream");
+                    memoryStream.Position = 0;
+                    using (var document = PdfDocument.Open(memoryStream))
+                    {
+                        Console.WriteLine($"{DateTime.Now} - Opened PdfDocument");
+                        textContent = new StringBuilder();
+                        string textFromPdf = string.Empty;
+
+                        foreach (Page page in document.GetPages())
+                        {
+                            Console.WriteLine($"{DateTime.Now} - Start read page: {page.Number}");
+                            string pageText = page.Text;
+
+                            foreach (Word word in page.GetWords())
+                            {
+                                // Console.WriteLine($"{DateTime.Now} - Start read world for page: {page.Number}");
+                                // textFromPdf += string.Join(" ", word);
+                                // textFromPdf += $"{word}\n";
+                                textContent.AppendLine(word.Text);
+                                // Console.WriteLine(word.Text);
+                            }
+                        }
+
+                        Console.WriteLine("PDF successfully converted to text:");
+
+
+
+                    }
+                }
+            }
+
+
+        }
+        catch (Exception ex)
+        {
+
+            Console.WriteLine(ex.Message);
+        }
+
+
+    }
+
+    protected async Task supplierSelected(object supplier)
+    {
+
+        // var readInBill = await _anchillaryService.GetActiveReadInBillBySupplierList((supplier as Supplier).Id);
+        selectedSupplier = (supplier as Supplier);
+        await RefreshReadInBill(selectedSupplier.Id);
+        billProperties = new List<string>();
+        billProperties.Add("Amount");
+        billProperties.Add("PaidDate");
+        billProperties.Add("RefPeriodStart");
+        billProperties.Add("RefPeriodEnd");
+        billProperties.Add("Consumtion");
+        billProperties.Add("BillNumber");
+
+        billTypes = new List<string>();
+        billTypes.Add("double");
+        billTypes.Add("DateTime");
+        billTypes.Add("string");
+
+        AutoCompleteBill();
+    }
+
+    private void AutoCompleteBill()
+    {
+        foreach (var item in readInBill)
+        {
+            var _property = item.BillProperty;
+            var _keyWord = item.KeyWord;
+            var _regex = item.RegexString;
+            var _propertyType = item.PropertyDataType;
+
+            //search in text
+
+            var result = SearchInTxt(textContent.ToString(), _keyWord, _regex);
+
+            try
+            {
+                if (!string.IsNullOrEmpty(result))
+                {
+                    switch (_property)
+                    {
+                        case "Amount":
+
+                            bill.Amount = Convert.ToDouble(result);
+                            break;
+
+                        case "PaidDate":
+                            bill.PaidDate = Convert.ToDateTime(result);
+                            break;
+
+                        case "RefPeriodStart":
+                            bill.RefPeriodStart = Convert.ToDateTime(result);
+                            break;
+
+                        case "RefPeriodEnd":
+                            bill.RefPeriodEnd = Convert.ToDateTime(result);
+                            break;
+
+                        case "Consumtion":
+                            bill.Consumption = Convert.ToDouble(result);
+                            break;
+
+                        case "BillNumber":
+                            bill.BillNumber = result;
+                            break;
+
+                        default:
+                            break;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+
+                Console.WriteLine(ex.Message);
+            }
+
+        }
+    }
+
+    private string SearchInTxt(string text, string keyWord, string regexString)
+    {
+
+        string pattern = $@"{keyWord}{regexString}";
+        //string pattern = $@"{searchText}\s*([\d,.]+)\s*€";
+
+        Match match = Regex.Match(text, pattern, RegexOptions.None);
+
+        if (match.Success)
+        {
+            string result = match.Groups[1].Value;
+
+            Console.WriteLine($"'{keyWord}'= {result}");
+            return result;
+        }
+        else
+        {
+            Console.WriteLine($"Valore '{keyWord}' non trovato.");
+            return string.Empty;
+        }
+    }
+
+    async Task SaveBill()
+    {
+
+        var result = await _service.AddBill(bill);
+
+        if (result != null)
+        {
+            var uploadResult = await UploadFile(result.Id);
+
+            if (uploadResult != null)
+            {
+                NotificationService.Notify(new NotificationMessage
+                        {
+                            Severity = NotificationSeverity.Success,
+                            Summary = "New Bill Created",
+                            Detail = $"Bill created",
+                            Duration = 4000
+
+                        });
+                selectedFile = null;
+                selectedSupplier = null;
+                pdfBase64 = null;
+                viewText = false;
+                viewSupplierList = false;
+                bill = null;
+            }
+            else
+            {
+                NotificationService.Notify(new NotificationMessage
+                        {
+                            Severity = NotificationSeverity.Error,
+                            Summary = "Error",
+                            Detail = "Error adding New Bill",
+                            Duration = 4000
+
+                        });
+            }
+
+        }
+        else
+        {
+            NotificationService.Notify(new NotificationMessage
+                    {
+                        Severity = NotificationSeverity.Error,
+                        Summary = "Error",
+                        Detail = "Error adding New Bill",
+                        Duration = 4000
+
+                    });
+        }
+    }
+
+    private async Task<string> UploadFile(int id)
+    {
+
+        if (selectedFile != null)
+        {
+            try
+            {
+                var content = new MultipartFormDataContent();
+                var fileContent = new StreamContent(selectedFile.OpenReadStream(maxFileSize));
+
+                fileContent.Headers.ContentType = new MediaTypeHeaderValue(selectedFile.ContentType);
+
+                content.Add(content: fileContent,
+                    name: "\"file\"", //same name in api ws
+                    fileName: selectedFile.Name);
+
+                var response = await _service.UploadFile(content, id);
+
+                if (response != null)
+                {
+                    Console.WriteLine($"File {response} uploaded");
+                    return response;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                return null;
+
+            }
+
+        }
+        return null;
+    }    
+    
+
+    #region ReadIn Bill Grid
+
+    protected IList<ReadInBill>? readInBill;
+    ReadInBill? readInBillToUpdate;
+    ReadInBill? readInBillToInsert;
+    RadzenDataGrid<ReadInBill>? readInBillGrid;
+    protected IList<string>? billProperties;
+    protected IList<string>? billTypes;
+
+    protected async Task RefreshReadInBill(int supplierId)
+    {
+        if (suppliers != null)
+        {
+            readInBill = await _anchillaryService.GetActiveReadInBillBySupplierList(supplierId);
+        }
+        StateHasChanged();
+    }
+
+    protected void RefreshCompiledBill()
+    {
+        AutoCompleteBill();
+    }
+
+    async Task EditRowReadInBill(ReadInBill item)
+    {
+        readInBillToUpdate = item;
+
+        await readInBillGrid.EditRow(item);
+    }
+
+    async Task SearchRowReadInBill(ReadInBill item)
+    {
+        var result = SearchInTxt(textContent.ToString(), item.KeyWord, item.RegexString);
+
+        NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Info,
+                    Summary = "Search in text",
+                    Detail = $"Searched '{item.KeyWord}' : {result}",
+                    Duration = 4000
+
+                });
+
+    }
+
+    async void OnUpdateRowReadInBill(ReadInBill item)
+    {
+        ResetReadInBill();
+
+        var result = await _anchillaryService.UpdateReadInBill(item);
+
+        if (result != null)
+        {
+            NotificationService.Notify(new NotificationMessage
+                    {
+                        Severity = NotificationSeverity.Info,
+                        Summary = "ReadInBill Update",
+                        Detail = $"ReadInBill updated",
+                        Duration = 4000
+
+                    });
+        }
+        else
+        {
+            NotificationService.Notify(new NotificationMessage
+                    {
+                        Severity = NotificationSeverity.Error,
+                        Summary = "Error Update",
+                        Detail = $"ReadInBill NOT updated",
+                        Duration = 4000
+
+                    });
+        }
+    }
+
+    async void OnCreateRowReadInBill(ReadInBill item)
+    {
+        var result = await _anchillaryService.AddReadInBill(item);
+
+        readInBillToInsert = null;
+
+        if (result != null)
+        {
+            NotificationService.Notify(new NotificationMessage
+                    {
+                        Severity = NotificationSeverity.Info,
+                        Summary = "New ReadInBill Created",
+                        Detail = $"ReadInBill created",
+                        Duration = 4000
+
+                    });
+        }
+        else
+        {
+            NotificationService.Notify(new NotificationMessage
+                    {
+                        Severity = NotificationSeverity.Error,
+                        Summary = "Error",
+                        Detail = "Error adding New ReadInBill",
+                        Duration = 4000
+
+                    });
+        }
+
+        // await RefreshData();
+        await RefreshReadInBill(selectedSupplier.Id);
+    }
+
+    async Task SaveRowReadInBill(ReadInBill item)
+    {
+        await readInBillGrid.UpdateRow(item);
+    }
+
+    async void CancelEditReadInBill(ReadInBill item)
+    {
+        ResetReadInBill();
+
+        readInBillGrid.CancelEditRow(item);
+
+        var orginalItem = await _anchillaryService.GetReadInBill(item.Id);
+
+        StateHasChanged();
+
+    }
+
+    protected async Task InsertRowReadInBill()
+    {
+        readInBillToInsert = new ReadInBill();
+        readInBillToInsert.Supplier = selectedSupplier;
+        await readInBillGrid.InsertRow(readInBillToInsert);
+
+    }
+
+    async Task DeleteRowReadInBill(ReadInBill item)
+    {
+
+        //confirm delete
+        var dialogResult = await DialogService.OpenAsync("Confirm Delete", ds =>
+    @<RadzenStack Gap="1.5rem">
+        <p>Do you want delete the ReadInBill n <b>@item.Id</b>?</p>
+        <RadzenStack Gap="2rem" Class="rz-p-4 rz-p-md-12">
+            <RadzenRow AlignItems="AlignItems.Center" Class="rz-mt-4">
+                <RadzenButton Text="No" Click="() => ds.Close(false)" ButtonStyle="ButtonStyle.Light" />
+                <RadzenButton Click="() => ds.Close(true)" Text="Yes" ButtonStyle="ButtonStyle.Secondary"></RadzenButton>
+            </RadzenRow>
+        </RadzenStack>
+    </RadzenStack>
+    );
+
+        if (dialogResult != null && dialogResult)
+        {
+
+            if (item == readInBillToInsert)
+            {
+                readInBillToInsert = null;
+            }
+
+            if (item == readInBillToUpdate)
+            {
+                readInBillToUpdate = null;
+            }
+
+            var result = await _anchillaryService.DeleteReadInBill(item);
+
+
+            if (result != null)
+            {
+                NotificationService.Notify(new NotificationMessage
+                    {
+                        Severity = NotificationSeverity.Info,
+                        Summary = "ReadInBill Deleted",
+                        Detail = $"ReadInBill {result.Id} deleted",
+                        Duration = 4000
+
+                    });
+            }
+            else
+            {
+                NotificationService.Notify(new NotificationMessage
+                    {
+                        Severity = NotificationSeverity.Error,
+                        Summary = "Error",
+                        Detail = "Error deleting ReadInBill",
+                        Duration = 4000
+
+                    });
+            }
+            await readInBillGrid.Reload();
+            // await RefreshData();
+            await RefreshReadInBill(selectedSupplier.Id);
+        }
+    }
+
+    void ResetReadInBill()
+    {
+        if (readInBillToInsert != null)
+        {
+            readInBillToInsert = null;
+        }
+
+        readInBillToUpdate = null;
+    }
+
+    async Task openRegexHelper()
+    {
+        await DialogService.OpenAsync<RegexHelper>("Regex Helper", null, new DialogOptions() { Width = "700px", Height = "512px", Resizable = true, Draggable = true });
+    }
+
+    #endregion
+}
