@@ -4,6 +4,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MoneyManagement_Data", "Mon
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MoneyManagement_Api", "MoneyManagement_Api\MoneyManagement_Api.csproj", "{2EE07C7C-C8EF-4C49-98A7-C16FEFF2B2C5}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MoneyManagement_Web", "MoneyManagement_Web\MoneyManagement_Web.csproj", "{A276A8BB-E429-4602-B8B2-64CB5C2C081D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -18,5 +20,9 @@ Global
 		{2EE07C7C-C8EF-4C49-98A7-C16FEFF2B2C5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2EE07C7C-C8EF-4C49-98A7-C16FEFF2B2C5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2EE07C7C-C8EF-4C49-98A7-C16FEFF2B2C5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A276A8BB-E429-4602-B8B2-64CB5C2C081D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A276A8BB-E429-4602-B8B2-64CB5C2C081D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A276A8BB-E429-4602-B8B2-64CB5C2C081D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A276A8BB-E429-4602-B8B2-64CB5C2C081D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
