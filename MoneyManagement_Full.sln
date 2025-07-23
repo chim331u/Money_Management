@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MoneyManagement_Data", "MoneyManagement_Data\MoneyManagement_Data.csproj", "{E3157D36-0220-4F39-97C7-A72C74F266BB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MoneyManagement_Api", "MoneyManagement_Api\MoneyManagement_Api.csproj", "{2EE07C7C-C8EF-4C49-98A7-C16FEFF2B2C5}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{E3157D36-0220-4F39-97C7-A72C74F266BB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E3157D36-0220-4F39-97C7-A72C74F266BB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E3157D36-0220-4F39-97C7-A72C74F266BB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E3157D36-0220-4F39-97C7-A72C74F266BB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2EE07C7C-C8EF-4C49-98A7-C16FEFF2B2C5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2EE07C7C-C8EF-4C49-98A7-C16FEFF2B2C5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2EE07C7C-C8EF-4C49-98A7-C16FEFF2B2C5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2EE07C7C-C8EF-4C49-98A7-C16FEFF2B2C5}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
