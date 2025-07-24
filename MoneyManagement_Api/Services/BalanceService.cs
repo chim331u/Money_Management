@@ -4,6 +4,7 @@ using MoneyManagement_Api.Contract;
 using MoneyManagement_Api.Interfaces;
 using MoneyManagement_Api.Models.Balance;
 using MoneyManagement_Data;
+using MoneyManagement_Data.DTOs;
 
 namespace MoneyManagement_Api.Services;
 
@@ -18,7 +19,7 @@ public class BalanceService : IBalanceService
         _logger = logger;
     }
 
-    public async Task<ApiResponse<ICollection<Balance>>> GetActiveBalanceList()
+    public async Task<ApiResponse<ICollection<BalanceDto>>> GetActiveBalanceList()
     {
         try
         {
@@ -28,17 +29,17 @@ public class BalanceService : IBalanceService
                 .Where(x => x.IsActive)
                 .OrderByDescending(x => x.DateBalance).ToListAsync();
 
-            return new ApiResponse<ICollection<Balance>>(result,
+            return new ApiResponse<ICollection<BalanceDto>>(result.Select(b => AutoMapper.MapBalanceToDto(b)).ToList(),
                 $"Balance list retrieved successfully with {result.Count} items.");
         }
         catch (Exception ex)
         {
             _logger.LogError($"Error retrieving Active balance list: {ex.Message}");
-            return new ApiResponse<ICollection<Balance>>(null, $"Error retrieving Active balance list: {ex.Message}");
+            return new ApiResponse<ICollection<BalanceDto>>(null, $"Error retrieving Active balance list: {ex.Message}");
         }
     }
 
-    public async Task<ApiResponse<Balance>> GetBalance(int balanceId)
+    public async Task<ApiResponse<BalanceDto>> GetBalance(int balanceId)
     {
         try
         {
@@ -47,16 +48,16 @@ public class BalanceService : IBalanceService
                 .Include(c => c.Account.Currency)
                 .Where(x => x.Id == balanceId).FirstOrDefaultAsync();
 
-            return new ApiResponse<Balance>(result, $"Balance retrieved successfully with id {balanceId}");
+            return new ApiResponse<BalanceDto>(AutoMapper.MapBalanceToDto(result), $"Balance retrieved successfully with id {balanceId}");
         }
         catch (Exception ex)
         {
             _logger.LogError($"Error retrieving Balance: {ex.Message}");
-            return new ApiResponse<Balance>(null, $"Error retrieving Balance: {ex.Message}");
+            return new ApiResponse<BalanceDto>(null, $"Error retrieving Balance: {ex.Message}");
         }
     }
 
-    public async Task<ApiResponse<Balance>> UpdateBalance(Balance item)
+    public async Task<ApiResponse<BalanceDto>> UpdateBalance(BalanceDto item)
     {
         try
         {
@@ -68,50 +69,56 @@ public class BalanceService : IBalanceService
             if (existingBalance == null)
             {
                 _logger.LogError("Balance not found for update.");
-                return new ApiResponse<Balance>(null, $"Balance not found for update.");
+                return new ApiResponse<BalanceDto>(null, $"Balance not found for update.");
             }
 
             existingBalance.DateBalance = item.DateBalance;
             existingBalance.BalanceValue = item.BalanceValue;
-            existingBalance.IsActive = item.IsActive;
             existingBalance.Note = item.Note;
-            existingBalance.LastUpdatedDate = item.LastUpdatedDate;
+            existingBalance.LastUpdatedDate = DateTime.Now;
+            
 
             _context.Balance.Update(existingBalance);
             await _context.SaveChangesAsync();
 
-            return new ApiResponse<Balance>(existingBalance,
+            return new ApiResponse<BalanceDto>(AutoMapper.MapBalanceToDto(existingBalance),
                 $"Balance updated successfully with id {existingBalance.Id}");
         }
         catch (Exception ex)
         {
             _logger.LogError($"Error update Balance: {ex.Message}");
-            return new ApiResponse<Balance>(null, $"Error update Balance: {ex.Message}");
+            return new ApiResponse<BalanceDto>(null, $"Error update Balance: {ex.Message}");
         }
     }
 
-    public async Task<ApiResponse<Balance>> AddBalance(Balance item)
+    public async Task<ApiResponse<BalanceDto>> AddBalance(BalanceDto item)
     {
         var account = await _context.AccountMasterData
             .Include(x => x.Currency)
-            .Where(x => x.Id == item.Account.Id)
+            .Where(x => x.Id == item.AccountId)
             .FirstOrDefaultAsync();
 
         try
         {
-            item.CreatedDate = DateTime.Now;
-            item.IsActive = true;
-            item.Account = account;
-            item.LastUpdatedDate = DateTime.Now;
-            await _context.Balance.AddAsync(item);
+            var newBalance = new Balance()
+            {
+                CreatedDate = DateTime.Now,
+                DateBalance = item.DateBalance,
+                BalanceValue = item.BalanceValue,
+                Note = item.Note,
+                Account = account,
+                IsActive = true
+            };
+
+            await _context.Balance.AddAsync(newBalance);
             await _context.SaveChangesAsync();
 
-            return new ApiResponse<Balance>(item, $"Balance added successfully with id {item.Id}");
+            return new ApiResponse<BalanceDto>(AutoMapper.MapBalanceToDto(newBalance), $"Balance added successfully with id {newBalance.Id}");
         }
         catch (Exception ex)
         {
             _logger.LogError($"Error adding Balance: {ex.Message}");
-            return new ApiResponse<Balance>(null, $"Error adding Balance: {ex.Message}");
+            return new ApiResponse<BalanceDto>(null, $"Error adding Balance: {ex.Message}");
         }
     }
 

@@ -5,8 +5,6 @@ namespace MoneyManagement_Web.Data.BankAccount
 {
     public class Account_DTO
     {
-
-        [Key]
         public int Id { get; set; }
         public string? Name { get; set; }
         public string? Conto { get; set; } //NEW 
@@ -14,13 +12,9 @@ namespace MoneyManagement_Web.Data.BankAccount
         public string? Iban { get; set; }
         public string? Bic { get; set; }
         public string? AccountType { get; set; }
-        public DateTime CreatedDate { get; set; }
         public string? Note { get; set; }
-
         public int CurrencyId { get; set; }
         public string? CurrencyName { get; set; }
-
-        public Currency Currency { get; set; }
         public int BankId { get; set; }
         public string? BankName { get; set; }
     }

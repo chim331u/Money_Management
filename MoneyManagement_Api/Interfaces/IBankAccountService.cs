@@ -1,15 +1,16 @@
 ﻿using MoneyManagement_Api.Contract;
 using MoneyManagement_Api.Models.BankAccount;
 using MoneyManagement_Data;
+using MoneyManagement_Data.DTOs;
 
 namespace MoneyManagement_Api.Interfaces;
 
 public interface IBankAccountService
 {
-    Task<ApiResponse<ICollection<AccountMasterData>>> GetActiveAccountList();
-    Task<ApiResponse<AccountMasterData>> GetAccount(int accountId);
-    Task<ApiResponse<AccountMasterData>> AddAccount(AccountMasterData account);
-    Task<ApiResponse<AccountMasterData>> UpdateAccount(AccountMasterData account);
+    Task<ApiResponse<ICollection<AccountDto>>> GetActiveAccountList();
+    Task<ApiResponse<AccountDto>> GetAccount(int accountId);
+    Task<ApiResponse<AccountDto>> AddAccount(AccountDto account);
+    Task<ApiResponse<AccountDto>> UpdateAccount(AccountDto account);
     Task<ApiResponse<bool>> DeleteAccount(int id);
 
     //Task<ICollection<BankMasterData>> GetActiveBankList();

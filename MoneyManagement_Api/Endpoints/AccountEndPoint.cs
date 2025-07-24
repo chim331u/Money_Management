@@ -1,5 +1,5 @@
 using MoneyManagement_Api.Interfaces;
-using MoneyManagement_Api.Models.BankAccount;
+using MoneyManagement_Data.DTOs;
 
 namespace MoneyManagement_Api.Endpoints;
 
@@ -20,7 +20,7 @@ public static class AccountEndPoint
             return result != null ? Results.Ok(result) : Results.NotFound();
         });
 
-        app.MapPost("/AddAccount", async (AccountMasterData? item, IBankAccountService service) =>
+        app.MapPost("/AddAccount", async (AccountDto item, IBankAccountService service) =>
         {
             if (item == null) return Results.BadRequest("Account is null");
 
@@ -28,7 +28,7 @@ public static class AccountEndPoint
             return result != null ? Results.Ok(result) : Results.NotFound();
         });
 
-        app.MapPut("/UpdateAccount", async (AccountMasterData? item, IBankAccountService service) =>
+        app.MapPut("/UpdateAccount", async (AccountDto item, IBankAccountService service) =>
         {
             if (item == null) return Results.BadRequest("Account is null");
             var result = await service.UpdateAccount(item);

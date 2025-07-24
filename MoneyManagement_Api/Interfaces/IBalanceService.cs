@@ -1,14 +1,13 @@
-﻿using MoneyManagement_Api.Contract;
-using MoneyManagement_Api.Models.Balance;
-using MoneyManagement_Data;
+﻿using MoneyManagement_Data;
+using MoneyManagement_Data.DTOs;
 
 namespace MoneyManagement_Api.Interfaces;
 
 public interface IBalanceService
 {
-    Task<ApiResponse<ICollection<Balance>>> GetActiveBalanceList();
-    Task<ApiResponse<Balance>> GetBalance(int balanceId);
-    Task<ApiResponse<Balance>> AddBalance(Balance balance);
-    Task<ApiResponse<Balance>> UpdateBalance(Balance balance);
+    Task<ApiResponse<ICollection<BalanceDto>>> GetActiveBalanceList();
+    Task<ApiResponse<BalanceDto>> GetBalance(int balanceId);
+    Task<ApiResponse<BalanceDto>> AddBalance(BalanceDto balance);
+    Task<ApiResponse<BalanceDto>> UpdateBalance(BalanceDto balance);
     Task<ApiResponse<bool>> DeleteBalance(int id);
 }

@@ -3,6 +3,7 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using MoneyManagement_Data.DTOs;
 using MoneyManagement_Web.Data.BankAccount;
 using MoneyManagement_Web.Interfaces;
 
@@ -178,10 +179,10 @@ namespace MoneyManagement_Web.Services
 
 
         #region Account
-        public async Task<List<AccountMasterData>> GetActiveAccountListOriginal()
+        public async Task<List<AccountDto>> GetActiveAccountListOriginal()
         {
             Uri uri = new Uri(string.Format(_utilityServices.GetRestUrl() + $"api/Account/GetAccountListOriginal", string.Empty));
-            var dataResponse = new List<AccountMasterData>();
+            var dataResponse = new List<AccountDto>();
 
             try
             {
@@ -191,7 +192,7 @@ namespace MoneyManagement_Web.Services
                 if (response.IsSuccessStatusCode)
                 {
                     string content = await response.Content.ReadAsStringAsync();
-                    dataResponse = JsonSerializer.Deserialize<List<AccountMasterData>>(content, _serializerOptions);
+                    dataResponse = JsonSerializer.Deserialize<List<AccountDto>>(content, _serializerOptions);
                 }
 
                 return dataResponse;
@@ -204,10 +205,10 @@ namespace MoneyManagement_Web.Services
             }
         }
 
-        public async Task<List<AccountMasterData>> GetActiveAccountList()
+        public async Task<List<AccountDto>> GetActiveAccountList()
         {
             Uri uri = new Uri(string.Format(_utilityServices.GetRestUrl() + $"api/Account/GetAccountList", string.Empty));
-            var dataResponse = new List<AccountMasterData>();
+            var dataResponse = new List<AccountDto>();
 
             try
             {
@@ -217,7 +218,7 @@ namespace MoneyManagement_Web.Services
                 if (response.IsSuccessStatusCode)
                 {
                     string content = await response.Content.ReadAsStringAsync();
-                    dataResponse = JsonSerializer.Deserialize<List<AccountMasterData>>(content, _serializerOptions);
+                    dataResponse = JsonSerializer.Deserialize<List<AccountDto>>(content, _serializerOptions);
                 }
 
                 return dataResponse;
@@ -230,10 +231,10 @@ namespace MoneyManagement_Web.Services
             }
         }
 
-        public async Task<AccountMasterData> GetAccount(int id)
+        public async Task<AccountDto> GetAccount(int id)
         {
             Uri uri = new Uri(string.Format(_utilityServices.GetRestUrl() + $"api/Account/GetAccount/{id}", string.Empty));
-            var dataResponse = new AccountMasterData();
+            var dataResponse = new AccountDto();
 
             try
             {
@@ -244,7 +245,7 @@ namespace MoneyManagement_Web.Services
                 if (response.IsSuccessStatusCode)
                 {
                     string content = await response.Content.ReadAsStringAsync();
-                    dataResponse = JsonSerializer.Deserialize<AccountMasterData>(content, _serializerOptions);
+                    dataResponse = JsonSerializer.Deserialize<AccountDto>(content, _serializerOptions);
                 }
 
                 return dataResponse;
@@ -257,7 +258,7 @@ namespace MoneyManagement_Web.Services
             }
         }
 
-        public async Task<AccountMasterData> UpdateAccount(AccountMasterData item)
+        public async Task<AccountDto> UpdateAccount(AccountDto item)
         {
             Uri uri = new Uri(string.Format(_utilityServices.GetRestUrl() + $"api/Account/UpdateAccount", string.Empty));
 
@@ -270,7 +271,7 @@ namespace MoneyManagement_Web.Services
                 if (response.IsSuccessStatusCode)
                 {
                     string content = await response.Content.ReadAsStringAsync();
-                    var dataResponse = JsonSerializer.Deserialize<AccountMasterData>(content, _serializerOptions);
+                    var dataResponse = JsonSerializer.Deserialize<AccountDto>(content, _serializerOptions);
                     return dataResponse;
                 }
 
@@ -285,7 +286,7 @@ namespace MoneyManagement_Web.Services
             }
         }
 
-        public async Task<AccountMasterData> AddAccount(AccountMasterData item)
+        public async Task<AccountDto> AddAccount(AccountDto item)
         {
             Uri uri = new Uri(string.Format(_utilityServices.GetRestUrl() + $"api/Account/AddAccount", string.Empty));
 
@@ -298,7 +299,7 @@ namespace MoneyManagement_Web.Services
                 if (response.IsSuccessStatusCode)
                 {
                     string content = await response.Content.ReadAsStringAsync();
-                    var dataResponse = JsonSerializer.Deserialize<AccountMasterData>(content, _serializerOptions);
+                    var dataResponse = JsonSerializer.Deserialize<AccountDto>(content, _serializerOptions);
                     return dataResponse;
                 }
 
@@ -313,7 +314,7 @@ namespace MoneyManagement_Web.Services
             }
         }
 
-        public async Task<AccountMasterData> DeleteAccount(AccountMasterData item)
+        public async Task<AccountDto> DeleteAccount(AccountDto item)
         {
 
             Uri uri = new Uri(string.Format(_utilityServices.GetRestUrl() + $"api/Account/DeleteAccount", string.Empty));
@@ -327,7 +328,7 @@ namespace MoneyManagement_Web.Services
                 if (response.IsSuccessStatusCode)
                 {
                     string content = await response.Content.ReadAsStringAsync();
-                    var dataResponse = JsonSerializer.Deserialize<AccountMasterData>(content, _serializerOptions);
+                    var dataResponse = JsonSerializer.Deserialize<AccountDto>(content, _serializerOptions);
                     return dataResponse;
                 }
 

@@ -3,7 +3,7 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using MoneyManagement_Web.Data.Balance;
+using MoneyManagement_Data.DTOs;
 using MoneyManagement_Web.Interfaces;
 
 namespace MoneyManagement_Web.Services
@@ -35,10 +35,10 @@ namespace MoneyManagement_Web.Services
 
         #region Balance
 
-        public async Task<List<Balance>> GetActiveBalanceList()
+        public async Task<List<BalanceDto>> GetActiveBalanceList()
         {
             Uri uri = new Uri(string.Format(_utilityServices.GetRestUrl() + $"api/Balance/GetBalanceList", string.Empty));
-            var dataResponse = new List<Balance>();
+            var dataResponse = new List<BalanceDto>();
 
             try
             {
@@ -53,7 +53,7 @@ namespace MoneyManagement_Web.Services
                 if (response.IsSuccessStatusCode)
                 {
                     string content = await response.Content.ReadAsStringAsync();
-                    dataResponse = JsonSerializer.Deserialize<List<Balance>>(content, _serializerOptions);
+                    dataResponse = JsonSerializer.Deserialize<List<BalanceDto>>(content, _serializerOptions);
                 }
 
                 return dataResponse;
@@ -65,10 +65,10 @@ namespace MoneyManagement_Web.Services
                 return null;
             }
         }
-        public async Task<Balance> GetBalance(int id)
+        public async Task<BalanceDto> GetBalance(int id)
         {
             Uri uri = new Uri(string.Format(_utilityServices.GetRestUrl() + $"api/Balance/GetBalance/{id}", string.Empty));
-            var dataResponse = new Balance();
+            var dataResponse = new BalanceDto();
 
             try
             {
@@ -78,7 +78,7 @@ namespace MoneyManagement_Web.Services
                 if (response.IsSuccessStatusCode)
                 {
                     string content = await response.Content.ReadAsStringAsync();
-                    dataResponse = JsonSerializer.Deserialize<Balance>(content, _serializerOptions);
+                    dataResponse = JsonSerializer.Deserialize<BalanceDto>(content, _serializerOptions);
                 }
 
                 return dataResponse;
@@ -91,7 +91,7 @@ namespace MoneyManagement_Web.Services
             }
         }
 
-        public async Task<Balance> UpdateBalance(Balance item)
+        public async Task<BalanceDto> UpdateBalance(BalanceDto item)
         {
             Uri uri = new Uri(string.Format(_utilityServices.GetRestUrl() + $"api/Balance/UpdateBalance", string.Empty));
 
@@ -103,7 +103,7 @@ namespace MoneyManagement_Web.Services
                 if (response.IsSuccessStatusCode)
                 {
                     string content = await response.Content.ReadAsStringAsync();
-                    var dataResponse = JsonSerializer.Deserialize<Balance>(content, _serializerOptions);
+                    var dataResponse = JsonSerializer.Deserialize<BalanceDto>(content, _serializerOptions);
                     return dataResponse;
                 }
 
@@ -118,7 +118,7 @@ namespace MoneyManagement_Web.Services
             }
         }
 
-        public async Task<Balance> AddBalance(Balance item)
+        public async Task<BalanceDto> AddBalance(BalanceDto item)
         {
             Uri uri = new Uri(string.Format(_utilityServices.GetRestUrl() + $"api/Balance/AddBalance", string.Empty));
 
@@ -130,7 +130,7 @@ namespace MoneyManagement_Web.Services
                 if (response.IsSuccessStatusCode)
                 {
                     string content = await response.Content.ReadAsStringAsync();
-                    var dataResponse = JsonSerializer.Deserialize<Balance>(content, _serializerOptions);
+                    var dataResponse = JsonSerializer.Deserialize<BalanceDto>(content, _serializerOptions);
                     return dataResponse;
                 }
 
@@ -145,7 +145,7 @@ namespace MoneyManagement_Web.Services
             }
         }
 
-        public async Task<Balance> DeleteBalance(Balance item)
+        public async Task<BalanceDto> DeleteBalance(BalanceDto item)
         {
 
             Uri uri = new Uri(string.Format(_utilityServices.GetRestUrl() + $"api/Balance/DeleteBalance", string.Empty));
@@ -158,7 +158,7 @@ namespace MoneyManagement_Web.Services
                 if (response.IsSuccessStatusCode)
                 {
                     string content = await response.Content.ReadAsStringAsync();
-                    var dataResponse = JsonSerializer.Deserialize<Balance>(content, _serializerOptions);
+                    var dataResponse = JsonSerializer.Deserialize<BalanceDto>(content, _serializerOptions);
                     return dataResponse;
                 }
 

@@ -26,10 +26,10 @@
                 <RadzenDataGridColumn TItem="TransactionDto" Property="Id" Filterable="false" Title="ID"
                                       Frozen="true" Width="20px" TextAlign="TextAlign.Center" />
 
-                <RadzenDataGridColumn TItem="TransactionDto" Property="Account.Name" Title="Account" Frozen="true" Width="50px">
+                <RadzenDataGridColumn TItem="TransactionDto" Property="AccountName" Title="Account" Frozen="true" Width="50px">
                     <EditTemplate Context="data">
                         <RadzenDropDown AllowClear="true" Name="Account.Name"
-                                        TValue="AccountMasterData" Class="w-99" Placeholder="Select an Account"
+                                        TValue="AccountDto" Class="w-99" Placeholder="Select an Account"
                                         FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
                                         AllowFiltering="true" TextProperty="Name"
                                         Data=@accountsList @bind-Value="data.AccountName" />
@@ -143,7 +143,7 @@ else
     public IBankAccountService _accountService { get; set; }
 
     protected IList<TransactionDto>? transactions;
-    protected IList<AccountMasterData>? accountsList;
+    protected IList<AccountDto>? accountsList;
     protected IList<string>? areas;
 
     protected override async Task OnInitializedAsync()

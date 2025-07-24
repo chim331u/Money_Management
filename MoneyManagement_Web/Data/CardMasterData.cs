@@ -15,6 +15,6 @@ namespace MoneyManagement_Web.Data
         public string Pan { get; set; } //TODO CRIPT
         public string Secret { get; set; } //TODO PIN, CVV2 ETC
 
-        public AccountMasterData AccountMasterData { get; set; }
+        //public AccountMasterData AccountMasterData { get; set; }
     }
 }

@@ -1,4 +1,5 @@
 ﻿@page "/accountpage"
+@using MoneyManagement_Data.DTOs
 <MM_WEB.Shared.Components.BreadCrumb path="accountpage"></MM_WEB.Shared.Components.BreadCrumb>
 @if (_accessService.IsAuthorized)
 {
@@ -38,7 +39,7 @@
                     </EditTemplate>
                 </RadzenDataGridColumn>
 
-                <RadzenDataGridColumn TItem="AccountMasterData" Property="Currency.Name" Title="Currency" Frozen="true" Width="60px">
+                <RadzenDataGridColumn TItem="AccountDto" Property="Currency.Name" Title="Currency" Frozen="true" Width="60px">
                     <EditTemplate Context="account">
                         <RadzenDropDown AllowClear="true" Name="Currency.Name"
                                         TValue="Currency" Class="w-99" Placeholder="Select a Currency"
@@ -49,13 +50,13 @@
                     </EditTemplate>
                 </RadzenDataGridColumn>
 
-                <RadzenDataGridColumn TItem="AccountMasterData" Property="Description" Title="Description" Frozen="true" Width="50px">
+                <RadzenDataGridColumn TItem="AccountDto" Property="Description" Title="Description" Frozen="true" Width="50px">
                     <EditTemplate Context="account">
                         <RadzenTextBox @bind-Value="account.Description" Style="width:100%; display: block" Name="Description" />
                     </EditTemplate>
                 </RadzenDataGridColumn>
 
-                <RadzenDataGridColumn TItem="AccountMasterData" Property="BankMasterData.Name" Title="Bank" Frozen="true" Width="60px">
+                <RadzenDataGridColumn TItem="AccountDto" Property="BankMasterData.Name" Title="Bank" Frozen="true" Width="60px">
                     <EditTemplate Context="account">
                         <RadzenDropDown AllowClear="true" Name="BankMasterData.Name"
                                         TValue="BankMasterData" Class="w-99" Placeholder="Select a Bank"
@@ -66,7 +67,7 @@
                     </EditTemplate>
                 </RadzenDataGridColumn>
 
-                <RadzenDataGridColumn TItem="AccountMasterData" Title="Type" Frozen="true" Width="50px">
+                <RadzenDataGridColumn TItem="AccountDto" Title="Type" Frozen="true" Width="50px">
                     <Template Context="data">
                         <RadzenBadge IsPill="true" Variant="Variant.Outlined" BadgeStyle=@AccountTypeStyle(data.AccountType) Text="@data.AccountType" />
                     </Template>
@@ -76,18 +77,18 @@
                         <RadzenRequiredValidator Text="Account Type" Component="AccountType" Popup="false" />
                     </EditTemplate>
                 </RadzenDataGridColumn>
-                <RadzenDataGridColumn TItem="AccountMasterData" Property="Iban" Title="Iban" Frozen="true" Width="50px">
+                <RadzenDataGridColumn TItem="AccountDto" Property="Iban" Title="Iban" Frozen="true" Width="50px">
                     <EditTemplate Context="account">
                         <RadzenTextBox @bind-Value="account.Iban" Style="width:100%; display: block" Name="Iban" />
                     </EditTemplate>
                 </RadzenDataGridColumn>
 
-                <RadzenDataGridColumn TItem="AccountMasterData" Property="Note" Title="Note" Frozen="true" Width="50px">
+                <RadzenDataGridColumn TItem="AccountDto" Property="Note" Title="Note" Frozen="true" Width="50px">
                     <EditTemplate Context="account">
                         <RadzenTextBox @bind-Value="account.Note" Style="width:100%; display: block" Name="Note" />
                     </EditTemplate>
                 </RadzenDataGridColumn>
-                <RadzenDataGridColumn TItem="AccountMasterData" Context="account" Filterable="false" Sortable="false"
+                <RadzenDataGridColumn TItem="AccountDto" Context="account" Filterable="false" Sortable="false"
                                       TextAlign="TextAlign.Right" Width="10%">
                     <Template Context="account">
                         <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Small"
@@ -125,7 +126,7 @@ else
     [Inject]
     public IAnchillaryService _anchillaryService { get; set; }
 
-    protected IList<AccountMasterData>? accounts;
+    protected IList<AccountDto>? accounts;
     protected IList<BankMasterData>? banks;
 
     protected IList<Currency> currencyList;
@@ -168,16 +169,16 @@ else
 
     }
 
-    AccountMasterData? accountToUpdate;
-    AccountMasterData? accountToInsert;
-    RadzenDataGrid<AccountMasterData>? accountGrid;
+    AccountDto? accountToUpdate;
+    AccountDto? accountToInsert;
+    RadzenDataGrid<AccountDto>? accountGrid;
 
-    protected AccountMasterData originalItem;
+    protected AccountDto originalItem;
 
-    async Task EditRow(AccountMasterData item)
+    async Task EditRow(AccountDto item)
     {
         accountToUpdate = item;
-        originalItem = new AccountMasterData
+        originalItem = new AccountDto()
             {
                 Id = item.Id,
                 Name = item.Name,
@@ -186,13 +187,12 @@ else
                 Iban = item.Iban,
                 Bic = item.Bic,
                 AccountType = item.AccountType,
-                CreatedDate = item.CreatedDate,
                 Note = item.Note,
             };
         await accountGrid.EditRow(item);
     }
 
-    async void OnUpdateRow(AccountMasterData item)
+    async void OnUpdateRow(AccountDto item)
     {
         if (item == accountToInsert)
         {
@@ -227,7 +227,7 @@ else
         }
     }
 
-    async void OnCreateRow(AccountMasterData item)
+    async void OnCreateRow(AccountDto item)
     {
         var result = await _service.AddAccount(item);
 
@@ -259,12 +259,12 @@ else
         await RefreshData();
     }
 
-    async Task SaveRow(AccountMasterData item)
+    async Task SaveRow(AccountDto item)
     {
         await accountGrid.UpdateRow(item);
     }
 
-    async void CancelEdit(AccountMasterData item)
+    async void CancelEdit(AccountDto item)
     {
         if (accountToInsert != null)
         {
@@ -283,13 +283,13 @@ else
 
     protected async Task InsertRow()
     {
-        accountToInsert = new AccountMasterData();
+        accountToInsert = new AccountDto();
 
         await accountGrid.InsertRow(accountToInsert);
 
     }
 
-    async Task DeleteRow(AccountMasterData item)
+    async Task DeleteRow(AccountDto item)
     {
         var dialogResult = await DialogService.OpenAsync("Confirm Delete", ds =>
             @<RadzenStack Gap="1.5rem">

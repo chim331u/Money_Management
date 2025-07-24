@@ -1,15 +1,16 @@
-﻿using MoneyManagement_Web.Data.BankAccount;
+﻿using MoneyManagement_Data.DTOs;
+using MoneyManagement_Web.Data.BankAccount;
 
 namespace MoneyManagement_Web.Interfaces
 {
     public interface IBankAccountService
     {
-        Task<List<AccountMasterData>> GetActiveAccountListOriginal();
-        Task<List<AccountMasterData>> GetActiveAccountList();
-        Task<AccountMasterData> GetAccount(int accountId);
-        Task<AccountMasterData> AddAccount(AccountMasterData account);
-        Task<AccountMasterData> UpdateAccount(AccountMasterData account);
-        Task<AccountMasterData> DeleteAccount(AccountMasterData account);
+        Task<List<AccountDto>> GetActiveAccountListOriginal();
+        Task<List<AccountDto>> GetActiveAccountList();
+        Task<AccountDto> GetAccount(int accountId);
+        Task<AccountDto> AddAccount(AccountDto account);
+        Task<AccountDto> UpdateAccount(AccountDto account);
+        Task<AccountDto> DeleteAccount(AccountDto account);
 
         Task<List<BankMasterData>> GetActiveBankList();
         Task<BankMasterData> GetBank(int bankId);

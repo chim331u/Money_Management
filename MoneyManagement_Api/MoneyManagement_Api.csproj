@@ -53,4 +53,9 @@
         <ProjectReference Include="..\MoneyManagement_Data\MoneyManagement_Data.csproj"/>
     </ItemGroup>
 
+    <ItemGroup>
+      <Compile Remove="Contract\Account_DTO.cs" />
+      <Compile Remove="Contract\Balance_DTO.cs" />
+    </ItemGroup>
+
 </Project>

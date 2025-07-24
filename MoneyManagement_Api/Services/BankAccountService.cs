@@ -5,6 +5,7 @@ using MoneyManagement_Api.Contract;
 using MoneyManagement_Api.Interfaces;
 using MoneyManagement_Api.Models.BankAccount;
 using MoneyManagement_Data;
+using MoneyManagement_Data.DTOs;
 
 namespace MoneyManagement_Api.Services;
 
@@ -154,7 +155,7 @@ public class BankAccountService : IBankAccountService
 
     #region Account
 
-    public async Task<ApiResponse<ICollection<AccountMasterData>>> GetActiveAccountList()
+    public async Task<ApiResponse<ICollection<AccountDto>>> GetActiveAccountList()
     {
         try
         {
@@ -164,18 +165,18 @@ public class BankAccountService : IBankAccountService
                 .Where(x => x.IsActive)
                 .OrderByDescending(x => x.CreatedDate).ToListAsync();
 
-            return new ApiResponse<ICollection<AccountMasterData>>(result,
+            return new ApiResponse<ICollection<AccountDto>>( result.Select(x => AutoMapper.MapAccountToDto(x)).ToList(),
                 "Active account list retrieved successfully.");
         }
         catch (Exception ex)
         {
             _logger.LogError($"Error retrieve Account list: {ex.Message}");
-            return new ApiResponse<ICollection<AccountMasterData>>(null,
+            return new ApiResponse<ICollection<AccountDto>>(null,
                 $"Error retrieving active account list: {ex.Message}");
         }
     }
 
-    public async Task<ApiResponse<AccountMasterData>> GetAccount(int accountId)
+    public async Task<ApiResponse<AccountDto>> GetAccount(int accountId)
     {
         try
         {
@@ -184,85 +185,95 @@ public class BankAccountService : IBankAccountService
                 .Include(x => x.BankMasterData)
                 .Where(x => x.Id == accountId).FirstOrDefaultAsync();
 
-            return new ApiResponse<AccountMasterData>(result, $"Account with ID {accountId} retrieved successfully.");
+            return new ApiResponse<AccountDto>(AutoMapper.MapAccountToDto(result), $"Account with ID {accountId} retrieved successfully.");
         }
         catch (Exception ex)
         {
             _logger.LogError($"Error retrieve Account {accountId}: {ex.Message}");
-            return new ApiResponse<AccountMasterData>(null, $"Error retrieve Account {accountId}: {ex.Message}");
+            return new ApiResponse<AccountDto>(null, $"Error retrieve Account {accountId}: {ex.Message}");
         }
     }
 
-    public async Task<ApiResponse<AccountMasterData>> UpdateAccount(AccountMasterData? item)
+    public async Task<ApiResponse<AccountDto>> UpdateAccount(AccountDto item)
     {
         try
         {
             var existingAccount = await _context.AccountMasterData
                 .Include(x => x.Currency)
-                .Include(x => x.BankMasterData).Where(x => x.Id == item.Id).FirstOrDefaultAsync();
+                .Include(x => x.BankMasterData)
+                .Where(x => x.Id == item.Id).FirstOrDefaultAsync();
 
             if (existingAccount == null)
             {
                 _logger.LogWarning($"Account to update not found");
-                return new ApiResponse<AccountMasterData>(null, $"Account with ID {item.Id} not found.");
+                return new ApiResponse<AccountDto>(null, $"Account with ID {item.Id} not found.");
             }
 
             existingAccount.AccountType = item.AccountType;
             existingAccount.LastUpdatedDate = DateTime.Now;
 
-            _context.AccountMasterData.Update(item);
+            _context.AccountMasterData.Update(existingAccount);
             await _context.SaveChangesAsync();
 
-            return new ApiResponse<AccountMasterData>(existingAccount,
-                $"Account with ID {item.Id} updated successfully.");
+            return new ApiResponse<AccountDto>(AutoMapper.MapAccountToDto(existingAccount),
+                $"Account with ID {existingAccount.Id} updated successfully.");
         }
         catch (Exception ex)
         {
             _logger.LogError(ex.Message);
-            return new ApiResponse<AccountMasterData>(null, $"Error updating account: {ex.Message}");
+            return new ApiResponse<AccountDto>(null, $"Error updating account: {ex.Message}");
         }
     }
 
-    public async Task<ApiResponse<AccountMasterData>> AddAccount(AccountMasterData? item)
+    public async Task<ApiResponse<AccountDto>> AddAccount(AccountDto? item)
     {
         if (item == null)
         {
             _logger.LogWarning($"Account to add not found");
-            return new ApiResponse<AccountMasterData>(null, "Account to add not found.");
+            return new ApiResponse<AccountDto>(null, "Account to add not found.");
         }
 
-        if (item.Currency == null)
+        if (item.CurrencyId == 0)
         {
             _logger.LogWarning($"Currency for Account to add not found");
-            return new ApiResponse<AccountMasterData>(null, "Currency for Account to add not found.");
+            return new ApiResponse<AccountDto>(null, "Currency for Account to add not found.");
         }
 
-        var currency = await _context.Currency.FindAsync(item.Currency.Id);
-        if (item.BankMasterData == null)
+        var currency = await _context.Currency.FindAsync(item.CurrencyId);
+        if (item.BankId == 0)
         {
             _logger.LogWarning($"Bank for Account to add not found");
-            return new ApiResponse<AccountMasterData>(null, "Bank for Account to add not found.");
+            return new ApiResponse<AccountDto>(null, "Bank for Account to add not found.");
         }
 
-        var bank = await _context.BankMasterData.FindAsync(item.BankMasterData.Id);
+        var bank = await _context.BankMasterData.FindAsync(item.BankId);
 
         try
         {
-            item.CreatedDate = DateTime.Now;
-            item.IsActive = true;
-            item.BankMasterData = bank;
-            item.Currency = currency;
+            var newAccount = new AccountMasterData()
+            {
+                Name = item.Name,
+                AccountType = item.AccountType,
+               Currency = currency,
+               BankMasterData = bank,
+                Description = item.Description,
+                Bic = item.Bic,
+                Iban = item.Iban,
+                Conto = item.Conto, CreatedDate = DateTime.Now, IsActive = true,
+                Note = item.Note
+            };
 
-            await _context.AccountMasterData.AddAsync(item);
+
+            await _context.AccountMasterData.AddAsync(newAccount);
             await _context.SaveChangesAsync();
 
-            return new ApiResponse<AccountMasterData>(await _context.AccountMasterData.FindAsync(item.Id),
-                $"Account with ID {item.Id} added successfully.");
+            return new ApiResponse<AccountDto>(AutoMapper.MapAccountToDto(await _context.AccountMasterData.FindAsync(newAccount.Id)),
+                $"Account with ID {newAccount.Id} added successfully.");
         }
         catch (Exception ex)
         {
             _logger.LogError($"Error adding new account : {ex.Message}");
-            return new ApiResponse<AccountMasterData>(null, $"Error adding new account : {ex.Message}");
+            return new ApiResponse<AccountDto>(null, $"Error adding new account : {ex.Message}");
         }
     }
 

@@ -1,5 +1,6 @@
 using MoneyManagement_Api.Interfaces;
 using MoneyManagement_Api.Models.Balance;
+using MoneyManagement_Data.DTOs;
 
 namespace MoneyManagement_Api.Endpoints;
 
@@ -21,13 +22,13 @@ public static class BalanceEndpoint
             return result != null ? Results.Ok(result) : Results.NotFound();
         });
 
-        app.MapPut("/AddBalance", async (Balance item, IBalanceService service) =>
+        app.MapPut("/AddBalance", async (BalanceDto item, IBalanceService service) =>
         {
             var result = await service.AddBalance(item);
             return result != null ? Results.Ok(result) : Results.NotFound();
         });
 
-        app.MapPost("/UpdateBalance", async (Balance item, IBalanceService service) =>
+        app.MapPost("/UpdateBalance", async (BalanceDto item, IBalanceService service) =>
         {
             var result = await service.UpdateBalance(item);
             return result != null ? Results.Ok(result) : Results.NotFound();

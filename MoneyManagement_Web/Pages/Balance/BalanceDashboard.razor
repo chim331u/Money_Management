@@ -1,4 +1,5 @@
 ﻿@page "/balancedashboard"
+@using MoneyManagement_Data.DTOs
 <MM_WEB.Shared.Components.BreadCrumb path="balancedashboard"></MM_WEB.Shared.Components.BreadCrumb>
 @if (_accessService.IsAuthorized)
 {
@@ -189,7 +190,7 @@ else
     [Inject]
     public IUtilityServices _utilityService { get; set; }
 
-    protected IList<Balance>? balances;
+    protected IList<BalanceDto>? balances;
     List<BalancesSummary>? availableBalancesDetails;
     List<BalancesSummary>? otherBalancesDetails;
     List<BalancesSummary>? totalBalancesDetails;
@@ -239,7 +240,7 @@ else
 
         await GetTotalBalancesChart(_balances);
 
-        balances = new List<Balance>();
+        balances = new List<BalanceDto>();
 
         foreach (var item in _balances.Where(x => x.Account.IsActive))
         {

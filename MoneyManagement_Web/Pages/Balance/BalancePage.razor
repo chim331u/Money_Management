@@ -1,4 +1,5 @@
 ﻿@page "/balancepage"
+@using MoneyManagement_Data.DTOs
 <MM_WEB.Shared.Components.BreadCrumb path="balancepage"></MM_WEB.Shared.Components.BreadCrumb>
 @if (_accessService.IsAuthorized)
 {
@@ -102,7 +103,7 @@ else
     [Inject]
     public IUtilityServices _utilityService { get; set; }
 
-    protected IList<Balance>? balances;
+    protected IList<BalanceDto>? balances;
     protected IList<AccountMasterData>? accounts;
 
     protected override async Task OnInitializedAsync()
@@ -123,18 +124,18 @@ else
 
     }
 
-    Balance? balanceToUpdate;
-    Balance? balanceToInsert;
-    RadzenDataGrid<Balance>? balanceGrid;
+    BalanceDto? balanceToUpdate;
+    BalanceDto? balanceToInsert;
+    RadzenDataGrid<BalanceDto>? balanceGrid;
 
-    async Task EditRow(Balance item)
+    async Task EditRow(BalanceDto item)
     {
         balanceToUpdate = item;
 
         await balanceGrid.EditRow(item);
     }
 
-    async void OnUpdateRow(Balance item)
+    async void OnUpdateRow(BalanceDto item)
     {
         if (item == balanceToInsert)
         {
@@ -169,7 +170,7 @@ else
         }
     }
 
-    async void OnCreateRow(Balance item)
+    async void OnCreateRow(BalanceDto item)
     {
         var result = await _service.AddBalance(item);
 
@@ -201,12 +202,12 @@ else
 
     }
 
-    async Task SaveRow(Balance item)
+    async Task SaveRow(BalanceDto item)
     {
         await balanceGrid.UpdateRow(item);
     }
 
-    async void CancelEdit(Balance item)
+    async void CancelEdit(BalanceDto item)
     {
         if (balanceToInsert != null)
         {
@@ -225,14 +226,14 @@ else
 
     protected async Task InsertRow()
     {
-        balanceToInsert = new Balance();
+        balanceToInsert = new BalanceDto();
         balanceToInsert.DateBalance = DateTime.Now;
 
         await balanceGrid.InsertRow(balanceToInsert);
 
     }
 
-    async Task DeleteRow(Balance item)
+    async Task DeleteRow(BalanceDto item)
     {
         var dialogResult = await DialogService.OpenAsync("Confirm Delete", ds =>
         @<RadzenStack Gap="1.5rem">
