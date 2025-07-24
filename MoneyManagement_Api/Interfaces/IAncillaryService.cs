@@ -1,5 +1,6 @@
 ﻿using MoneyManagement_Api.Contract;
 using MoneyManagement_Api.Models.AncillaryData;
+using MoneyManagement_Data;
 
 namespace MoneyManagement_Api.Interfaces;
 

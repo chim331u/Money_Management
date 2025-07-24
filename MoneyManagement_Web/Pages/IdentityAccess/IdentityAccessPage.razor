@@ -124,10 +124,6 @@ else
     [Inject]
     public IUtilityServices _utilityService { get; set; }
 
-    @inject NavigationManager NavManager
-    @inject NotificationService NotificationService
-    @inject DialogService DialogService
-
     protected IList<ISA_Accounts>? identiryAccounts;
     IList<ServiceUser>? users;
 
@@ -445,7 +441,6 @@ else
         iAccountToUpdate = null;
     }
 
-    @inject IClipboardService ClipboardService
 
     private async Task copyToClipboard(ISA_Accounts item)
     {
@@ -466,7 +461,7 @@ else
         else
         {
             // _utilityService.CopyToClipboard(text);
-            await ClipboardService.CopyTextToClipboardAsync(text);
+            //await ClipboardService.CopyTextToClipboardAsync(text);
             NotificationService.Notify(new NotificationMessage
                 {
                     Severity = NotificationSeverity.Success,

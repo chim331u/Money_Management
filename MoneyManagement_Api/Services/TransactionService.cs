@@ -6,6 +6,7 @@ using MoneyManagement_Api.AppContext;
 using MoneyManagement_Api.Contract;
 using MoneyManagement_Api.Interfaces;
 using MoneyManagement_Api.Models.Transactions;
+using MoneyManagement_Data;
 
 namespace MoneyManagement_Api.Services;
 
@@ -33,7 +34,8 @@ public class TransactionService : ITransactionService
                 .Where(x => x.IsActive).OrderByDescending(x => x.TxnDate).ToListAsync();
 
 
-            return new ApiResponse<ICollection<Transaction>>(result,
+            return new 
+                ApiResponse<ICollection<Transaction>>(result,
                 $"Active transactions retrieved successfully. Total: {result.Count}");
         }
         catch (Exception ex)

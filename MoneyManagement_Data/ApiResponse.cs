@@ -1,4 +1,4 @@
-namespace MoneyManagement_Api.Contract;
+namespace MoneyManagement_Data;
 
 /// <summary>
 /// Represents a generic API response containing data and a message.

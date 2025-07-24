@@ -88,11 +88,7 @@ else
     public IAccessServices _accessService { get; set; }
     [Inject]
     public IHouseThingsService _service { get; set; }
-
-    @inject NavigationManager NavManager
-    @inject NotificationService NotificationService
-    @inject DialogService DialogService
-
+    
     protected IList<HouseThings>? houseThings;
     protected IList<HouseThingsRooms>? rooms;
 

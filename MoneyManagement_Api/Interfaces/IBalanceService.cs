@@ -1,5 +1,6 @@
 ﻿using MoneyManagement_Api.Contract;
 using MoneyManagement_Api.Models.Balance;
+using MoneyManagement_Data;
 
 namespace MoneyManagement_Api.Interfaces;
 

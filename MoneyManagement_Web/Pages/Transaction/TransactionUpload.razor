@@ -205,9 +205,7 @@ else
     public IAccessServices _accessService { get; set; }
     [Inject]
     public ITransactionService _service { get; set; }
-    @inject NavigationManager NavManager
-    @inject NotificationService NotificationService
-
+    
     RadzenDataGrid<string[]>? csvGrid;
     RadzenDataGrid<Transaction>? csvModelGrid;
     MemoryStream ms;

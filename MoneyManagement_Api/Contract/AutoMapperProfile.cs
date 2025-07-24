@@ -1,6 +1,6 @@
 using AutoMapper;
-using MoneyManagement_Api.Contract.DTOs;
 using MoneyManagement_Api.Models.Transactions;
+using MoneyManagement_Data.DTOs;
 
 namespace MoneyManagement_Api.Contract;
 

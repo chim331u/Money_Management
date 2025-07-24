@@ -1,5 +1,6 @@
 using MoneyManagement_Api.Contract;
 using MoneyManagement_Api.Interfaces;
+using MoneyManagement_Data;
 using VaultSharp;
 using VaultSharp.V1.AuthMethods;
 using VaultSharp.V1.AuthMethods.UserPass;

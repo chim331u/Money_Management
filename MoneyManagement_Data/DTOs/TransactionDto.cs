@@ -1,4 +1,4 @@
-namespace MoneyManagement_Api.Contract.DTOs;
+namespace MoneyManagement_Data.DTOs;
 
 public class TransactionDto
 {

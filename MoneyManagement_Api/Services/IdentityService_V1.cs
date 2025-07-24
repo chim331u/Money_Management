@@ -6,6 +6,7 @@ using MoneyManagement_Api.AppContext;
 using MoneyManagement_Api.Contract;
 using MoneyManagement_Api.Interfaces;
 using MoneyManagement_Api.Models.Identity;
+using MoneyManagement_Data;
 
 namespace MoneyManagement_Api.Services;
 
