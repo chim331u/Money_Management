@@ -3,6 +3,7 @@ using Microsoft.ML.Data;
 using MoneyManagement_Api.AppContext;
 using MoneyManagement_Api.Interfaces;
 using MoneyManagement_Api.Models.Transactions;
+using MoneyManagement_Data.DTOs;
 
 namespace MoneyManagement_Api.Services;
 
@@ -148,7 +149,7 @@ public class MlTransactionService : IMlTransactionService
         mlContext.Model.Save(model, trainingDataViewSchema, _modelPath);
     }
 
-    public void AddToTrain(Transaction transaction)
+    public void AddToTrain(TransactionDto transaction)
     {
         if (transaction != null)
         {

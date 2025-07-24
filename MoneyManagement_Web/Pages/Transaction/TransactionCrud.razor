@@ -1,4 +1,5 @@
 ﻿@page "/transactionpage"
+@using MoneyManagement_Data.DTOs
 <MM_WEB.Shared.Components.BreadCrumb path="transactionpage"></MM_WEB.Shared.Components.BreadCrumb>
 @if (_accessService.IsAuthorized)
 {
@@ -18,25 +19,25 @@
         <RadzenDataGrid AllowFiltering="true" AllowColumnResize="true" AllowAlternatingRows="true" @ref="transactionGrid"
                         FilterMode="FilterMode.Advanced" AllowSorting="true" PageSize="15" AllowPaging="true"
                         PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true" ColumnWidth="250px"
-                        Data="@transactions" TItem="Transaction" LogicalFilterOperator="LogicalFilterOperator.Or"
+                        Data="@transactions" TItem="TransactionDto" LogicalFilterOperator="LogicalFilterOperator.Or"
                         EditMode="DataGridEditMode.Single" RowUpdate="@OnUpdateRow" RowCreate="@OnCreateRow"
                         Sort="@Reset" Page="@Reset" Filter="@Reset" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" Density="Density.Compact">
             <Columns>
-                <RadzenDataGridColumn TItem="Transaction" Property="Id" Filterable="false" Title="ID"
+                <RadzenDataGridColumn TItem="TransactionDto" Property="Id" Filterable="false" Title="ID"
                                       Frozen="true" Width="20px" TextAlign="TextAlign.Center" />
 
-                <RadzenDataGridColumn TItem="Transaction" Property="Account.Name" Title="Account" Frozen="true" Width="50px">
+                <RadzenDataGridColumn TItem="TransactionDto" Property="Account.Name" Title="Account" Frozen="true" Width="50px">
                     <EditTemplate Context="data">
                         <RadzenDropDown AllowClear="true" Name="Account.Name"
                                         TValue="AccountMasterData" Class="w-99" Placeholder="Select an Account"
                                         FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
                                         AllowFiltering="true" TextProperty="Name"
-                                        Data=@accountsList @bind-Value="data.Account" />
+                                        Data=@accountsList @bind-Value="data.AccountName" />
                         <RadzenRequiredValidator Text="Account is required" Component="Account.Name" Popup="false" />
                     </EditTemplate>
                 </RadzenDataGridColumn>
 
-                <RadzenDataGridColumn TItem="Transaction" Property="TxnDate" Title="Trx Date" Frozen="true" Width="50px" FormatString="{0:dd/MM/yyyy}">
+                <RadzenDataGridColumn TItem="TransactionDto" Property="TxnDate" Title="Trx Date" Frozen="true" Width="50px" FormatString="{0:dd/MM/yyyy}">
                     <EditTemplate Context="transaction">
                         <RadzenDatePicker @bind-Value="transaction.TxnDate" ShowTime="false" HourFormat="12"
                                           DateFormat="dd/MM/yyyy" Style="width:100%; display: block" Name="TxnDate" />
@@ -45,7 +46,7 @@
                 </RadzenDataGridColumn>
 
                 @*        Property="Description"*@
-                <RadzenDataGridColumn TItem="Transaction" Title="Description" Frozen="true" Width="90px">
+                <RadzenDataGridColumn TItem="TransactionDto" Title="Description" Frozen="true" Width="90px">
                     <Template Context="data">
                         <p style="white-space:pre-wrap">@data.Description</p>
                     </Template>
@@ -55,9 +56,9 @@
                     </EditTemplate>
                 </RadzenDataGridColumn>
 
-                <RadzenDataGridColumn TItem="Transaction" Title="Amount" Frozen="true" Width="40px">
+                <RadzenDataGridColumn TItem="TransactionDto" Title="Amount" Frozen="true" Width="40px">
                     <Template Context="data">
-                        @(string.Concat(data.TxnAmount.ToString("#.##"), " ", data.Account.Currency.CurrencyCodeALF3))
+                        @(string.Concat(data.TxnAmount.ToString("#.##"), " ", data.AccountCurrencyCodeALF3))
                     </Template>
                     <EditTemplate Context="transaction">
                         <RadzenNumeric @bind-Value="transaction.TxnAmount" Style="width:100%; display: block" Name="TxnAmount" />
@@ -65,7 +66,7 @@
                     </EditTemplate>
                 </RadzenDataGridColumn>
 
-                <RadzenDataGridColumn TItem="Transaction" Title="Area" Frozen="true" Width="60px">
+                <RadzenDataGridColumn TItem="TransactionDto" Title="Area" Frozen="true" Width="60px">
                     <Template Context="data">
                         <RadzenBadge IsPill="true" Variant="Variant.Outlined" BadgeStyle="BadgeStyle.Secondary" Text="@data.Area" />
                     </Template>
@@ -79,7 +80,7 @@
                     </EditTemplate>
                 </RadzenDataGridColumn>
 
-                <RadzenDataGridColumn TItem="Transaction" Property="IsCatConfirmed" Title="Confirm" Frozen="true" Width="40px">
+                <RadzenDataGridColumn TItem="TransactionDto" Property="IsCatConfirmed" Title="Confirm" Frozen="true" Width="40px">
                     <Template Context="data">
                         <RadzenSwitch @bind-Value=@data.IsCatConfirmed Change=@(args => OnConfirm(args, data))></RadzenSwitch>
                     </Template>
@@ -90,14 +91,14 @@
 
 
 
-                <RadzenDataGridColumn TItem="Transaction" Property="Note" Title="Note" Frozen="true" Width="40px">
+                <RadzenDataGridColumn TItem="TransactionDto" Property="Note" Title="Note" Frozen="true" Width="40px">
                     <EditTemplate Context="transaction">
                         <RadzenTextBox @bind-Value="transaction.Note" Style="width:100%; display: block" Name="Note" />
 
                     </EditTemplate>
                 </RadzenDataGridColumn>
 
-                <RadzenDataGridColumn TItem="Transaction" Context="transaction" Filterable="false" Sortable="false"
+                <RadzenDataGridColumn TItem="TransactionDto" Context="transaction" Filterable="false" Sortable="false"
                                       TextAlign="TextAlign.Right" Width="10%">
                     <Template Context="transaction">
                         <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Small"
@@ -141,7 +142,7 @@ else
     [Inject]
     public IBankAccountService _accountService { get; set; }
 
-    protected IList<Transaction>? transactions;
+    protected IList<TransactionDto>? transactions;
     protected IList<AccountMasterData>? accountsList;
     protected IList<string>? areas;
 
@@ -168,18 +169,18 @@ else
 
     }
 
-    Transaction? transactionToUpdate;
-    Transaction? transactionToInsert;
-    RadzenDataGrid<Transaction>? transactionGrid;
+    TransactionDto? transactionToUpdate;
+    TransactionDto? transactionToInsert;
+    RadzenDataGrid<TransactionDto>? transactionGrid;
 
-    async Task EditRow(Transaction item)
+    async Task EditRow(TransactionDto item)
     {
         transactionToUpdate = item;
 
         await transactionGrid.EditRow(item);
     }
 
-    async void OnUpdateRow(Transaction item)
+    async void OnUpdateRow(TransactionDto item)
     {
         Reset();
 
@@ -211,7 +212,7 @@ else
         }
     }
 
-    async void OnCreateRow(Transaction item)
+    async void OnCreateRow(TransactionDto item)
     {
         var result = await _service.AddTransaction(item);
 
@@ -245,12 +246,12 @@ else
 
     }
 
-    async Task SaveRow(Transaction item)
+    async Task SaveRow(TransactionDto item)
     {
         await transactionGrid.UpdateRow(item);
     }
 
-    async void CancelEdit(Transaction item)
+    async void CancelEdit(TransactionDto item)
     {
         Reset();
 
@@ -264,7 +265,7 @@ else
 
     protected async Task InsertRow()
     {
-        transactionToInsert = new Transaction();
+        transactionToInsert = new TransactionDto();
 
         transactionToInsert.TxnDate = DateTime.Now;
 
@@ -272,7 +273,7 @@ else
 
     }
 
-    async Task DeleteRow(Transaction item)
+    async Task DeleteRow(TransactionDto item)
     {
         var dialogResult = await DialogService.OpenAsync("Confirm Delete", ds =>
     @<RadzenStack Gap="1.5rem">
@@ -338,7 +339,7 @@ else
         transactionToUpdate = null;
     }
 
-    protected async Task OnConfirm(bool value, Transaction item)
+    protected async Task OnConfirm(bool value, TransactionDto item)
     {
         item.IsCatConfirmed = value;
 

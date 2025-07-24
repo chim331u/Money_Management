@@ -1,5 +1,6 @@
 using MoneyManagement_Api.Interfaces;
 using MoneyManagement_Api.Models.Transactions;
+using MoneyManagement_Data.DTOs;
 
 namespace MoneyManagement_Api.Endpoints;
 
@@ -20,19 +21,19 @@ public static class TransactionEndpoint
             return result != null ? Results.Ok(result) : Results.NotFound();
         });
 
-        app.MapPut("/UpdateTransaction", async (Transaction item, ITransactionService service) =>
+        app.MapPut("/UpdateTransaction", async (TransactionDto item, ITransactionService service) =>
         {
             var result = await service.UpdateTransaction(item);
             return result != null ? Results.Ok(result) : Results.NotFound();
         });
 
-        app.MapPost("/AddTransaction", async (Transaction item, ITransactionService service) =>
+        app.MapPost("/AddTransaction", async (TransactionDto item, ITransactionService service) =>
         {
             var result = await service.AddTransaction(item);
             return result != null ? Results.Ok(result) : Results.BadRequest("Failed to add transaction");
         });
 
-        app.MapPost("/UploadCsv", async (List<Transaction> item, ITransactionService service) =>
+        app.MapPost("/UploadCsv", async (List<TransactionDto> item, ITransactionService service) =>
         {
             var result = await service.UploadCsv(item);
             return result != null ? Results.BadRequest("Transaction list is null or empty") : Results.Ok(result);
@@ -44,13 +45,13 @@ public static class TransactionEndpoint
             return result != null ? Results.Ok(result) : Results.NotFound();
         });
 
-        app.MapPut("/CategoryConfirmed", async (Transaction item, ITransactionService service) =>
+        app.MapPut("/CategoryConfirmed", async (TransactionDto item, ITransactionService service) =>
         {
             var result = await service.CategoryConfirmed(item);
             return result != null ? Results.Ok(result) : Results.NotFound();
         });
 
-        app.MapPut("/CategorizeTransaction", async (Transaction item, ITransactionService service) =>
+        app.MapPut("/CategorizeTransaction", async (TransactionDto item, ITransactionService service) =>
         {
             var result = await service.CategorizeTransaction(item);
             return result != null ? Results.Ok(result) : Results.NotFound();

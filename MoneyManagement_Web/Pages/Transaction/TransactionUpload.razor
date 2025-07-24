@@ -1,6 +1,7 @@
 ﻿@page "/transactionupload"
 @using System.Net.Http.Headers;
 @using System.Text.RegularExpressions;
+@using MoneyManagement_Data.DTOs
 @using System.Globalization;
 
 <MM_WEB.Shared.Components.BreadCrumb path="transactionupload"></MM_WEB.Shared.Components.BreadCrumb>
@@ -168,19 +169,19 @@
         <RadzenDataGrid AllowFiltering="true" AllowColumnResize="true" AllowAlternatingRows="true" @ref="csvModelGrid"
                         FilterMode="FilterMode.Advanced" AllowSorting="true" PageSize="15" AllowPaging="true"
                         PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true" ColumnWidth="250px"
-                        Data="@csvModelList" TItem="Transaction" LogicalFilterOperator="LogicalFilterOperator.Or"
+                        Data="@csvModelList" TItem="TransactionDto" LogicalFilterOperator="LogicalFilterOperator.Or"
                         EditMode="DataGridEditMode.Single"
                         Sort="@Reset" Page="@Reset" Filter="@Reset" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive">
 
             <Columns>
 
-                <RadzenDataGridColumn TItem="Transaction" Property="TxnDate" Title="Data" Frozen="true" Width="50px">
+                <RadzenDataGridColumn TItem="TransactionDto" Property="TxnDate" Title="Data" Frozen="true" Width="50px">
 
                 </RadzenDataGridColumn>
-                <RadzenDataGridColumn TItem="Transaction" Property="TxnAmount" Title="Amount" Frozen="true" Width="50px">
+                <RadzenDataGridColumn TItem="TransactionDto" Property="TxnAmount" Title="Amount" Frozen="true" Width="50px">
 
                 </RadzenDataGridColumn>
-                <RadzenDataGridColumn TItem="Transaction" Property="Description" Title="Description" Frozen="true" Width="50px">
+                <RadzenDataGridColumn TItem="TransactionDto" Property="Description" Title="Description" Frozen="true" Width="50px">
 
                 </RadzenDataGridColumn>
 
@@ -207,7 +208,7 @@ else
     public ITransactionService _service { get; set; }
     
     RadzenDataGrid<string[]>? csvGrid;
-    RadzenDataGrid<Transaction>? csvModelGrid;
+    RadzenDataGrid<TransactionDto>? csvModelGrid;
     MemoryStream ms;
     string size = string.Empty;
     string fileName = string.Empty;
@@ -274,7 +275,7 @@ else
     private void RemoveItems()
     {
 
-        IList<Transaction> itemsToRemove = new List<Transaction>();
+        IList<TransactionDto> itemsToRemove = new List<TransactionDto>();
 
         switch (selectedSearchColumn)
         {
@@ -490,7 +491,7 @@ else
         return result;
     }
 
-    IList<Transaction>? csvModelList;
+    IList<TransactionDto>? csvModelList;
 
     private bool CheckCsvOptions()
     {
@@ -531,7 +532,7 @@ else
     {
         if (CheckCsvOptions())
         {
-            csvModelList = new List<Transaction>();
+            csvModelList = new List<TransactionDto>();
 
             var dataIndex = Convert.ToInt32(transactionDateColumn);
             var amountIndex = Convert.ToInt32(transactionAmountColumn);
@@ -549,9 +550,10 @@ else
                     var amount = ConvertToDouble(item.GetValue(amountIndex).ToString());
                     var desc = item.GetValue(descriptionIndex).ToString();
 
-                    csvModelList.Add(new Transaction
+                    csvModelList.Add(new TransactionDto
                         {
-                            Account = selectedAccount,
+                            AccountName = selectedAccount.Name,
+                            AccountId = selectedAccount.Id,
                             TxnDate = dateTrx,
                             TxnAmount = amount,
                             Description = desc

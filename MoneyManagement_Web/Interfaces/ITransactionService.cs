@@ -1,16 +1,16 @@
-﻿using MoneyManagement_Web.Data.Transactions;
+﻿using MoneyManagement_Data.DTOs;
 
 namespace MoneyManagement_Web.Interfaces
 {
     public interface ITransactionService
     {
-        Task<List<Transaction>> GetActiveTransactionList();
-        Task<Transaction> GetTransaction(int transactionId);
-        Task<Transaction> AddTransaction(Transaction transaction);
-        Task<Transaction> UpdateTransaction(Transaction transaction);
-        Task<Transaction> CategoryConfirmed(Transaction transaction);
-        Task<Transaction> DeleteTransaction(Transaction transaction);
-        Task<string> UploadCsv(IList<Transaction> transactions);
+        Task<List<TransactionDto>> GetActiveTransactionList();
+        Task<TransactionDto> GetTransaction(int transactionId);
+        Task<TransactionDto> AddTransaction(TransactionDto transaction);
+        Task<TransactionDto> UpdateTransaction(TransactionDto transaction);
+        Task<TransactionDto> CategoryConfirmed(TransactionDto transaction);
+        Task<TransactionDto> DeleteTransaction(TransactionDto transaction);
+        Task<string> UploadCsv(IList<TransactionDto> transactions);
 
         Task<string> TrainModel();
         Task<string> CategorizeAllTransaction();

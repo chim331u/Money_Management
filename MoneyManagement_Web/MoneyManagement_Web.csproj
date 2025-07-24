@@ -16,4 +16,12 @@
         <PackageReference Include="Tewr.Blazor.FileReader" Version="3.4.0.24340" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Compile Remove="Data\Transactions\Transaction.cs" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\MoneyManagement_Data\MoneyManagement_Data.csproj" />
+    </ItemGroup>
+
 </Project>

@@ -7,6 +7,7 @@ using MoneyManagement_Api.Contract;
 using MoneyManagement_Api.Interfaces;
 using MoneyManagement_Api.Models.Transactions;
 using MoneyManagement_Data;
+using MoneyManagement_Data.DTOs;
 
 namespace MoneyManagement_Api.Services;
 
@@ -26,60 +27,64 @@ public class TransactionService : ITransactionService
         _logger = logger;
     }
 
-    public async Task<ApiResponse<ICollection<Transaction>>> GetActiveTransactionList()
+    public async Task<ApiResponse<ICollection<TransactionDto>>> GetActiveTransactionList()
     {
         try
         {
-            var result = await _context.Transaction.Include(c => c.Account).Include(c => c.Account.Currency)
+            var result = await _context.Transaction.Include(c => c.Account)
+                .Include(c => c.Account.Currency)
                 .Where(x => x.IsActive).OrderByDescending(x => x.TxnDate).ToListAsync();
 
 
             return new 
-                ApiResponse<ICollection<Transaction>>(result,
+                ApiResponse<ICollection<TransactionDto>>(
+                    result.Select(x => AutoMapper.MapTransactionToDto(x)).ToList(),
                 $"Active transactions retrieved successfully. Total: {result.Count}");
         }
         catch (Exception ex)
         {
             _logger.LogError($"Error retrieving active transactions: {ex.Message}");
-            return new ApiResponse<ICollection<Transaction>>(null, "Error retrieving active transactions");
+            return new ApiResponse<ICollection<TransactionDto>>(null, "Error retrieving active transactions");
         }
     }
 
-    public async Task<ApiResponse<Transaction>> GetTransaction(int balanceId)
+    public async Task<ApiResponse<TransactionDto>> GetTransaction(int transactionId)
     {
         try
         {
-            var result = await _context.Transaction.Include(c => c.Account).Include(c => c.Account.Currency)
-                .Where(x => x.Id == balanceId).FirstOrDefaultAsync();
-            return new ApiResponse<Transaction>(result, $"Transaction with ID {balanceId} retrieved successfully.");
+            var result = await _context.Transaction.Include(c => c.Account)
+                .Include(c => c.Account.Currency)
+                .Where(x => x.Id == transactionId).FirstOrDefaultAsync();
+            return new ApiResponse<TransactionDto>(AutoMapper.MapTransactionToDto(result), $"Transaction with ID {transactionId} retrieved successfully.");
         }
         catch (Exception ex)
         {
-            _logger.LogError($"Error retrieving transaction with ID {balanceId}: {ex.Message}");
-            return new ApiResponse<Transaction>(null, $"Error retrieving transaction with ID {balanceId}");
+            _logger.LogError($"Error retrieving transaction with ID {transactionId}: {ex.Message}");
+            return new ApiResponse<TransactionDto>(null, $"Error retrieving transaction with ID {transactionId}");
         }
     }
 
-    public async Task<ApiResponse<Transaction>> UpdateTransaction(Transaction item)
+    public async Task<ApiResponse<TransactionDto>> UpdateTransaction(TransactionDto item)
     {
         try
         {
-            var existingTransaction = await _context.Transaction.Include(c => c.Account).Where(x => x.Id == item.Id)
+            var existingTransaction = await _context.Transaction
+                .Include(c => c.Account)
+                .Include(c => c.Account.Currency)
+                .Where(x => x.Id == item.Id)
                 .FirstOrDefaultAsync();
 
             if (existingTransaction == null)
             {
                 _logger.LogWarning($"Transaction with ID {item.Id} not found.");
-                return new ApiResponse<Transaction>(null, $"Transaction with ID {item.Id} not found.");
+                return new ApiResponse<TransactionDto>(null, $"Transaction with ID {item.Id} not found.");
             }
 
             // Update the properties of the existing transaction
             existingTransaction.TxnDate = item.TxnDate;
             existingTransaction.TxnAmount = item.TxnAmount;
             existingTransaction.Description = item.Description;
-            existingTransaction.IsActive = item.IsActive;
             existingTransaction.IsCatConfirmed = item.IsCatConfirmed;
-            existingTransaction.UniqueKey = item.UniqueKey;
             existingTransaction.Note = item.Note;
 
             existingTransaction.LastUpdatedDate = DateTime.Now;
@@ -91,17 +96,17 @@ public class TransactionService : ITransactionService
             _context.Transaction.Update(existingTransaction);
             await _context.SaveChangesAsync();
 
-            return new ApiResponse<Transaction>(existingTransaction,
+            return new ApiResponse<TransactionDto>(AutoMapper.MapTransactionToDto(existingTransaction),
                 $"Transaction with ID {item.Id} updated successfully.");
         }
         catch (Exception ex)
         {
             _logger.LogError($"Error updating transaction with ID {item.Id}: {ex.Message}");
-            return new ApiResponse<Transaction>(null, $"Error updating transaction with ID {item.Id}");
+            return new ApiResponse<TransactionDto>(null, $"Error updating transaction with ID {item.Id}");
         }
     }
 
-    public async Task<ApiResponse<Transaction>> CategoryConfirmed(Transaction item)
+    public async Task<ApiResponse<TransactionDto>> CategoryConfirmed(TransactionDto item)
     {
         if (item.IsCatConfirmed)
             //Confirmed Category
@@ -110,29 +115,29 @@ public class TransactionService : ITransactionService
 
         try
         {
-            return new ApiResponse<Transaction>(UpdateTransaction(item).Result.Data,
+            return new ApiResponse<TransactionDto>(UpdateTransaction(item).Result.Data,
                 $"Category confirmation for transaction with ID {item.Id} updated successfully.");
         }
         catch (Exception ex)
         {
             _logger.LogError($"Error confirming category for transaction with ID {item.Id}: {ex.Message}");
-            return new ApiResponse<Transaction>(null, $"Error confirming category for transaction with ID {item.Id}");
+            return new ApiResponse<TransactionDto>(null, $"Error confirming category for transaction with ID {item.Id}");
         }
     }
 
-    public async Task<ApiResponse<Transaction>> CategorizeTransaction(Transaction item)
+    public async Task<ApiResponse<TransactionDto>> CategorizeTransaction(TransactionDto item)
     {
         try
         {
             item.Area = _mlService.PredictCategory(item.Description).ToUpper();
 
-            return new ApiResponse<Transaction>(UpdateTransaction(item).Result.Data,
-                $"Transaction with ID {item.Id} categorized successfully.");
+            return new ApiResponse<TransactionDto>(UpdateTransaction(item).Result.Data,
+                $"Transaction with ID {item.Id} categorized successfully in {item.Area}.");
         }
         catch (Exception ex)
         {
             _logger.LogError($"Error categorizing transaction with ID {item.Id}: {ex.Message}");
-            return new ApiResponse<Transaction>(null, $"Error categorizing transaction with ID {item.Id}");
+            return new ApiResponse<TransactionDto>(null, $"Error categorizing transaction with ID {item.Id}");
         }
     }
 
@@ -149,8 +154,9 @@ public class TransactionService : ITransactionService
             {
                 // item.LastUpdatedDate = DateTime.Now;
                 item.Area = _mlService.PredictCategory(item.Description);
-
-                await UpdateTransaction(item);
+                
+                //todo manage massive update
+                await UpdateTransaction(AutoMapper.MapTransactionToDto(item));
                 // var result = _context.Transaction.Update(item);
                 // await _context.SaveChangesAsync();
                 ok++;
@@ -183,39 +189,49 @@ public class TransactionService : ITransactionService
         }
     }
 
-    public async Task<ApiResponse<Transaction>> AddTransaction(Transaction item)
+    public async Task<ApiResponse<TransactionDto>> AddTransaction(TransactionDto item)
     {
-        var account = await _context.AccountMasterData.Include(c => c.Currency)
-            .Where(x => x.Id == item.Account.Id)
+        var account = await _context.AccountMasterData
+            .Include(c => c.Currency)
+            .Where(x => x.Id == item.AccountId)
             .FirstOrDefaultAsync();
 
         try
         {
-            item.LastUpdatedDate = DateTime.Now;
-            if (item.Area != null) item.Area = item.Area.ToUpper();
+            var newTransaction = new Transaction
+            {
+                TxnDate = item.TxnDate,
+                TxnAmount = item.TxnAmount,
+                Description = item.Description,
+                IsCatConfirmed = item.IsCatConfirmed,
+                Note = item.Note,
+                Area = item.Area?.ToUpper(),
+                Account = account,
+                LastUpdatedDate = DateTime.Now,
+                CreatedDate = DateTime.Now,
+                IsActive = true,
+                UniqueKey = MD5UniqueKey(item.AccountName, item.TxnDate.ToString(CultureInfo.InvariantCulture),
+                    item.TxnAmount.ToString(CultureInfo.InvariantCulture), item.Description)
+            };
 
-            item.CreatedDate = DateTime.Now;
-            item.IsActive = true;
-            item.UniqueKey = MD5UniqueKey(item.Account.Name, item.TxnDate.ToString(CultureInfo.InvariantCulture),
-                item.TxnAmount.ToString(CultureInfo.InvariantCulture), item.Description);
-            item.Account = account;
+            newTransaction.Account = account;
 
-            if (_context.Transaction.Any(x => x.UniqueKey == item.UniqueKey))
+            if (_context.Transaction.Any(x => x.UniqueKey == newTransaction.UniqueKey))
             {
                 //record already present: Duplicate Record
                 item.Id = 0;
-                return new ApiResponse<Transaction>(null, "Transaction already exists with the same unique key.");
+                return new ApiResponse<TransactionDto>(null, "Transaction already exists with the same unique key.");
             }
 
-            await _context.Transaction.AddAsync(item);
+            await _context.Transaction.AddAsync(newTransaction);
             await _context.SaveChangesAsync();
 
-            return new ApiResponse<Transaction>(item, $"Transaction with ID {item.Id} added successfully.");
+            return new ApiResponse<TransactionDto>(AutoMapper.MapTransactionToDto(newTransaction), $"Transaction with ID {item.Id} added successfully.");
         }
         catch (Exception ex)
         {
             _logger.LogError($"Error adding transaction: {ex.Message}");
-            return new ApiResponse<Transaction>(null, $"Error adding transaction: {ex.Message}");
+            return new ApiResponse<TransactionDto>(null, $"Error adding transaction: {ex.Message}");
         }
     }
 
@@ -224,6 +240,7 @@ public class TransactionService : ITransactionService
         try
         {
             var existingTransaction = await _context.Transaction.Include(c => c.Account)
+                .Include(c => c.Account.Currency)
                 .Where(x => x.Id == id).FirstOrDefaultAsync();
 
             if (existingTransaction == null)
@@ -247,7 +264,7 @@ public class TransactionService : ITransactionService
         }
     }
 
-    public async Task<ApiResponse<string>> UploadCsv(IList<Transaction> transactions)
+    public async Task<ApiResponse<string>> UploadCsv(IList<TransactionDto> transactions)
     {
         if (transactions.Count == 0)
         {

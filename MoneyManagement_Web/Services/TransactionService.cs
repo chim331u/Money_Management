@@ -3,7 +3,7 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using MoneyManagement_Web.Data.Transactions;
+using MoneyManagement_Data.DTOs;
 using MoneyManagement_Web.Interfaces;
 
 namespace MoneyManagement_Web.Services
@@ -33,12 +33,12 @@ namespace MoneyManagement_Web.Services
             _accessService = accessService;
         }
 
-        #region Transaction
+        #region TransactionDto
 
-        public async Task<List<Transaction>> GetActiveTransactionList()
+        public async Task<List<TransactionDto>> GetActiveTransactionList()
         {
-            Uri uri = new Uri(string.Format(_utilityServices.GetRestUrl() + $"api/Transaction/GetTransactionList", string.Empty));
-            var dataResponse = new List<Transaction>();
+            Uri uri = new Uri(string.Format(_utilityServices.GetRestUrl() + $"api/TransactionDto/GetTransactionDtoList", string.Empty));
+            var dataResponse = new List<TransactionDto>();
 
             try
             {
@@ -48,7 +48,7 @@ namespace MoneyManagement_Web.Services
                 if (response.IsSuccessStatusCode)
                 {
                     string content = await response.Content.ReadAsStringAsync();
-                    dataResponse = JsonSerializer.Deserialize<List<Transaction>>(content, _serializerOptions);
+                    dataResponse = JsonSerializer.Deserialize<List<TransactionDto>>(content, _serializerOptions);
                 }
 
                 return dataResponse;
@@ -61,10 +61,10 @@ namespace MoneyManagement_Web.Services
             }
         }
 
-        public async Task<Transaction> GetTransaction(int id)
+        public async Task<TransactionDto> GetTransaction(int id)
         {
-            Uri uri = new Uri(string.Format(_utilityServices.GetRestUrl() + $"api/Transaction/GetTransaction/{id}", string.Empty));
-            var dataResponse = new Transaction();
+            Uri uri = new Uri(string.Format(_utilityServices.GetRestUrl() + $"api/TransactionDto/GetTransactionDto/{id}", string.Empty));
+            var dataResponse = new TransactionDto();
 
             try
             {
@@ -74,7 +74,7 @@ namespace MoneyManagement_Web.Services
                 if (response.IsSuccessStatusCode)
                 {
                     string content = await response.Content.ReadAsStringAsync();
-                    dataResponse = JsonSerializer.Deserialize<Transaction>(content, _serializerOptions);
+                    dataResponse = JsonSerializer.Deserialize<TransactionDto>(content, _serializerOptions);
                 }
 
                 return dataResponse;
@@ -87,9 +87,9 @@ namespace MoneyManagement_Web.Services
             }
         }
 
-        public async Task<Transaction> UpdateTransaction(Transaction item)
+        public async Task<TransactionDto> UpdateTransaction(TransactionDto item)
         {
-            Uri uri = new Uri(string.Format(_utilityServices.GetRestUrl() + $"api/Transaction/UpdateTransaction", string.Empty));
+            Uri uri = new Uri(string.Format(_utilityServices.GetRestUrl() + $"api/TransactionDto/UpdateTransactionDto", string.Empty));
 
             try
             {
@@ -99,7 +99,7 @@ namespace MoneyManagement_Web.Services
                 if (response.IsSuccessStatusCode)
                 {
                     string content = await response.Content.ReadAsStringAsync();
-                    var dataResponse = JsonSerializer.Deserialize<Transaction>(content, _serializerOptions);
+                    var dataResponse = JsonSerializer.Deserialize<TransactionDto>(content, _serializerOptions);
                     return dataResponse;
                 }
 
@@ -114,9 +114,9 @@ namespace MoneyManagement_Web.Services
             }
         }       
         
-        public async Task<Transaction> CategoryConfirmed(Transaction item)
+        public async Task<TransactionDto> CategoryConfirmed(TransactionDto item)
         {
-            Uri uri = new Uri(string.Format(_utilityServices.GetRestUrl() + $"api/Transaction/CategoryConfirmed", string.Empty));
+            Uri uri = new Uri(string.Format(_utilityServices.GetRestUrl() + $"api/TransactionDto/CategoryConfirmed", string.Empty));
 
             try
             {
@@ -126,7 +126,7 @@ namespace MoneyManagement_Web.Services
                 if (response.IsSuccessStatusCode)
                 {
                     string content = await response.Content.ReadAsStringAsync();
-                    var dataResponse = JsonSerializer.Deserialize<Transaction>(content, _serializerOptions);
+                    var dataResponse = JsonSerializer.Deserialize<TransactionDto>(content, _serializerOptions);
                     return dataResponse;
                 }
 
@@ -141,9 +141,9 @@ namespace MoneyManagement_Web.Services
             }
         }
 
-        public async Task<Transaction> AddTransaction(Transaction item)
+        public async Task<TransactionDto> AddTransaction(TransactionDto item)
         {
-            Uri uri = new Uri(string.Format(_utilityServices.GetRestUrl() + $"api/Transaction/AddTransaction", string.Empty));
+            Uri uri = new Uri(string.Format(_utilityServices.GetRestUrl() + $"api/TransactionDto/AddTransactionDto", string.Empty));
 
             try
             {
@@ -153,7 +153,7 @@ namespace MoneyManagement_Web.Services
                 if (response.IsSuccessStatusCode)
                 {
                     string content = await response.Content.ReadAsStringAsync();
-                    var dataResponse = JsonSerializer.Deserialize<Transaction>(content, _serializerOptions);
+                    var dataResponse = JsonSerializer.Deserialize<TransactionDto>(content, _serializerOptions);
                     return dataResponse;
                 }
 
@@ -168,14 +168,14 @@ namespace MoneyManagement_Web.Services
             }
         }        
         
-        public async Task<string> UploadCsv(IList<Transaction> transactions)
+        public async Task<string> UploadCsv(IList<TransactionDto> TransactionDtos)
         {
-            Uri uri = new Uri(string.Format(_utilityServices.GetRestUrl() + $"api/Transaction/UploadCsv", string.Empty));
+            Uri uri = new Uri(string.Format(_utilityServices.GetRestUrl() + $"api/TransactionDto/UploadCsv", string.Empty));
 
             try
             {
                 _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _accessService._apiToken);
-                HttpResponseMessage response = await _httpClient.PostAsJsonAsync(uri, transactions);
+                HttpResponseMessage response = await _httpClient.PostAsJsonAsync(uri, TransactionDtos);
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -195,10 +195,10 @@ namespace MoneyManagement_Web.Services
             }
         }
 
-        public async Task<Transaction> DeleteTransaction(Transaction item)
+        public async Task<TransactionDto> DeleteTransaction(TransactionDto item)
         {
 
-            Uri uri = new Uri(string.Format(_utilityServices.GetRestUrl() + $"api/Transaction/DeleteTransaction", string.Empty));
+            Uri uri = new Uri(string.Format(_utilityServices.GetRestUrl() + $"api/TransactionDto/DeleteTransactionDto", string.Empty));
 
             try
             {
@@ -209,7 +209,7 @@ namespace MoneyManagement_Web.Services
                 if (response.IsSuccessStatusCode)
                 {
                     string content = await response.Content.ReadAsStringAsync();
-                    var dataResponse = JsonSerializer.Deserialize<Transaction>(content, _serializerOptions);
+                    var dataResponse = JsonSerializer.Deserialize<TransactionDto>(content, _serializerOptions);
                     return dataResponse;
                 }
 
@@ -230,7 +230,7 @@ namespace MoneyManagement_Web.Services
 
         public async Task<string> TrainModel()
         {
-            Uri uri = new Uri(string.Format(_utilityServices.GetRestUrl() + $"api/Transaction/TrainModelTransaction", string.Empty));
+            Uri uri = new Uri(string.Format(_utilityServices.GetRestUrl() + $"api/TransactionDto/TrainModelTransactionDto", string.Empty));
 
             try
             {
@@ -256,7 +256,7 @@ namespace MoneyManagement_Web.Services
         }        
         public async Task<string> CategorizeAllTransaction()
         {
-            Uri uri = new Uri(string.Format(_utilityServices.GetRestUrl() + $"api/Transaction/CategorizeAllTransaction", string.Empty));
+            Uri uri = new Uri(string.Format(_utilityServices.GetRestUrl() + $"api/TransactionDto/CategorizeAllTransactionDto", string.Empty));
 
             try
             {
