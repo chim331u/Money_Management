@@ -165,7 +165,7 @@ public class BankAccountService : IBankAccountService
                 .Where(x => x.IsActive)
                 .OrderByDescending(x => x.CreatedDate).ToListAsync();
 
-            return new ApiResponse<ICollection<AccountDto>>( result.Select(x => AutoMapper.MapAccountToDto(x)).ToList(),
+            return new ApiResponse<ICollection<AccountDto>>(result.Select(x => AutoMapper.MapAccountToDto(x)).ToList(),
                 "Active account list retrieved successfully.");
         }
         catch (Exception ex)
@@ -185,7 +185,8 @@ public class BankAccountService : IBankAccountService
                 .Include(x => x.BankMasterData)
                 .Where(x => x.Id == accountId).FirstOrDefaultAsync();
 
-            return new ApiResponse<AccountDto>(AutoMapper.MapAccountToDto(result), $"Account with ID {accountId} retrieved successfully.");
+            return new ApiResponse<AccountDto>(AutoMapper.MapAccountToDto(result),
+                $"Account with ID {accountId} retrieved successfully.");
         }
         catch (Exception ex)
         {
@@ -250,12 +251,12 @@ public class BankAccountService : IBankAccountService
 
         try
         {
-            var newAccount = new AccountMasterData()
+            var newAccount = new AccountMasterData
             {
                 Name = item.Name,
                 AccountType = item.AccountType,
-               Currency = currency,
-               BankMasterData = bank,
+                Currency = currency,
+                BankMasterData = bank,
                 Description = item.Description,
                 Bic = item.Bic,
                 Iban = item.Iban,
@@ -267,7 +268,8 @@ public class BankAccountService : IBankAccountService
             await _context.AccountMasterData.AddAsync(newAccount);
             await _context.SaveChangesAsync();
 
-            return new ApiResponse<AccountDto>(AutoMapper.MapAccountToDto(await _context.AccountMasterData.FindAsync(newAccount.Id)),
+            return new ApiResponse<AccountDto>(
+                AutoMapper.MapAccountToDto(await _context.AccountMasterData.FindAsync(newAccount.Id)),
                 $"Account with ID {newAccount.Id} added successfully.");
         }
         catch (Exception ex)

@@ -25,10 +25,6 @@ public class IdentityAccessService : IIdentityAccessService
         _logger = logger;
     }
 
-    protected IdentityAccessService()
-    {
-        throw new NotImplementedException();
-    }
 
     #region Identity Accounts
 

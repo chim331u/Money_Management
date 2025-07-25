@@ -5,108 +5,107 @@ using System.Text.Json.Serialization;
 using MoneyManagement_Web.Data.Salary;
 using MoneyManagement_Web.Interfaces;
 
-namespace MoneyManagement_Web.Services
+namespace MoneyManagement_Web.Services;
+
+public class TestServices : ITestServices
 {
-    public class TestServices : ITestServices
+    private HttpClient _httpClient;
+    private JsonSerializerOptions _serializerOptions;
+    private readonly IConfiguration _config;
+    private readonly IUtilityServices _utilityServices;
+
+    private IAccessServices _accessService;
+
+    public TestServices(IConfiguration config, IAccessServices accessService, IUtilityServices utilityServices)
     {
-        HttpClient _httpClient;
-        JsonSerializerOptions _serializerOptions;
-        private readonly IConfiguration _config;
-        private readonly IUtilityServices _utilityServices;
+        _httpClient = new HttpClient();
 
-        IAccessServices _accessService;
-
-        public TestServices(IConfiguration config, IAccessServices accessService, IUtilityServices utilityServices)
+        _serializerOptions = new JsonSerializerOptions
         {
-            _httpClient = new HttpClient();
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            WriteIndented = true,
+            NumberHandling =
+                JsonNumberHandling.AllowReadingFromString |
+                JsonNumberHandling.WriteAsString,
+            ReadCommentHandling = JsonCommentHandling.Skip
+        };
 
-            _serializerOptions = new JsonSerializerOptions
+        _config = config;
+        _accessService = accessService;
+        _utilityServices = utilityServices;
+    }
+
+    public async Task<string> UploadFile(MultipartFormDataContent item)
+    {
+        try
+        {
+            _httpClient.DefaultRequestHeaders.Authorization =
+                new AuthenticationHeaderValue("Bearer", _accessService._apiToken);
+
+            //var client = new HttpClient();
+            var request = new HttpRequestMessage(HttpMethod.Post,
+                string.Format(_utilityServices.GetRestUrl() + $"api/Test/PostFile"));
+
+            request.Content = item;
+            var _response = await _httpClient.SendAsync(request);
+            _response.EnsureSuccessStatusCode();
+            var result = await _response.Content.ReadAsStringAsync();
+            return result;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(@"\tERROR {0}", ex.Message);
+
+            return null;
+        }
+    }
+
+    public async Task<string> PostFileSalary(SalaryWithFile salaryFile)
+    {
+        var uri = new Uri(string.Format(_utilityServices.GetRestUrl() + $"api/Test/PostFileSalary", string.Empty));
+
+        try
+        {
+            _httpClient.DefaultRequestHeaders.Authorization =
+                new AuthenticationHeaderValue("Bearer", _accessService._apiToken);
+            var response = await _httpClient.PostAsJsonAsync(uri, salaryFile);
+
+            if (response.IsSuccessStatusCode)
             {
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-                WriteIndented = true,
-                NumberHandling =
-                    JsonNumberHandling.AllowReadingFromString |
-                    JsonNumberHandling.WriteAsString,
-                ReadCommentHandling = JsonCommentHandling.Skip
-            };
+                var content = await response.Content.ReadAsStringAsync();
 
-            _config = config;
-            _accessService = accessService;
-            _utilityServices = utilityServices;
+                return content;
+            }
+
+            return null;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(@"\tERROR {0}", ex.Message);
+
+            return null;
         }
 
-        public async Task<string> UploadFile(MultipartFormDataContent item)
-        {
 
-            try
-            {
-                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _accessService._apiToken);
+        //try
+        //{
+        //    _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _accessService._apiToken);
 
-                //var client = new HttpClient();
-                var request = new HttpRequestMessage(HttpMethod.Post, string.Format(_utilityServices.GetRestUrl() + $"api/Test/PostFile"));
+        //    //var client = new HttpClient();
+        //    var request = new HttpRequestMessage(HttpMethod.Post, string.Format(_utilityServices.GetRestUrl() + $"api/Test/PostFileSalary"));
 
-                request.Content = item;
-                var _response = await _httpClient.SendAsync(request);
-                _response.EnsureSuccessStatusCode();
-                var result = await _response.Content.ReadAsStringAsync();
-                return result;
+        //    request.Content = salaryFile;
+        //    var _response = await _httpClient.SendAsync(request);
+        //    _response.EnsureSuccessStatusCode();
+        //    var result = await _response.Content.ReadAsStringAsync();
+        //    return result;
 
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(@"\tERROR {0}", ex.Message);
+        //}
+        //catch (Exception ex)
+        //{
+        //    Console.WriteLine(@"\tERROR {0}", ex.Message);
 
-                return null;
-            }
-        }        
-        
-        public async Task<string> PostFileSalary(SalaryWithFile salaryFile)
-        {
-            Uri uri = new Uri(string.Format(_utilityServices.GetRestUrl() + $"api/Test/PostFileSalary", string.Empty));
-
-            try
-            {
-                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _accessService._apiToken);
-                HttpResponseMessage response = await _httpClient.PostAsJsonAsync(uri, salaryFile);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    string content = await response.Content.ReadAsStringAsync();
-                    
-                    return content;
-                }
-
-                return null;
-
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(@"\tERROR {0}", ex.Message);
-
-                return null;
-            }
-
-
-            //try
-            //{
-            //    _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _accessService._apiToken);
-
-            //    //var client = new HttpClient();
-            //    var request = new HttpRequestMessage(HttpMethod.Post, string.Format(_utilityServices.GetRestUrl() + $"api/Test/PostFileSalary"));
-
-            //    request.Content = salaryFile;
-            //    var _response = await _httpClient.SendAsync(request);
-            //    _response.EnsureSuccessStatusCode();
-            //    var result = await _response.Content.ReadAsStringAsync();
-            //    return result;
-
-            //}
-            //catch (Exception ex)
-            //{
-            //    Console.WriteLine(@"\tERROR {0}", ex.Message);
-
-            //    return null;
-            //}
-        }
+        //    return null;
+        //}
     }
 }

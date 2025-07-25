@@ -6,32 +6,31 @@ using Serilog;
 
 namespace MoneyManagement_Api.Contract;
 
-public static class AutoMapper 
+public static class AutoMapper
 {
-   
     public static TransactionDto MapTransactionToDto(Transaction transaction)
     {
         //Log.Debug($"Mapping transaction with ID: {transaction?.Id}");
-        
+
         if (transaction == null)
         {
             Log.Logger.Warning("Transaction is null, cannot map to DTO.");
             return null;
         }
-        
+
         if (transaction.Account == null)
         {
             Log.Logger.Warning("Transaction Account is null, cannot map to DTO.");
             return null;
         }
-        
+
         if (transaction.Account.Currency == null)
         {
             Log.Logger.Warning("Transaction Account Currency is null, cannot map to DTO.");
             return null;
         }
 
-        
+
         return new TransactionDto
         {
             Id = transaction.Id,
@@ -44,19 +43,17 @@ public static class AutoMapper
             AccountName = transaction.Account.Name,
             AccountId = transaction.Account.Id,
             AccountCurrencyCodeALF3 = transaction.Account.Currency.CurrencyCodeALF3
-           
         };
     }
-    
-   public static AccountDto MapAccountToDto(AccountMasterData account)
+
+    public static AccountDto MapAccountToDto(AccountMasterData account)
     {
-        
         if (account == null)
         {
             Log.Logger.Warning("Account is null, cannot map to DTO.");
             return null;
         }
-        
+
         if (account.Currency == null)
         {
             Log.Logger.Warning("Account Currency is null, cannot map to DTO.");
@@ -79,21 +76,21 @@ public static class AutoMapper
             BankName = account.BankMasterData?.Name
         };
     }
-   
-   public static BalanceDto MapBalanceToDto(Balance balance)
-   { 
+
+    public static BalanceDto MapBalanceToDto(Balance balance)
+    {
         if (balance == null)
         {
             Log.Logger.Warning("Balance is null, cannot map to DTO.");
             return null;
         }
-        
+
         if (balance.Account == null)
         {
             Log.Logger.Warning("Balance Account is null, cannot map to DTO.");
             return null;
         }
-        
+
         if (balance.Account.Currency == null)
         {
             Log.Logger.Warning("Balance Account Currency is null, cannot map to DTO.");
@@ -111,6 +108,5 @@ public static class AutoMapper
             BalanceValue = balance.BalanceValue,
             Note = balance.Note
         };
-     }
-   
+    }
 }

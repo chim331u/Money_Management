@@ -19,7 +19,9 @@ public class HashiCorpVaultService : IHashicorpVaultService
 
     private const string VaultUsername = "VAULT_U"; // Example username, replace with your actual username
     private const string VaultPassword = "VAULT_P"; // Example password, replace with your actual password
-    private string _vaultUsername; /// Example username, replace with your actual username
+    private string _vaultUsername;
+
+    /// Example username, replace with your actual username
     private string _vaultPassword;
 
 
@@ -28,25 +30,20 @@ public class HashiCorpVaultService : IHashicorpVaultService
         _configuration = configuration;
         _logger = logger;
         //for debug only
-        _vaultUsername = (_configuration != null && _configuration.GetSection("IsDev").Value != null
+        _vaultUsername = _configuration != null && _configuration.GetSection("IsDev").Value != null
             ? configuration[VaultUsername]
-            : Environment.GetEnvironmentVariable(VaultUsername));
+            : Environment.GetEnvironmentVariable(VaultUsername);
 
         _vaultPassword = _configuration.GetSection("IsDev").Value != null
             ? configuration[VaultPassword]
             : Environment.GetEnvironmentVariable(VaultPassword);
-        
+
         _vaultAddress = configuration.GetConnectionString("HashicorpVaultConnection");
 
         if (string.IsNullOrEmpty(_vaultAddress))
-        {
             _logger.LogWarning("Connection string not set for HashicorpVaultService");
-        }
 
-        if (string.IsNullOrEmpty(_vaultAddress))
-        {
-            _logger.LogWarning("MasterKey is not set for HashiCorpVaultService");
-        }
+        if (string.IsNullOrEmpty(_vaultAddress)) _logger.LogWarning("MasterKey is not set for HashiCorpVaultService");
 
         // Initialize one of the several auth methods.
         //IAuthMethodInfo authMethod = new TokenAuthMethodInfo(_vaultToken);
@@ -63,7 +60,7 @@ public class HashiCorpVaultService : IHashicorpVaultService
         try
         {
             Secret<SecretData> kv2Secret = await vaultClient.V1.Secrets.KeyValue.V2
-                .ReadSecretAsync(path: path, mountPoint: mountPoint);
+                .ReadSecretAsync(path, mountPoint: mountPoint);
 
             if (kv2Secret.Data.Data.TryGetValue(key, out var value))
             {
@@ -89,7 +86,7 @@ public class HashiCorpVaultService : IHashicorpVaultService
         try
         {
             Secret<SecretData> kv2Secret = await vaultClient.V1.Secrets.KeyValue.V2
-                .ReadSecretAsync(path: path, mountPoint: mountPoint);
+                .ReadSecretAsync(path, mountPoint: mountPoint);
 
             if (kv2Secret.Data.Data.Keys.Any())
             {
@@ -123,7 +120,7 @@ public class HashiCorpVaultService : IHashicorpVaultService
                     secret.MountVolume);
 
             return new ApiResponse<SecretResponseDTO>(
-                new SecretResponseDTO() { Key = secret.Key, Value = secret.Value.ToString() },
+                new SecretResponseDTO { Key = secret.Key, Value = secret.Value.ToString() },
                 $"New secret added at path '{secret.Path}' with key '{secret.Key}'");
         }
         catch (Exception e)
@@ -140,12 +137,12 @@ public class HashiCorpVaultService : IHashicorpVaultService
         {
             var valueToBeCombined = new Dictionary<string, object> { { secret.Key, secret.Value } };
 
-            var patchSecretDataRequest = new PatchSecretDataRequest() { Data = valueToBeCombined };
+            var patchSecretDataRequest = new PatchSecretDataRequest { Data = valueToBeCombined };
             var metadata = await vaultClient.V1.Secrets.KeyValue.V2.PatchSecretAsync(secret.Path,
-                patchSecretDataRequest, mountPoint: secret.MountVolume);
+                patchSecretDataRequest, secret.MountVolume);
 
             return new ApiResponse<SecretResponseDTO>(
-                new SecretResponseDTO() { Key = secret.Key, Value = secret.Value.ToString() },
+                new SecretResponseDTO { Key = secret.Key, Value = secret.Value.ToString() },
                 $"New secret added at path '{secret.Path}' with key '{secret.Key}'");
         }
         catch (Exception e)
@@ -162,11 +159,11 @@ public class HashiCorpVaultService : IHashicorpVaultService
         {
             var valueToBeCombined = new Dictionary<string, object> { { secret.Key, secret.Value } };
 
-            var patchSecretDataRequest = new PatchSecretDataRequest() { Data = valueToBeCombined };
+            var patchSecretDataRequest = new PatchSecretDataRequest { Data = valueToBeCombined };
             var metadata = await vaultClient.V1.Secrets.KeyValue.V2.PatchSecretAsync(secret.Path,
-                patchSecretDataRequest, mountPoint: secret.MountVolume);
+                patchSecretDataRequest, secret.MountVolume);
             return new ApiResponse<SecretResponseDTO>(
-                new SecretResponseDTO() { Key = secret.Key, Value = secret.Value.ToString() },
+                new SecretResponseDTO { Key = secret.Key, Value = secret.Value.ToString() },
                 $"Secret updated at path '{secret.Path}' with key '{secret.Key}'");
         }
         catch (Exception e)

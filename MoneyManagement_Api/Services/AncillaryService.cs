@@ -25,6 +25,7 @@ public class AncillaryService : IAncillaryService
         // Task.Run(async () =>
         // {
         //     await
+        //TODO scheduile this task
         UpdateCurrencyRate();
         //     _logger.LogInformation("Update currency rate Async task completed.");
         // });
@@ -440,7 +441,7 @@ public class AncillaryService : IAncillaryService
                     var uniqueK = string.Concat(currency, rate.ToString(CultureInfo.InvariantCulture),
                         DateTime.Now.Date);
 
-                    bool isCodeExist =
+                    var isCodeExist =
                         _context.CurrencyConversionRates.Any(c => c.UniqueKey == uniqueK && c.IsActive == true);
 
                     if (!isCodeExist)
@@ -510,7 +511,7 @@ public class AncillaryService : IAncillaryService
                     var uniqueK = string.Concat(currency, rate.ToString(CultureInfo.InvariantCulture),
                         DateTime.Now.Date);
 
-                    bool isCodeExist =
+                    var isCodeExist =
                         _context.CurrencyConversionRates.Any(c => c.UniqueKey == uniqueK && c.IsActive == true);
 
                     if (!isCodeExist)

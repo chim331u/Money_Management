@@ -1,9 +1,8 @@
-﻿namespace MoneyManagement_Web.Data.Test
-{
-    public class FileUpload
-    {
-        public string? Name{ get; set; }
+﻿namespace MoneyManagement_Web.Data.Test;
 
-        public MultipartFormDataContent? file { get; set; }
-    }
+public class FileUpload
+{
+    public string? Name { get; set; }
+
+    public MultipartFormDataContent? file { get; set; }
 }

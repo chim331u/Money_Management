@@ -35,7 +35,8 @@ public class BalanceService : IBalanceService
         catch (Exception ex)
         {
             _logger.LogError($"Error retrieving Active balance list: {ex.Message}");
-            return new ApiResponse<ICollection<BalanceDto>>(null, $"Error retrieving Active balance list: {ex.Message}");
+            return new ApiResponse<ICollection<BalanceDto>>(null,
+                $"Error retrieving Active balance list: {ex.Message}");
         }
     }
 
@@ -48,7 +49,8 @@ public class BalanceService : IBalanceService
                 .Include(c => c.Account.Currency)
                 .Where(x => x.Id == balanceId).FirstOrDefaultAsync();
 
-            return new ApiResponse<BalanceDto>(AutoMapper.MapBalanceToDto(result), $"Balance retrieved successfully with id {balanceId}");
+            return new ApiResponse<BalanceDto>(AutoMapper.MapBalanceToDto(result),
+                $"Balance retrieved successfully with id {balanceId}");
         }
         catch (Exception ex)
         {
@@ -76,7 +78,7 @@ public class BalanceService : IBalanceService
             existingBalance.BalanceValue = item.BalanceValue;
             existingBalance.Note = item.Note;
             existingBalance.LastUpdatedDate = DateTime.Now;
-            
+
 
             _context.Balance.Update(existingBalance);
             await _context.SaveChangesAsync();
@@ -100,7 +102,7 @@ public class BalanceService : IBalanceService
 
         try
         {
-            var newBalance = new Balance()
+            var newBalance = new Balance
             {
                 CreatedDate = DateTime.Now,
                 DateBalance = item.DateBalance,
@@ -113,7 +115,8 @@ public class BalanceService : IBalanceService
             await _context.Balance.AddAsync(newBalance);
             await _context.SaveChangesAsync();
 
-            return new ApiResponse<BalanceDto>(AutoMapper.MapBalanceToDto(newBalance), $"Balance added successfully with id {newBalance.Id}");
+            return new ApiResponse<BalanceDto>(AutoMapper.MapBalanceToDto(newBalance),
+                $"Balance added successfully with id {newBalance.Id}");
         }
         catch (Exception ex)
         {

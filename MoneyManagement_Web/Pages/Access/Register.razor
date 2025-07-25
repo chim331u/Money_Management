@@ -13,48 +13,61 @@
                     <RadzenStack Gap="1rem">
                         <RadzenRow AlignItems="AlignItems.Center">
                             <RadzenColumn Size="12" SizeMD="4">
-                                <RadzenLabel Text="Username" />
+                                <RadzenLabel Text="Username"/>
                             </RadzenColumn>
                             <RadzenColumn Size="12" SizeMD="8">
-                                <RadzenTextBox Style="width: 100%;" Name="Username" @bind-Value=@registrationRequest.Username />
+                                <RadzenTextBox Style="width: 100%;" Name="Username"
+                                               @bind-Value=@registrationRequest.Username/>
                             </RadzenColumn>
                         </RadzenRow>
                         <RadzenRow AlignItems="AlignItems.Center">
                             <RadzenColumn Size="12" SizeMD="4">
-                                <RadzenLabel Text="Mail" />
+                                <RadzenLabel Text="Mail"/>
                             </RadzenColumn>
                             <RadzenColumn Size="12" SizeMD="8">
-                                <RadzenTextBox Style="width: 100%; display: block" Name="Email" @bind-Value=@registrationRequest.Email />
-                                <RadzenRequiredValidator Component="Email" Text="Email is required" Style="position: absolute" />
-                                <RadzenEmailValidator Component="Email" Text="Provide a valid email address" Style="position: absolute" />
+                                <RadzenTextBox Style="width: 100%; display: block" Name="Email"
+                                               @bind-Value=@registrationRequest.Email/>
+                                <RadzenRequiredValidator Component="Email" Text="Email is required"
+                                                         Style="position: absolute"/>
+                                <RadzenEmailValidator Component="Email" Text="Provide a valid email address"
+                                                      Style="position: absolute"/>
                             </RadzenColumn>
                         </RadzenRow>
                         <RadzenRow AlignItems="AlignItems.Center">
                             <RadzenColumn Size="12" SizeMD="4">
-                                <RadzenLabel Text="Password" />
+                                <RadzenLabel Text="Password"/>
                             </RadzenColumn>
                             <RadzenColumn Size="12" SizeMD="8">
-                                <RadzenPassword Style="display: block; width: 100%" Name="Password" @bind-Value=@registrationRequest.Password />
-                                <RadzenRequiredValidator Component="Password" Text="Enter password" Style="position: absolute" />
+                                <RadzenPassword Style="display: block; width: 100%" Name="Password"
+                                                @bind-Value=@registrationRequest.Password/>
+                                <RadzenRequiredValidator Component="Password" Text="Enter password"
+                                                         Style="position: absolute"/>
                             </RadzenColumn>
                         </RadzenRow>
                         <RadzenRow AlignItems="AlignItems.Center">
                             <RadzenColumn Size="12" SizeMD="4">
-                                <RadzenLabel Text="Repeat Password" />
+                                <RadzenLabel Text="Repeat Password"/>
                             </RadzenColumn>
                             <RadzenColumn Size="12" SizeMD="8">
-                                <RadzenPassword Style="display: block; width: 100%" Name="RepeatPassword" @bind-Value=@registrationRequest.RepeatPassword />
-                                <RadzenRequiredValidator Component="RepeatPassword" Text="Repeat your password" Style="position: absolute" />
-                                <RadzenCompareValidator Visible=@(!string.IsNullOrEmpty(registrationRequest.RepeatPassword)) Value=@registrationRequest.Password Component="RepeatPassword" Text="Passwords should be the same" Style="position: absolute" />
+                                <RadzenPassword Style="display: block; width: 100%" Name="RepeatPassword"
+                                                @bind-Value=@registrationRequest.RepeatPassword/>
+                                <RadzenRequiredValidator Component="RepeatPassword" Text="Repeat your password"
+                                                         Style="position: absolute"/>
+                                <RadzenCompareValidator
+                                    Visible=@(!string.IsNullOrEmpty(registrationRequest.RepeatPassword))
+                                    Value=@registrationRequest.Password Component="RepeatPassword"
+                                    Text="Passwords should be the same" Style="position: absolute"/>
                             </RadzenColumn>
                         </RadzenRow>
                     </RadzenStack>
                 </RadzenFieldset>
             </RadzenStack>
 
-            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Center" Gap="1rem" Class="rz-mt-8 rz-mb-4">
-                <RadzenButton ButtonType="ButtonType.Submit" Size="ButtonSize.Large" Icon="save" Text="Save" />
-                <RadzenButton ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Large" Icon="cancel" Text="Cancel" Click="@Cancel" />
+            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Center" Gap="1rem"
+                         Class="rz-mt-8 rz-mb-4">
+                <RadzenButton ButtonType="ButtonType.Submit" Size="ButtonSize.Large" Icon="save" Text="Save"/>
+                <RadzenButton ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Large"
+                              Icon="cancel" Text="Cancel" Click="@Cancel"/>
             </RadzenStack>
         </RadzenTemplateForm>
 
@@ -67,9 +80,8 @@ else
 
 @code {
 
-    [Inject]
-    public IAccessServices _accessService { get; set; }
-    
+    [Inject] public IAccessServices _accessService { get; set; }
+
     private RegistrationRequest? registrationRequest;
     private string registerResult;
 
@@ -78,7 +90,6 @@ else
         registerResult = string.Empty;
         registrationRequest = new RegistrationRequest();
         //todo check remember
-
     }
 
     async Task Submit(RegistrationRequest arg)
@@ -89,27 +100,24 @@ else
         {
             //registration OK
             NotificationService.Notify(new NotificationMessage
-                {
-                    Severity = NotificationSeverity.Success,
-                    Summary = "Registration ok",
-                    Detail = $"New User Registered",
-                    Duration = 4000
-
-                });
+            {
+                Severity = NotificationSeverity.Success,
+                Summary = "Registration ok",
+                Detail = $"New User Registered",
+                Duration = 4000
+            });
             NavManager.NavigateTo("/");
-
         }
         else
         {
             //error
             NotificationService.Notify(new NotificationMessage
-                {
-                    Severity = NotificationSeverity.Error,
-                    Summary = "Registration failed",
-                    Detail = $"Error in Registration: check the log",
-                    Duration = 4000
-
-                });
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Registration failed",
+                Detail = $"Error in Registration: check the log",
+                Duration = 4000
+            });
             Console.WriteLine(registrationResult);
         }
         //todo submit new registration
@@ -119,4 +127,5 @@ else
     {
         registrationRequest = new RegistrationRequest();
     }
+
 }

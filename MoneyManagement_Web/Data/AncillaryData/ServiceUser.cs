@@ -1,13 +1,10 @@
-﻿namespace MoneyManagement_Web.Data.AncillaryData
+﻿namespace MoneyManagement_Web.Data.AncillaryData;
+
+public class ServiceUser : BaseEntity
 {
-    public class ServiceUser : BaseEntity
-    {
-
-        public int Id { get; set; }
+    public int Id { get; set; }
 
 
-        public string? Name { get; set; }
-        public string? Surname { get; set; }
-
-    }
+    public string? Name { get; set; }
+    public string? Surname { get; set; }
 }

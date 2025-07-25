@@ -14,7 +14,7 @@ public class TransactionDto
 
     public int AccountId { get; set; }
     public string AccountName { get; set; }
-    
+
     public string AccountCurrencyCodeALF3 { get; set; }
 
     public string Note { get; set; }

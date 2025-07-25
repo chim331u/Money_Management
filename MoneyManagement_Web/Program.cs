@@ -19,10 +19,7 @@ builder.Services.AddScoped<NotificationService>();
 builder.Services.AddScoped<TooltipService>();
 builder.Services.AddScoped<ContextMenuService>();
 
-builder.Services.AddFileReaderService(options =>
-{
-    options.UseWasmSharedBuffer = true;
-});
+builder.Services.AddFileReaderService(options => { options.UseWasmSharedBuffer = true; });
 
 builder.Services.AddScoped<IAccessServices, AccessServices>();
 builder.Services.AddScoped<IUtilityServices, UtilityServices>();

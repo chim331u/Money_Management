@@ -9,34 +9,39 @@
     else
     {
         <RadzenMenu>
-            <RadzenMenuItem Text="New" Icon="add" Click="@InsertRow" Disabled=@(houseThingToInsert != null || thingToUpdate != null)></RadzenMenuItem>
+            <RadzenMenuItem Text="New" Icon="add" Click="@InsertRow"
+                            Disabled=@(houseThingToInsert != null || thingToUpdate != null)></RadzenMenuItem>
         </RadzenMenu>
-        <br />
-        <RadzenDataGrid AllowFiltering="true" AllowColumnResize="true" AllowAlternatingRows="true" @ref="houseThingsGrid"
+        <br/>
+        <RadzenDataGrid AllowFiltering="true" AllowColumnResize="true" AllowAlternatingRows="true"
+                        @ref="houseThingsGrid"
                         FilterMode="FilterMode.Advanced" AllowSorting="true" PageSize="15" AllowPaging="true"
                         PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true"
                         Data="@houseThings" TItem="HouseThings" LogicalFilterOperator="LogicalFilterOperator.Or"
                         EditMode="DataGridEditMode.Single" RowUpdate="@OnUpdateRow" RowCreate="@OnCreateRow"
-                        Sort="@Reset" Page="@Reset" Filter="@Reset" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
-                        ExpandMode="DataGridExpandMode.Single" RowExpand="RowExpand" ShowExpandColumn=true Density="Density.Compact">
+                        Sort="@Reset" Page="@Reset" Filter="@Reset"
+                        FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                        ExpandMode="DataGridExpandMode.Single" RowExpand="RowExpand" ShowExpandColumn=true
+                        Density="Density.Compact">
             <Template Context="item">
                 <RadzenDataGrid AllowFiltering="true" AllowPaging="false" AllowSorting="true" Data="@historyHouseThings"
                                 TItem="HouseThings">
                     <Columns>
-                        <RadzenDataGridColumn TItem="HouseThings" Property="Name" Title="Name" />
+                        <RadzenDataGridColumn TItem="HouseThings" Property="Name" Title="Name"/>
                         <RadzenDataGridColumn TItem="HouseThings" Property="Description" Title="Description">
                             <Template Context="data">
                                 <p style="white-space:pre-wrap">@data.Model</p>
                             </Template>
                         </RadzenDataGridColumn>
-                        <RadzenDataGridColumn TItem="HouseThings" Property="ItemType" Title="Type" />
+                        <RadzenDataGridColumn TItem="HouseThings" Property="ItemType" Title="Type"/>
                         <RadzenDataGridColumn TItem="HouseThings" Property="Model" Title="Model">
                             <Template Context="data">
                                 <p style="white-space:pre-wrap">@data.Model</p>
                             </Template>
                         </RadzenDataGridColumn>
-                        <RadzenDataGridColumn TItem="HouseThings" Property="PurchaseDate" Title="Date" FormatString="{0:dd/MM/yyyy}" />
-                        <RadzenDataGridColumn TItem="HouseThings" Property="Cost" Title="Cost" FormatString="{0:C0}" />
+                        <RadzenDataGridColumn TItem="HouseThings" Property="PurchaseDate" Title="Date"
+                                              FormatString="{0:dd/MM/yyyy}"/>
+                        <RadzenDataGridColumn TItem="HouseThings" Property="Cost" Title="Cost" FormatString="{0:C0}"/>
                     </Columns>
                 </RadzenDataGrid>
             </Template>
@@ -47,8 +52,8 @@
                         <p style="white-space:pre-wrap">@data.Name</p>
                     </Template>
                     <EditTemplate Context="thing">
-                        <RadzenTextBox @bind-Value="thing.Name" Style="width:100%; display: block" Name="Name" />
-                        <RadzenRequiredValidator Text="Name is required" Component="Name" Popup="false" />
+                        <RadzenTextBox @bind-Value="thing.Name" Style="width:100%; display: block" Name="Name"/>
+                        <RadzenRequiredValidator Text="Name is required" Component="Name" Popup="false"/>
                     </EditTemplate>
                 </RadzenDataGridColumn>
 
@@ -58,8 +63,8 @@
                                         TValue="HouseThingsRooms" Class="w-99" Placeholder="Select a Room"
                                         FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
                                         AllowFiltering="true" TextProperty="Name"
-                                        Data=@rooms @bind-Value="data.Room" />
-                        <RadzenRequiredValidator Text="Room is required" Component="Room.Name" Popup="false" />
+                                        Data=@rooms @bind-Value="data.Room"/>
+                        <RadzenRequiredValidator Text="Room is required" Component="Room.Name" Popup="false"/>
                     </EditTemplate>
                 </RadzenDataGridColumn>
 
@@ -68,13 +73,14 @@
                         <p style="white-space:pre-wrap">@data.Description</p>
                     </Template>
                     <EditTemplate Context="room">
-                        <RadzenTextBox @bind-Value="room.Description" Style="width:100%; display: block" Name="Description" />
+                        <RadzenTextBox @bind-Value="room.Description" Style="width:100%; display: block"
+                                       Name="Description"/>
                     </EditTemplate>
                 </RadzenDataGridColumn>
 
                 <RadzenDataGridColumn TItem="HouseThings" Property="ItemType" Title="Type" Frozen="true" Width="50px">
                     <EditTemplate Context="thing">
-                        <RadzenTextBox @bind-Value="thing.ItemType" Style="width:100%; display: block" Name="ItemType" />
+                        <RadzenTextBox @bind-Value="thing.ItemType" Style="width:100%; display: block" Name="ItemType"/>
                     </EditTemplate>
                 </RadzenDataGridColumn>
 
@@ -83,22 +89,25 @@
                         <p style="white-space:pre-wrap">@data.Model</p>
                     </Template>
                     <EditTemplate Context="thing">
-                        <RadzenTextBox @bind-Value="thing.Model" Style="width:100%; display: block" Name="Model" />
+                        <RadzenTextBox @bind-Value="thing.Model" Style="width:100%; display: block" Name="Model"/>
                     </EditTemplate>
                 </RadzenDataGridColumn>
 
-                <RadzenDataGridColumn TItem="HouseThings" Property="PurchaseDate" Title="Date" Frozen="true" Width="40px" FormatString="{0:dd/MM/yyyy}">
+                <RadzenDataGridColumn TItem="HouseThings" Property="PurchaseDate" Title="Date" Frozen="true"
+                                      Width="40px" FormatString="{0:dd/MM/yyyy}">
                     <EditTemplate Context="thing">
                         <RadzenDatePicker @bind-Value="thing.PurchaseDate" ShowTime="false" HourFormat="12"
-                                          DateFormat="dd/MM/yyyy" Style="width:100%; display: block" Name="PurchaseDate" />
-                        <RadzenRequiredValidator Text="Date is required" Component="PurchaseDate" Popup="false" />
+                                          DateFormat="dd/MM/yyyy" Style="width:100%; display: block"
+                                          Name="PurchaseDate"/>
+                        <RadzenRequiredValidator Text="Date is required" Component="PurchaseDate" Popup="false"/>
                     </EditTemplate>
                 </RadzenDataGridColumn>
 
-                <RadzenDataGridColumn TItem="HouseThings" Property="Cost" Title="Cost" Frozen="true" Width="40px" FormatString="{0:C0}">
+                <RadzenDataGridColumn TItem="HouseThings" Property="Cost" Title="Cost" Frozen="true" Width="40px"
+                                      FormatString="{0:C0}">
                     <EditTemplate Context="thing">
-                        <RadzenNumeric @bind-Value="thing.Cost" Style="width:100%; display: block" Name="Cost" />
-                        <RadzenRequiredValidator Text="Cost is required" Component="Cost" Popup="false" />
+                        <RadzenNumeric @bind-Value="thing.Cost" Style="width:100%; display: block" Name="Cost"/>
+                        <RadzenRequiredValidator Text="Cost is required" Component="Cost" Popup="false"/>
                     </EditTemplate>
                 </RadzenDataGridColumn>
 
@@ -108,29 +117,34 @@
                         <p style="white-space:pre-wrap">@data.Note</p>
                     </Template>
                     <EditTemplate Context="thing">
-                        <RadzenTextBox @bind-Value="thing.Note" Style="width:100%; display: block" Name="thing" />
+                        <RadzenTextBox @bind-Value="thing.Note" Style="width:100%; display: block" Name="thing"/>
                     </EditTemplate>
                 </RadzenDataGridColumn>
 
                 <RadzenDataGridColumn TItem="HouseThings" Context="thing" Filterable="false" Sortable="false"
                                       TextAlign="TextAlign.Right" Width="10%">
                     <Template Context="thing">
-                        <RadzenButton Icon="recycling" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Small"
+                        <RadzenButton Icon="recycling" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat"
+                                      Size="ButtonSize.Small"
                                       Click="@(args => Renew(thing))"
-                        @onclick:stopPropagation="true">
+                                      @onclick:stopPropagation="true">
                         </RadzenButton>
-                        <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Small"
+                        <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat"
+                                      Size="ButtonSize.Small"
                                       Click="@(args => EditRow(thing))" @onclick:stopPropagation="true">
                         </RadzenButton>
-                        <RadzenButton ButtonStyle="ButtonStyle.Light" Icon="delete" Variant="Variant.Flat" Shade="Shade.Lighter"
-                                      Size="ButtonSize.Small" class="my-1 ms-1" Click="@(args => DeleteRow(thing))" @onclick:stopPropagation="true">
+                        <RadzenButton ButtonStyle="ButtonStyle.Light" Icon="delete" Variant="Variant.Flat"
+                                      Shade="Shade.Lighter"
+                                      Size="ButtonSize.Small" class="my-1 ms-1" Click="@(args => DeleteRow(thing))"
+                                      @onclick:stopPropagation="true">
                         </RadzenButton>
                     </Template>
                     <EditTemplate Context="thing">
                         <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Success" Variant="Variant.Flat"
                                       Size="ButtonSize.Small" Click="@((args) => SaveRow(thing))">
                         </RadzenButton>
-                        <RadzenButton Icon="undo" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Small"
+                        <RadzenButton Icon="undo" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat"
+                                      Size="ButtonSize.Small"
                                       class="my-1 ms-1" Click="@((args) => CancelEdit(thing))">
                         </RadzenButton>
                     </EditTemplate>
@@ -148,10 +162,8 @@ else
 
 @code {
 
-    [Inject]
-    public IAccessServices _accessService { get; set; }
-    [Inject]
-    public IHouseThingsService _service { get; set; }
+    [Inject] public IAccessServices _accessService { get; set; }
+    [Inject] public IHouseThingsService _service { get; set; }
 
     protected IList<HouseThings>? houseThings;
     protected IList<HouseThings>? historyHouseThings;
@@ -168,7 +180,6 @@ else
         if (_accessService.IsAuthorized)
         {
             await RefreshData();
-
         }
     }
 
@@ -177,9 +188,7 @@ else
         rooms = await _service.GetActiveHouseThingsRoomsList();
         houseThings = await _service.GetActiveHouseThingsList();
         StateHasChanged();
-
     }
-
 
 
     async Task EditRow(HouseThings item)
@@ -198,24 +207,22 @@ else
         if (result != null)
         {
             NotificationService.Notify(new NotificationMessage
-                    {
-                        Severity = NotificationSeverity.Success,
-                        Summary = "Thing Update",
-                        Detail = $"Thing {result.Name} updated",
-                        Duration = 4000
-
-                    });
+            {
+                Severity = NotificationSeverity.Success,
+                Summary = "Thing Update",
+                Detail = $"Thing {result.Name} updated",
+                Duration = 4000
+            });
         }
         else
         {
             NotificationService.Notify(new NotificationMessage
-                    {
-                        Severity = NotificationSeverity.Error,
-                        Summary = "Error Update",
-                        Detail = $"Thing NOT updated",
-                        Duration = 4000
-
-                    });
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Error Update",
+                Detail = $"Thing NOT updated",
+                Duration = 4000
+            });
         }
     }
 
@@ -228,24 +235,22 @@ else
         if (result != null)
         {
             NotificationService.Notify(new NotificationMessage
-                    {
-                        Severity = NotificationSeverity.Success,
-                        Summary = "New Thing Created",
-                        Detail = $"Thing {result.Name} created",
-                        Duration = 4000
-
-                    });
+            {
+                Severity = NotificationSeverity.Success,
+                Summary = "New Thing Created",
+                Detail = $"Thing {result.Name} created",
+                Duration = 4000
+            });
         }
         else
         {
             NotificationService.Notify(new NotificationMessage
-                    {
-                        Severity = NotificationSeverity.Error,
-                        Summary = "Error",
-                        Detail = "Error adding New Thing",
-                        Duration = 4000
-
-                    });
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Error",
+                Detail = "Error adding New Thing",
+                Duration = 4000
+            });
         }
 
         await RefreshData();
@@ -262,25 +267,22 @@ else
                 await RefreshData();
                 await houseThingsGrid.Reload();
                 NotificationService.Notify(new NotificationMessage
-                        {
-                            Severity = NotificationSeverity.Success,
-                            Summary = "Renew",
-                            Detail = $"Item Renewed",
-                            Duration = 2000
-
-                        });
-
+                {
+                    Severity = NotificationSeverity.Success,
+                    Summary = "Renew",
+                    Detail = $"Item Renewed",
+                    Duration = 2000
+                });
             }
             else
             {
                 NotificationService.Notify(new NotificationMessage
-                        {
-                            Severity = NotificationSeverity.Error,
-                            Summary = "Error Renew",
-                            Detail = $"Error during the Renew: check the log",
-                            Duration = 2000
-
-                        });
+                {
+                    Severity = NotificationSeverity.Error,
+                    Summary = "Error Renew",
+                    Detail = $"Error during the Renew: check the log",
+                    Duration = 2000
+                });
             }
 
             isRenew = false;
@@ -289,7 +291,6 @@ else
         {
             await houseThingsGrid.UpdateRow(item);
         }
-
     }
 
     async void CancelEdit(HouseThings item)
@@ -301,7 +302,6 @@ else
         var orginalItem = await _service.GetHouseThingsRooms(item.Id);
 
         StateHasChanged();
-
     }
 
     protected async Task InsertRow()
@@ -310,28 +310,26 @@ else
         houseThingToInsert.PurchaseDate = DateTime.Now;
 
         await houseThingsGrid.InsertRow(houseThingToInsert);
-
     }
 
     async Task DeleteRow(HouseThings item)
     {
-
         //confirm delete
         var dialogResult = await DialogService.OpenAsync("Confirm Delete", ds =>
-    @<RadzenStack Gap="1.5rem">
-        <p>Do you want delete the thing <b>@item.Name</b>?</p>
-        <RadzenStack Gap="2rem" Class="rz-p-4 rz-p-md-12">
-            <RadzenRow AlignItems="AlignItems.Center" Class="rz-mt-4">
-                <RadzenButton Text="No" Click="() => ds.Close(false)" ButtonStyle="ButtonStyle.Light" />
-                <RadzenButton Click="() => ds.Close(true)" Text="Yes" ButtonStyle="ButtonStyle.Secondary"></RadzenButton>
-            </RadzenRow>
-        </RadzenStack>
-        </RadzenStack>
-    );
+            @<RadzenStack Gap="1.5rem">
+                <p>Do you want delete the thing <b>@item.Name</b>?</p>
+                <RadzenStack Gap="2rem" Class="rz-p-4 rz-p-md-12">
+                    <RadzenRow AlignItems="AlignItems.Center" Class="rz-mt-4">
+                        <RadzenButton Text="No" Click="() => ds.Close(false)" ButtonStyle="ButtonStyle.Light"/>
+                        <RadzenButton Click="() => ds.Close(true)" Text="Yes"
+                                      ButtonStyle="ButtonStyle.Secondary"></RadzenButton>
+                    </RadzenRow>
+                </RadzenStack>
+            </RadzenStack>
+        );
 
         if (dialogResult != null && dialogResult)
         {
-
             if (item == houseThingToInsert)
             {
                 houseThingToInsert = null;
@@ -348,25 +346,24 @@ else
             if (result != null)
             {
                 NotificationService.Notify(new NotificationMessage
-                    {
-                        Severity = NotificationSeverity.Success,
-                        Summary = "Thing Deleted",
-                        Detail = $"Thing {result.Name} deleted",
-                        Duration = 4000
-
-                    });
+                {
+                    Severity = NotificationSeverity.Success,
+                    Summary = "Thing Deleted",
+                    Detail = $"Thing {result.Name} deleted",
+                    Duration = 4000
+                });
             }
             else
             {
                 NotificationService.Notify(new NotificationMessage
-                    {
-                        Severity = NotificationSeverity.Error,
-                        Summary = "Error",
-                        Detail = "Error deleting Thing",
-                        Duration = 4000
-
-                    });
+                {
+                    Severity = NotificationSeverity.Error,
+                    Summary = "Error",
+                    Detail = "Error deleting Thing",
+                    Duration = 4000
+                });
             }
+
             await houseThingsGrid.Reload();
             await RefreshData();
         }
@@ -398,12 +395,10 @@ else
         thingToUpdate = item;
 
         await houseThingsGrid.EditRow(item);
-
-
     }
 
     #region Tooltips
 
-
     #endregion
+
 }

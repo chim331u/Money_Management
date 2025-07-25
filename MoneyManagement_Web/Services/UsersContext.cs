@@ -1,6 +1,5 @@
-﻿namespace MoneyManagement_Web.Services
+﻿namespace MoneyManagement_Web.Services;
+
+internal class UsersContext
 {
-    internal class UsersContext
-    {
-    }
 }

@@ -1,10 +1,9 @@
-﻿namespace MoneyManagement_Web.Data.Test
+﻿namespace MoneyManagement_Web.Data.Test;
+
+public class UploadResult
 {
-    public class UploadResult
-    {
-        public bool Uploaded { get; set; }
-        public string? FileName { get; set; }
-        public string? StoredFileName { get; set; }
-        public int ErrorCode { get; set; }
-    }
+    public bool Uploaded { get; set; }
+    public string? FileName { get; set; }
+    public string? StoredFileName { get; set; }
+    public int ErrorCode { get; set; }
 }

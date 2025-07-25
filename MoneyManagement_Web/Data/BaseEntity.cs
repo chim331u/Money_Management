@@ -1,14 +1,12 @@
-﻿namespace MoneyManagement_Web.Data
+﻿namespace MoneyManagement_Web.Data;
+
+public abstract class BaseEntity
 {
-    public abstract class BaseEntity
-    {
+    public DateTime CreatedDate { get; set; }
+    public DateTime LastUpdatedDate { get; set; }
+    public bool IsActive { get; set; }
+    public string? Note { get; set; }
 
-        public DateTime CreatedDate { get; set; }
-        public DateTime LastUpdatedDate { get; set; }
-        public bool IsActive { get; set; }
-        public string? Note { get; set; }
-
-        //Future:
-        //Who(add, mod, etc)
-    }
+    //Future:
+    //Who(add, mod, etc)
 }

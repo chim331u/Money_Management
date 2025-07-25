@@ -13,7 +13,7 @@
         <NoWarn>1701;1702;1591</NoWarn>
     </PropertyGroup>
 
-    <ItemGroup>        
+    <ItemGroup>
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.14"/>
         <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2"/>
         <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="11.11.0"/>
@@ -54,8 +54,8 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Compile Remove="Contract\Account_DTO.cs" />
-      <Compile Remove="Contract\Balance_DTO.cs" />
+        <Compile Remove="Contract\Account_DTO.cs"/>
+        <Compile Remove="Contract\Balance_DTO.cs"/>
     </ItemGroup>
 
 </Project>

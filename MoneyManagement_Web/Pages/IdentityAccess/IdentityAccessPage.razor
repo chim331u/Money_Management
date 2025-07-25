@@ -9,34 +9,38 @@
     else
     {
         <RadzenMenu>
-            <RadzenMenuItem Text="New" Icon="add" Click="@InsertRow" Disabled=@(iAccountToInsert != null || iAccountToUpdate != null)></RadzenMenuItem>
+            <RadzenMenuItem Text="New" Icon="add" Click="@InsertRow"
+                            Disabled=@(iAccountToInsert != null || iAccountToUpdate != null)></RadzenMenuItem>
         </RadzenMenu>
-        <br />
+        <br/>
         <RadzenDataGrid AllowFiltering="true" AllowColumnResize="true" AllowAlternatingRows="true" @ref="iAccountGrid"
                         FilterMode="FilterMode.SimpleWithMenu" AllowSorting="true" PageSize="15" AllowPaging="true"
                         PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true" ColumnWidth="250px"
                         Data="@identiryAccounts" TItem="ISA_Accounts" LogicalFilterOperator="LogicalFilterOperator.Or"
                         EditMode="DataGridEditMode.Single" RowUpdate="@OnUpdateRow" RowCreate="@OnCreateRow"
-                        Sort="@Reset" Page="@Reset" Filter="@Reset" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" Density="Density.Compact">
+                        Sort="@Reset" Page="@Reset" Filter="@Reset"
+                        FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" Density="Density.Compact">
             <Columns>
                 <RadzenDataGridColumn TItem="ISA_Accounts" Context="account" Filterable="true" Sortable="false"
                                       TextAlign="TextAlign.Center" Width="10%">
                     <Template Context="account">
-                        <RadzenButton Icon="content_copy" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Small"
+                        <RadzenButton Icon="content_copy" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat"
+                                      Size="ButtonSize.Small"
                                       Click="@(args => copyToClipboard(account))"
-                        @onclick:stopPropagation="true">
+                                      @onclick:stopPropagation="true">
                         </RadzenButton>
-                        <RadzenButton Icon="visibility" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" 
-                        Size="ButtonSize.Small"  Click="@(args => viewPsw(account))"
-                        @onclick:stopPropagation="true">
+                        <RadzenButton Icon="visibility" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat"
+                                      Size="ButtonSize.Small" Click="@(args => viewPsw(account))"
+                                      @onclick:stopPropagation="true">
                         </RadzenButton>
                         <RadzenButton Icon="autorenew" Variant="Variant.Flat" ButtonStyle="ButtonStyle.Light"
-                                      Size="ButtonSize.Small" class="my-1 ms-1" Click="@(args => changePsw(account))" @onclick:stopPropagation="true">
+                                      Size="ButtonSize.Small" class="my-1 ms-1" Click="@(args => changePsw(account))"
+                                      @onclick:stopPropagation="true">
                         </RadzenButton>
                     </Template>
                 </RadzenDataGridColumn>
                 <RadzenDataGridColumn TItem="ISA_Accounts" Property="Id" Filterable="true" Title="ID"
-                                      Frozen="true" Width="20px" TextAlign="TextAlign.Center" />
+                                      Frozen="true" Width="20px" TextAlign="TextAlign.Center"/>
 
 
                 <RadzenDataGridColumn TItem="ISA_Accounts" Title="Name" Frozen="true" Filterable="true" Width="30px">
@@ -44,56 +48,66 @@
                         <p style="white-space:pre-wrap">@data.Name</p>
                     </Template>
                     <EditTemplate Context="account">
-                        <RadzenTextBox @bind-Value="account.Name" Style="width:100%; display: block" Name="Name" />
-                        <RadzenRequiredValidator Text="Name is required" Component="Name" Popup="false" Style="position: absolute" />
+                        <RadzenTextBox @bind-Value="account.Name" Style="width:100%; display: block" Name="Name"/>
+                        <RadzenRequiredValidator Text="Name is required" Component="Name" Popup="false"
+                                                 Style="position: absolute"/>
                     </EditTemplate>
                 </RadzenDataGridColumn>
 
-                <RadzenDataGridColumn TItem="ISA_Accounts" Property="ISA_User.Name" Title="User" Frozen="true" Width="30px">
+                <RadzenDataGridColumn TItem="ISA_Accounts" Property="ISA_User.Name" Title="User" Frozen="true"
+                                      Width="30px">
                     <EditTemplate Context="account">
                         <RadzenDropDown AllowClean="true" Name="ISA_User.Name"
                                         TValue="ServiceUser" Class="w-99" Placeholder="Select a User"
                                         FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
                                         AllowFiltering="true" TextProperty="Name"
-                                        Data=@users @bind-Value="account.ISA_User" />
-                        <RadzenRequiredValidator Text="User is required" Component="ISA_User.Name" Popup="false" Style="position: absolute" />
+                                        Data=@users @bind-Value="account.ISA_User"/>
+                        <RadzenRequiredValidator Text="User is required" Component="ISA_User.Name" Popup="false"
+                                                 Style="position: absolute"/>
                     </EditTemplate>
                 </RadzenDataGridColumn>
 
-                <RadzenDataGridColumn TItem="ISA_Accounts" Property="UserName" Title="UserName" Frozen="true" Width="50px">
+                <RadzenDataGridColumn TItem="ISA_Accounts" Property="UserName" Title="UserName" Frozen="true"
+                                      Width="50px">
                     <EditTemplate Context="account">
-                        <RadzenTextBox @bind-Value="account.UserName" Style="width:100%; display: block" Name="UserName" />
-                        <RadzenRequiredValidator Text="UserName is required" Component="UserName" Popup="false" Style="position: absolute" />
+                        <RadzenTextBox @bind-Value="account.UserName" Style="width:100%; display: block"
+                                       Name="UserName"/>
+                        <RadzenRequiredValidator Text="UserName is required" Component="UserName" Popup="false"
+                                                 Style="position: absolute"/>
                     </EditTemplate>
                 </RadzenDataGridColumn>
 
                 <RadzenDataGridColumn TItem="ISA_Accounts" Property="WebUrl" Title="WebUrl" Frozen="true" Width="50px">
                     <EditTemplate Context="account">
-                        <RadzenTextBox @bind-Value="account.WebUrl" Style="width:100%; display: block" Name="WebUrl" />
+                        <RadzenTextBox @bind-Value="account.WebUrl" Style="width:100%; display: block" Name="WebUrl"/>
                     </EditTemplate>
                 </RadzenDataGridColumn>
 
                 <RadzenDataGridColumn TItem="ISA_Accounts" Property="Note" Title="Note" Frozen="true" Width="50px">
                     <EditTemplate Context="account">
-                        <RadzenTextBox @bind-Value="account.Note" Style="width:100%; display: block" Name="Note" />
+                        <RadzenTextBox @bind-Value="account.Note" Style="width:100%; display: block" Name="Note"/>
                     </EditTemplate>
                 </RadzenDataGridColumn>
 
                 <RadzenDataGridColumn TItem="ISA_Accounts" Context="account" Filterable="false" Sortable="false"
                                       TextAlign="TextAlign.Right" Width="10%" Title="#">
                     <Template Context="account">
-                        <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Small"
+                        <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat"
+                                      Size="ButtonSize.Small"
                                       Click="@(args => EditRow(account))" @onclick:stopPropagation="true">
                         </RadzenButton>
-                        <RadzenButton ButtonStyle="ButtonStyle.Light" Icon="delete" Variant="Variant.Flat" Shade="Shade.Lighter"
-                                      Size="ButtonSize.Small" class="my-1 ms-1" Click="@(args => DeleteRow(account))" @onclick:stopPropagation="true">
+                        <RadzenButton ButtonStyle="ButtonStyle.Light" Icon="delete" Variant="Variant.Flat"
+                                      Shade="Shade.Lighter"
+                                      Size="ButtonSize.Small" class="my-1 ms-1" Click="@(args => DeleteRow(account))"
+                                      @onclick:stopPropagation="true">
                         </RadzenButton>
                     </Template>
                     <EditTemplate Context="account">
                         <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Success" Variant="Variant.Flat"
                                       Size="ButtonSize.Small" Click="@((args) => SaveRow(account))">
                         </RadzenButton>
-                        <RadzenButton Icon="undo" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Small"
+                        <RadzenButton Icon="undo" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat"
+                                      Size="ButtonSize.Small"
                                       class="my-1 ms-1" Click="@((args) => CancelEdit(account))">
                         </RadzenButton>
                     </EditTemplate>
@@ -101,7 +115,6 @@
 
             </Columns>
         </RadzenDataGrid>
-
     }
 }
 else
@@ -114,15 +127,11 @@ else
 
 
 @code {
-    [Inject]
-    public IIdentityAccessService _service { get; set; }
-    [Inject]
-    public IAccessServices _accessService { get; set; }
-    [Inject]
-    public IAnchillaryService _anchillaryService { get; set; }
+    [Inject] public IIdentityAccessService _service { get; set; }
+    [Inject] public IAccessServices _accessService { get; set; }
+    [Inject] public IAnchillaryService _anchillaryService { get; set; }
 
-    [Inject]
-    public IUtilityServices _utilityService { get; set; }
+    [Inject] public IUtilityServices _utilityService { get; set; }
 
     protected IList<ISA_Accounts>? identiryAccounts;
     IList<ServiceUser>? users;
@@ -131,7 +140,7 @@ else
     ISA_Accounts? iAccountToInsert;
     RadzenDataGrid<ISA_Accounts>? iAccountGrid;
 
-   
+
     protected override async Task OnInitializedAsync()
     {
         if (_accessService.IsAuthorized)
@@ -145,68 +154,68 @@ else
     {
         identiryAccounts = await _service.GetActiveIdentityAccountList();
         StateHasChanged();
-
     }
 
     private async Task viewPsw(ISA_Accounts item)
-    { 
+    {
         var cleanPsw = await _service.GetCleanPsw(item.Id);
 
         if (string.IsNullOrEmpty(cleanPsw))
         {
             NotificationService.Notify(new NotificationMessage
-                    {
-                        Severity = NotificationSeverity.Warning,
-                        Summary = "Clean Password",
-                        Detail = $"Password in null or empty",
-                        Duration = 1000
-
-                    });
+            {
+                Severity = NotificationSeverity.Warning,
+                Summary = "Clean Password",
+                Detail = $"Password in null or empty",
+                Duration = 1000
+            });
         }
         else
         {
-
             var result = await DialogService.OpenAsync("", ds =>
-    @<MM_WEB.Shared.Components.PasswordTextBox cleanPsw="@cleanPsw">
-    </MM_WEB.Shared.Components.PasswordTextBox>, new AlertOptions()
-                                                   {
-                                                       OkButtonText = "OK",
-                                                       CloseDialogOnEsc = true,
-                                                       ShowTitle = false,
-                                                       CloseDialogOnOverlayClick = true
-                                                   });
-
+                @<MM_WEB.Shared.Components.PasswordTextBox cleanPsw="@cleanPsw">
+                </MM_WEB.Shared.Components.PasswordTextBox>, new AlertOptions
+            {
+                OkButtonText = "OK",
+                CloseDialogOnEsc = true,
+                ShowTitle = false,
+                CloseDialogOnOverlayClick = true
+            });
         }
     }
 
     private async Task changePsw(ISA_Accounts item)
     {
-        item.Password=string.Empty;
+        item.Password = string.Empty;
 
         var dialogResult = await DialogService.OpenAsync("Change Password", ds =>
-        @<RadzenStack Gap="1.5rem">
-            <RadzenTemplateForm TItem="ISA_Accounts" Data=@item Submit=@(() => @ds.Close(true))>
-                <RadzenFieldset Text="Password">
-                    <RadzenStack Gap="2rem" Class="rz-p-4 rz-p-md-12">
-                        <RadzenRow AlignItems="AlignItems.Center" RowGap="0.25rem">
-                            <RadzenColumn Size="12" SizeMD="4" Class="rz-text-align-start rz-text-align-md-end">
-                                <RadzenLabel Text="Password" />
-                            </RadzenColumn>
-                            <RadzenColumn Size="12" SizeMD="8">
-                                <RadzenTextBox Name="Password" @bind-Value=@item.Password Style="display: block; width: 100%" />
-                                <RadzenRequiredValidator Component="Password" Text="Enter password" Popup="false" Style="position: absolute" />
-                            </RadzenColumn>
-                        </RadzenRow>
-                        <RadzenRow AlignItems="AlignItems.Center" Class="rz-mt-4">
-                            <RadzenColumn Size="12" Offset="0" SizeMD="8" OffsetMD="4">
-                                <RadzenButton Text="Cancel" Click="() => ds.Close(false)" ButtonStyle="ButtonStyle.Light" />
-                                <RadzenButton ButtonType="ButtonType.Submit" Text="Submit" ButtonStyle="ButtonStyle.Secondary"></RadzenButton>
-                            </RadzenColumn>
-                        </RadzenRow>
-                    </RadzenStack>
-                </RadzenFieldset>
-            </RadzenTemplateForm>
-        </RadzenStack>);
+            @<RadzenStack Gap="1.5rem">
+                <RadzenTemplateForm TItem="ISA_Accounts" Data="@item" Submit="@(() => @ds.Close(true))">
+                    <RadzenFieldset Text="Password">
+                        <RadzenStack Gap="2rem" Class="rz-p-4 rz-p-md-12">
+                            <RadzenRow AlignItems="AlignItems.Center" RowGap="0.25rem">
+                                <RadzenColumn Size="12" SizeMD="4" Class="rz-text-align-start rz-text-align-md-end">
+                                    <RadzenLabel Text="Password"/>
+                                </RadzenColumn>
+                                <RadzenColumn Size="12" SizeMD="8">
+                                    <RadzenTextBox Name="Password" @bind-Value="@item.Password"
+                                                   Style="display: block; width: 100%"/>
+                                    <RadzenRequiredValidator Component="Password" Text="Enter password" Popup="false"
+                                                             Style="position: absolute"/>
+                                </RadzenColumn>
+                            </RadzenRow>
+                            <RadzenRow AlignItems="AlignItems.Center" Class="rz-mt-4">
+                                <RadzenColumn Size="12" Offset="0" SizeMD="8" OffsetMD="4">
+                                    <RadzenButton Text="Cancel" Click="() => ds.Close(false)"
+                                                  ButtonStyle="ButtonStyle.Light"/>
+                                    <RadzenButton ButtonType="ButtonType.Submit" Text="Submit"
+                                                  ButtonStyle="ButtonStyle.Secondary"></RadzenButton>
+                                </RadzenColumn>
+                            </RadzenRow>
+                        </RadzenStack>
+                    </RadzenFieldset>
+                </RadzenTemplateForm>
+            </RadzenStack>);
 
         if (dialogResult != null && dialogResult)
         {
@@ -217,39 +226,35 @@ else
             if (result != null)
             {
                 NotificationService.Notify(new NotificationMessage
-                        {
-                            Severity = NotificationSeverity.Success,
-                            Summary = "Password Change",
-                            Detail = $"Password Changed",
-                            Duration = 4000
-
-                        });
+                {
+                    Severity = NotificationSeverity.Success,
+                    Summary = "Password Change",
+                    Detail = $"Password Changed",
+                    Duration = 4000
+                });
                 await RefreshData();
             }
             else
             {
                 NotificationService.Notify(new NotificationMessage
-                        {
-                            Severity = NotificationSeverity.Error,
-                            Summary = "Error",
-                            Detail = "Error change password",
-                            Duration = 4000
-
-                        });
+                {
+                    Severity = NotificationSeverity.Error,
+                    Summary = "Error",
+                    Detail = "Error change password",
+                    Duration = 4000
+                });
             }
         }
         else
         {
             NotificationService.Notify(new NotificationMessage
-                    {
-                        Severity = NotificationSeverity.Warning,
-                        Summary = "Missing Password",
-                        Detail = "Password is required",
-                        Duration = 4000
-
-                    });
+            {
+                Severity = NotificationSeverity.Warning,
+                Summary = "Missing Password",
+                Detail = "Password is required",
+                Duration = 4000
+            });
         }
-
     }
 
     async Task EditRow(ISA_Accounts item)
@@ -268,24 +273,22 @@ else
         if (result != null)
         {
             NotificationService.Notify(new NotificationMessage
-                    {
-                        Severity = NotificationSeverity.Success,
-                        Summary = "Account Update",
-                        Detail = $"Account updated",
-                        Duration = 4000
-
-                    });
+            {
+                Severity = NotificationSeverity.Success,
+                Summary = "Account Update",
+                Detail = $"Account updated",
+                Duration = 4000
+            });
         }
         else
         {
             NotificationService.Notify(new NotificationMessage
-                    {
-                        Severity = NotificationSeverity.Error,
-                        Summary = "Error Update",
-                        Detail = $"Account NOT updated",
-                        Duration = 4000
-
-                    });
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Error Update",
+                Detail = $"Account NOT updated",
+                Duration = 4000
+            });
         }
     }
 
@@ -294,31 +297,35 @@ else
         //add new psw
 
         var dialogResult = await DialogService.OpenAsync("Create Password", ds =>
-    @<RadzenStack Gap="1.5rem">
-        <RadzenTemplateForm TItem="ISA_Accounts" Data=@item Submit=@(() => @ds.Close(true))>
-            <RadzenFieldset Text="Password">
-                <RadzenStack Gap="2rem" Class="rz-p-4 rz-p-md-12">
-                    <RadzenRow AlignItems="AlignItems.Center" RowGap="0.25rem">
-                        <RadzenColumn Size="12" SizeMD="4" Class="rz-text-align-start rz-text-align-md-end">
-                            <RadzenLabel Text="Password" />
-                        </RadzenColumn>
-                        <RadzenColumn Size="12" SizeMD="8">
-                            <RadzenTextBox Name="Password" @bind-Value=@item.Password Style="display: block; width: 100%" />
-                            <RadzenRequiredValidator Component="Password" Text="Enter password" Popup="false" Style="position: absolute" />
-                        </RadzenColumn>
-                    </RadzenRow>
-                    <RadzenRow AlignItems="AlignItems.Center" Class="rz-mt-4">
-                        <RadzenColumn Size="12" Offset="0" SizeMD="8" OffsetMD="4">
-                            <RadzenButton Text="Cancel" Click="() => ds.Close(false)" ButtonStyle="ButtonStyle.Light" />
-                            <RadzenButton ButtonType="ButtonType.Submit" Text="Submit" ButtonStyle="ButtonStyle.Secondary"></RadzenButton>
-                        </RadzenColumn>
-                    </RadzenRow>
-                </RadzenStack>
-            </RadzenFieldset>
-        </RadzenTemplateForm>
+            @<RadzenStack Gap="1.5rem">
+                <RadzenTemplateForm TItem="ISA_Accounts" Data="@item" Submit="@(() => @ds.Close(true))">
+                    <RadzenFieldset Text="Password">
+                        <RadzenStack Gap="2rem" Class="rz-p-4 rz-p-md-12">
+                            <RadzenRow AlignItems="AlignItems.Center" RowGap="0.25rem">
+                                <RadzenColumn Size="12" SizeMD="4" Class="rz-text-align-start rz-text-align-md-end">
+                                    <RadzenLabel Text="Password"/>
+                                </RadzenColumn>
+                                <RadzenColumn Size="12" SizeMD="8">
+                                    <RadzenTextBox Name="Password" @bind-Value="@item.Password"
+                                                   Style="display: block; width: 100%"/>
+                                    <RadzenRequiredValidator Component="Password" Text="Enter password" Popup="false"
+                                                             Style="position: absolute"/>
+                                </RadzenColumn>
+                            </RadzenRow>
+                            <RadzenRow AlignItems="AlignItems.Center" Class="rz-mt-4">
+                                <RadzenColumn Size="12" Offset="0" SizeMD="8" OffsetMD="4">
+                                    <RadzenButton Text="Cancel" Click="() => ds.Close(false)"
+                                                  ButtonStyle="ButtonStyle.Light"/>
+                                    <RadzenButton ButtonType="ButtonType.Submit" Text="Submit"
+                                                  ButtonStyle="ButtonStyle.Secondary"></RadzenButton>
+                                </RadzenColumn>
+                            </RadzenRow>
+                        </RadzenStack>
+                    </RadzenFieldset>
+                </RadzenTemplateForm>
 
-        </RadzenStack>
-    );
+            </RadzenStack>
+        );
 
         if (dialogResult != null && dialogResult)
         {
@@ -329,39 +336,35 @@ else
             if (result != null)
             {
                 NotificationService.Notify(new NotificationMessage
-                    {
-                        Severity = NotificationSeverity.Success,
-                        Summary = "New Account Created",
-                        Detail = $"Account created",
-                        Duration = 4000
-
-                    });
+                {
+                    Severity = NotificationSeverity.Success,
+                    Summary = "New Account Created",
+                    Detail = $"Account created",
+                    Duration = 4000
+                });
                 await RefreshData();
             }
             else
             {
                 NotificationService.Notify(new NotificationMessage
-                    {
-                        Severity = NotificationSeverity.Error,
-                        Summary = "Error",
-                        Detail = "Error adding New Account",
-                        Duration = 4000
-
-                    });
+                {
+                    Severity = NotificationSeverity.Error,
+                    Summary = "Error",
+                    Detail = "Error adding New Account",
+                    Duration = 4000
+                });
             }
         }
         else
         {
             NotificationService.Notify(new NotificationMessage
-                {
-                    Severity = NotificationSeverity.Warning,
-                    Summary = "Missing Password",
-                    Detail = "Password is required",
-                    Duration = 4000
-
-                });
+            {
+                Severity = NotificationSeverity.Warning,
+                Summary = "Missing Password",
+                Detail = "Password is required",
+                Duration = 4000
+            });
         }
-
     }
 
     async Task SaveRow(ISA_Accounts item)
@@ -378,7 +381,6 @@ else
         var orginalItem = await _service.GetIdentityAccount(item.Id);
 
         StateHasChanged();
-
     }
 
     protected async Task InsertRow()
@@ -386,7 +388,6 @@ else
         iAccountToInsert = new ISA_Accounts();
 
         await iAccountGrid.InsertRow(iAccountToInsert);
-
     }
 
     async Task DeleteRow(ISA_Accounts item)
@@ -407,28 +408,26 @@ else
         if (result != null)
         {
             NotificationService.Notify(new NotificationMessage
-                {
-                    Severity = NotificationSeverity.Success,
-                    Summary = "Account Deleted",
-                    Detail = $"Account deleted",
-                    Duration = 4000
-
-                });
+            {
+                Severity = NotificationSeverity.Success,
+                Summary = "Account Deleted",
+                Detail = $"Account deleted",
+                Duration = 4000
+            });
         }
         else
         {
             NotificationService.Notify(new NotificationMessage
-                {
-                    Severity = NotificationSeverity.Error,
-                    Summary = "Error",
-                    Detail = "Error deleting Account",
-                    Duration = 4000
-
-                });
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Error",
+                Detail = "Error deleting Account",
+                Duration = 4000
+            });
         }
+
         await iAccountGrid.Reload();
         await RefreshData();
-
     }
 
     void Reset()
@@ -450,30 +449,28 @@ else
         if (string.IsNullOrEmpty(text))
         {
             NotificationService.Notify(new NotificationMessage
-                {
-                    Severity = NotificationSeverity.Warning,
-                    Summary = "Copy to ClipBoard",
-                    Detail = $"Password must be valued",
-                    Duration = 1000
-
-                });
+            {
+                Severity = NotificationSeverity.Warning,
+                Summary = "Copy to ClipBoard",
+                Detail = $"Password must be valued",
+                Duration = 1000
+            });
         }
         else
         {
             // _utilityService.CopyToClipboard(text);
             //await ClipboardService.CopyTextToClipboardAsync(text);
             NotificationService.Notify(new NotificationMessage
-                {
-                    Severity = NotificationSeverity.Success,
-                    Summary = "Copy to ClipBoard",
-                    Detail = $"Password Copied",
-                    Duration = 1000
-
-                });
+            {
+                Severity = NotificationSeverity.Success,
+                Summary = "Copy to ClipBoard",
+                Detail = $"Password Copied",
+                Duration = 1000
+            });
         }
     }
-    #region Tooltips
 
+    #region Tooltips
 
     #endregion
 

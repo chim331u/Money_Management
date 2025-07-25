@@ -36,10 +36,10 @@ public class TransactionService : ITransactionService
                 .Where(x => x.IsActive).OrderByDescending(x => x.TxnDate).ToListAsync();
 
 
-            return new 
+            return new
                 ApiResponse<ICollection<TransactionDto>>(
                     result.Select(x => AutoMapper.MapTransactionToDto(x)).ToList(),
-                $"Active transactions retrieved successfully. Total: {result.Count}");
+                    $"Active transactions retrieved successfully. Total: {result.Count}");
         }
         catch (Exception ex)
         {
@@ -55,7 +55,8 @@ public class TransactionService : ITransactionService
             var result = await _context.Transaction.Include(c => c.Account)
                 .Include(c => c.Account.Currency)
                 .Where(x => x.Id == transactionId).FirstOrDefaultAsync();
-            return new ApiResponse<TransactionDto>(AutoMapper.MapTransactionToDto(result), $"Transaction with ID {transactionId} retrieved successfully.");
+            return new ApiResponse<TransactionDto>(AutoMapper.MapTransactionToDto(result),
+                $"Transaction with ID {transactionId} retrieved successfully.");
         }
         catch (Exception ex)
         {
@@ -121,7 +122,8 @@ public class TransactionService : ITransactionService
         catch (Exception ex)
         {
             _logger.LogError($"Error confirming category for transaction with ID {item.Id}: {ex.Message}");
-            return new ApiResponse<TransactionDto>(null, $"Error confirming category for transaction with ID {item.Id}");
+            return new ApiResponse<TransactionDto>(null,
+                $"Error confirming category for transaction with ID {item.Id}");
         }
     }
 
@@ -154,11 +156,10 @@ public class TransactionService : ITransactionService
             {
                 // item.LastUpdatedDate = DateTime.Now;
                 item.Area = _mlService.PredictCategory(item.Description);
-                
+
                 //todo manage massive update
                 await UpdateTransaction(AutoMapper.MapTransactionToDto(item));
-                // var result = _context.Transaction.Update(item);
-                // await _context.SaveChangesAsync();
+
                 ok++;
             }
             catch (Exception ex)
@@ -226,7 +227,8 @@ public class TransactionService : ITransactionService
             await _context.Transaction.AddAsync(newTransaction);
             await _context.SaveChangesAsync();
 
-            return new ApiResponse<TransactionDto>(AutoMapper.MapTransactionToDto(newTransaction), $"Transaction with ID {item.Id} added successfully.");
+            return new ApiResponse<TransactionDto>(AutoMapper.MapTransactionToDto(newTransaction),
+                $"Transaction with ID {item.Id} added successfully.");
         }
         catch (Exception ex)
         {

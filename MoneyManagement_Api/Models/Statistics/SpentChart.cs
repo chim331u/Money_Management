@@ -1,8 +1,7 @@
-﻿namespace MoneyManagement_Api.Models.Statistics
+﻿namespace MoneyManagement_Api.Models.Statistics;
+
+public class SpentChart
 {
-    public class SpentChart
-    {
-        public double SpentAmount { get; set; }
-        public DateTime SpentDate { get; set; }
-    }
+    public double SpentAmount { get; set; }
+    public DateTime SpentDate { get; set; }
 }

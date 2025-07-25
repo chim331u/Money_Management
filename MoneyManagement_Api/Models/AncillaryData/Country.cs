@@ -3,7 +3,6 @@ using MoneyManagement_Api.Models.Utility;
 
 namespace MoneyManagement_Api.Models.AncillaryData;
 
-
 public class Country : BaseEntity
 {
     [Key] public int Id { get; set; }
@@ -21,8 +20,4 @@ public class Country : BaseEntity
 
     [MaxLength(3, ErrorMessage = "Country code Numeric must be lenght 3 numbers")]
     public string? CountryCodeNum3 { get; set; }
-
-    //public ICollection<BankMasterData?> BankMasterData { get; set; }
-
-    //TODO Currency(RIF)
 }

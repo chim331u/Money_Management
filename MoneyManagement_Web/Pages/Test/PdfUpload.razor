@@ -5,48 +5,51 @@
 
 
 
-<InputFile OnChange="@OnInputFileChange" class="btn btn-primary" multiple />
+<InputFile OnChange="@OnInputFileChange" class="btn btn-primary" multiple/>
 
 @if (files.Count > 0)
 {
     <RadzenCard>
-@*         <div class="card-body"> *@
-            <ul>
-                @foreach (var file in files)
-                {
-                    <li>
-                        File: @file.Name
-                        <br>
-                        @if (FileUpload(uploadResults, file.Name, out var result))
-                        {
-                            <span>
+        @*         <div class="card-body"> *@
+        <ul>
+            @foreach (var file in files)
+            {
+                <li>
+                    File: @file.Name
+                    <br>
+                    @if (FileUpload(uploadResults, file.Name, out var result))
+                    {
+                        <span>
                                 Stored File Name: @result.StoredFileName
                             </span>
-                        }
-                        else
-                        {
-                            <span>
+                    }
+                    else
+                    {
+                        <span>
                                 There was an error uploading the file
-                                (Error: @result.ErrorCode).
+                            (Error: @result.ErrorCode).
                             </span>
-                        }
-                    </li>
-                }
-            </ul>
+                    }
+                </li>
+            }
+        </ul>
         @* </div> *@
 
     </RadzenCard>
 }
+
 @code {
 
-    [Inject]
-    public ITestServices _testService { get; set; }
+    [Inject] public ITestServices _testService { get; set; }
 
-    private List<File> files = new List<File>();
+    private List<File> files = new();
     private List<UploadResult> uploadResults = new();
     private int maxAllowedFiles = 3;
     private bool shouldRender;
-    protected override bool ShouldRender() => shouldRender;
+    protected override bool ShouldRender()
+    {
+        return shouldRender;
+    }
 
     private async Task OnInputFileChange(InputFileChangeEventArgs e)
     {
@@ -59,12 +62,11 @@
 
         foreach (var file in e.GetMultipleFiles(maxAllowedFiles))
         {
-            if (uploadResults.SingleOrDefault(
-                f => f.FileName == file.Name) is null)
+            if (uploadResults.SingleOrDefault(f => f.FileName == file.Name) is null)
             {
                 try
                 {
-                    files.Add(new() { Name = file.Name });
+                    files.Add(new File { Name = file.Name });
 
                     var fileContent =
                         new StreamContent(file.OpenReadStream(maxFileSize));
@@ -73,9 +75,9 @@
                         new MediaTypeHeaderValue(file.ContentType);
 
                     content.Add(
-                        content: fileContent,
-                        name: "\"files\"",
-                        fileName: file.Name);
+                        fileContent,
+                        "\"files\"",
+                        file.Name);
 
                     upload = true;
                 }
@@ -86,12 +88,12 @@
                     //     file.Name, ex.Message);
 
                     uploadResults.Add(
-                        new()
-                            {
-                                FileName = file.Name,
-                                ErrorCode = 6,
-                                Uploaded = false
-                            });
+                        new UploadResult
+                        {
+                            FileName = file.Name,
+                            ErrorCode = 6,
+                            Uploaded = false
+                        });
                 }
             }
         }
@@ -113,10 +115,10 @@
 
         shouldRender = true;
     }
-    
+
     private static bool FileUpload(IList<UploadResult> uploadResults, string? fileName, out UploadResult result)
     {
-        result = uploadResults.SingleOrDefault(f => f.FileName == fileName) ?? new();
+        result = uploadResults.SingleOrDefault(f => f.FileName == fileName) ?? new UploadResult();
 
         if (!result.Uploaded)
         {
@@ -195,7 +197,7 @@
     {
         string[] sizes = { "B", "KB", "MB", "GB", "TB" };
 
-        int order = 0;
+        var order = 0;
         while (len >= 1024 && order < sizes.Length - 1)
         {
             order++;
@@ -204,7 +206,8 @@
 
         // Adjust the format string to your preferences. For example "{0:0.#}{1}" would
         // show a single decimal place, and no space.
-        string result = String.Format("{0:0.##} {1}", len, sizes[order]);
+        var result = string.Format("{0:0.##} {1}", len, sizes[order]);
         return result;
     }
+
 }

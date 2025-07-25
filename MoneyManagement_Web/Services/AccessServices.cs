@@ -6,146 +6,142 @@ using System.Text.Json.Serialization;
 using MoneyManagement_Web.Data;
 using MoneyManagement_Web.Interfaces;
 
-namespace MoneyManagement_Web.Services
+namespace MoneyManagement_Web.Services;
+
+public class AccessServices : IAccessServices
 {
-    public class AccessServices : IAccessServices
+    public bool IsAuthorized
     {
-
-        public bool IsAuthorized { get => isAuthorized; set { isAuthorized = value; NotifyStateChanged(); } }
-
-        public RegistrationRequest LoggedInfo { get; set; }
-
-        private bool isAuthorized;
-
-        public event Action? OnChange;
-
-        private void NotifyStateChanged() => OnChange?.Invoke();
-
-        HttpClient _httpClient;
-        JsonSerializerOptions _serializerOptions;
-        private readonly IUtilityServices _utilityServices;
-
-        public string _apiToken {get; set;}
-
-        public AccessServices(IUtilityServices utilityServices)
+        get => isAuthorized;
+        set
         {
-            _httpClient = new HttpClient();
-
-            _serializerOptions = new JsonSerializerOptions
-            {
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-                WriteIndented = true,
-                NumberHandling =
-                    JsonNumberHandling.AllowReadingFromString |
-                    JsonNumberHandling.WriteAsString,
-                ReadCommentHandling = JsonCommentHandling.Skip
-            };
-
-            _utilityServices = utilityServices;
+            isAuthorized = value;
+            NotifyStateChanged();
         }
+    }
 
-        public async Task<AuthResponse> Login(AuthRequest authRequest)
+    public RegistrationRequest LoggedInfo { get; set; }
+
+    private bool isAuthorized;
+
+    public event Action? OnChange;
+
+    private void NotifyStateChanged()
+    {
+        OnChange?.Invoke();
+    }
+
+    private HttpClient _httpClient;
+    private JsonSerializerOptions _serializerOptions;
+    private readonly IUtilityServices _utilityServices;
+
+    public string _apiToken { get; set; }
+
+    public AccessServices(IUtilityServices utilityServices)
+    {
+        _httpClient = new HttpClient();
+
+        _serializerOptions = new JsonSerializerOptions
         {
-           
-            Uri uri = new Uri(string.Format(_utilityServices.GetRestUrl() + $"api/access/login", string.Empty));
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            WriteIndented = true,
+            NumberHandling =
+                JsonNumberHandling.AllowReadingFromString |
+                JsonNumberHandling.WriteAsString,
+            ReadCommentHandling = JsonCommentHandling.Skip
+        };
 
-            try
+        _utilityServices = utilityServices;
+    }
+
+    public async Task<AuthResponse> Login(AuthRequest authRequest)
+    {
+        var uri = new Uri(string.Format(_utilityServices.GetRestUrl() + $"api/access/login", string.Empty));
+
+        try
+        {
+            var response = await _httpClient.PostAsJsonAsync(uri, authRequest);
+
+
+            if (response.IsSuccessStatusCode)
             {
-                HttpResponseMessage response = await _httpClient.PostAsJsonAsync(uri, authRequest);
+                var content = await response.Content.ReadAsStringAsync();
+                var dataResponse = JsonSerializer.Deserialize<AuthResponse>(content, _serializerOptions);
+                _apiToken = dataResponse.Token;
+                LoggedInfo = new RegistrationRequest { Username = dataResponse.Username, Email = dataResponse.Email };
+                IsAuthorized = true;
 
-                
-
-                if (response.IsSuccessStatusCode)
-                {
-                    string content = await response.Content.ReadAsStringAsync();
-                    var dataResponse = JsonSerializer.Deserialize<AuthResponse>(content, _serializerOptions);
-                    _apiToken = dataResponse.Token;
-                    LoggedInfo = new RegistrationRequest { Username = dataResponse.Username, Email=dataResponse.Email };
-                    IsAuthorized = true;
-
-                    await _utilityServices.WriteLog(string.Concat(response.StatusCode.ToString(), " - User: '", dataResponse.Username, "' Access granted"));
-                    return dataResponse;
-                }
-                else
-                {
-                    string content = await response.Content.ReadAsStringAsync();
-                    if (content == "Bad credential")
-                    {
-                        content = "Bad credential (user)";
-                    }
-                    else if (content == "Bad credentials")
-                    {
-                        content = "Bad credential (password)";
-                    }
-
-                    await _utilityServices.WriteLog(string.Concat(response.StatusCode.ToString(), " - ", content));
-                    return null;
-                }
-
-
+                await _utilityServices.WriteLog(string.Concat(response.StatusCode.ToString(), " - User: '",
+                    dataResponse.Username, "' Access granted"));
+                return dataResponse;
             }
-            catch (Exception ex)
+            else
             {
-                Console.WriteLine(@"\tERROR {0}", ex.Message);
+                var content = await response.Content.ReadAsStringAsync();
+                if (content == "Bad credential")
+                    content = "Bad credential (user)";
+                else if (content == "Bad credentials") content = "Bad credential (password)";
 
+                await _utilityServices.WriteLog(string.Concat(response.StatusCode.ToString(), " - ", content));
                 return null;
             }
-
-
-
         }
-
-        public async Task<string> Register(RegistrationRequest registrationRequest)
+        catch (Exception ex)
         {
-            Uri uri = new Uri(string.Format(_utilityServices.GetRestUrl() + $"api/Access/register", string.Empty));
+            Console.WriteLine(@"\tERROR {0}", ex.Message);
 
-            try
-            {
-                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _apiToken);
-                HttpResponseMessage response = await _httpClient.PostAsJsonAsync(uri, registrationRequest);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    string content = await response.Content.ReadAsStringAsync();
-
-                    return content;
-                }
-
-                return null;
-
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(@"\tERROR {0}", ex.Message);
-
-                return ex.Message;
-            }
+            return null;
         }
+    }
 
-        public async Task<string> AccessTest()
+    public async Task<string> Register(RegistrationRequest registrationRequest)
+    {
+        var uri = new Uri(string.Format(_utilityServices.GetRestUrl() + $"api/Access/register", string.Empty));
+
+        try
         {
-            Uri uri = new Uri(string.Format(_utilityServices.GetRestUrl() + $"api/Access", string.Empty));
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _apiToken);
+            var response = await _httpClient.PostAsJsonAsync(uri, registrationRequest);
 
-
-            try
+            if (response.IsSuccessStatusCode)
             {
-                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _apiToken);
-                HttpResponseMessage response = await _httpClient.GetAsync(uri);
+                var content = await response.Content.ReadAsStringAsync();
 
-                if (response.IsSuccessStatusCode)
-                {
-                    string content = await response.Content.ReadAsStringAsync();
-                    return content;
-                }
-
-                return null;
-
+                return content;
             }
-            catch (Exception ex)
+
+            return null;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(@"\tERROR {0}", ex.Message);
+
+            return ex.Message;
+        }
+    }
+
+    public async Task<string> AccessTest()
+    {
+        var uri = new Uri(string.Format(_utilityServices.GetRestUrl() + $"api/Access", string.Empty));
+
+
+        try
+        {
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _apiToken);
+            var response = await _httpClient.GetAsync(uri);
+
+            if (response.IsSuccessStatusCode)
             {
-                Debug.WriteLine(@"\tERROR {0}", ex.Message);
-                return ex.Message;
+                var content = await response.Content.ReadAsStringAsync();
+                return content;
             }
+
+            return null;
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine(@"\tERROR {0}", ex.Message);
+            return ex.Message;
         }
     }
 }

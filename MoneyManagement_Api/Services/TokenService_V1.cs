@@ -4,6 +4,7 @@ using System.Security.Cryptography;
 using System.Text;
 using Microsoft.IdentityModel.Tokens;
 using MoneyManagement_Api.Interfaces;
+
 namespace MoneyManagement_Api.Services;
 
 public class TokenService_V1 : ITokenService_V1
@@ -14,13 +15,14 @@ public class TokenService_V1 : ITokenService_V1
     private const string JWTSecretName = "JWT:SECRET";
     private const string VaultPath = "Tokens";
     private string VaultMountPoint;
+
     public TokenService_V1(IConfiguration configuration, ILogger<ITokenService_V1> logger,
         IHashicorpVaultService vaultService)
     {
         _logger = logger;
         _vaultService = vaultService;
         _configuration = configuration;
-        
+
         VaultMountPoint = _configuration["VaultMountPoint"];
     }
 
@@ -32,8 +34,8 @@ public class TokenService_V1 : ITokenService_V1
         //
         // string key = result.Result.Data.Value;
 
-        string key = _configuration[JWTSecretName];
-        
+        var key = _configuration[JWTSecretName];
+
         if (string.IsNullOrEmpty(key))
         {
             _logger.LogWarning($"No key found in LocalVault for {JWTSecretName}");
@@ -41,7 +43,7 @@ public class TokenService_V1 : ITokenService_V1
         }
 
         // Create a symmetric security key using the secret key from the configuration.
-        SymmetricSecurityKey authSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(key));
+        var authSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(key));
 
         var tokenDescriptor = new SecurityTokenDescriptor
         {
@@ -76,7 +78,7 @@ public class TokenService_V1 : ITokenService_V1
     public ClaimsPrincipal GetPrincipalFromExpiredToken(string accessToken)
     {
         // Create a symmetric security key using the secret key from the configuration.
-        SymmetricSecurityKey authSigningKey = new SymmetricSecurityKey
+        var authSigningKey = new SymmetricSecurityKey
             (Encoding.UTF8.GetBytes(_configuration[JWTSecretName]));
 
         // Define the token validation parameters used to validate the token.
@@ -95,7 +97,7 @@ public class TokenService_V1 : ITokenService_V1
 
         // Validate the token and extract the claims principal and the security token.
         var principal =
-            tokenHandler.ValidateToken(accessToken, tokenValidationParameters, out SecurityToken securityToken);
+            tokenHandler.ValidateToken(accessToken, tokenValidationParameters, out var securityToken);
 
         // Cast the security token to a JwtSecurityToken for further validation.
         var jwtSecurityToken = securityToken as JwtSecurityToken;
@@ -104,9 +106,7 @@ public class TokenService_V1 : ITokenService_V1
         // If no throw new SecurityTokenException
         if (jwtSecurityToken == null || !jwtSecurityToken.Header.Alg.Equals
                 (SecurityAlgorithms.HmacSha256, StringComparison.InvariantCultureIgnoreCase))
-        {
             throw new SecurityTokenException("Invalid token");
-        }
 
         // return the principal
         return principal;
