@@ -1,8 +1,6 @@
 ﻿@page "/transactionupload"
-@using System.Net.Http.Headers;
 @using System.Text.RegularExpressions;
 @using MoneyManagement_Data.DTOs
-@using System.Globalization;
 
 <MM_WEB.Shared.Components.BreadCrumb path="transactionupload"></MM_WEB.Shared.Components.BreadCrumb>
 
@@ -62,7 +60,7 @@
                                 <RadzenColumn Size="6" SizeMD="6">
                                     <RadzenFormField Text="Account" Variant="Variant.Text">
                                         <RadzenDropDown AllowClear="true" Name="Account"
-                                                        TValue="AccountMasterData" Class="w-99"
+                                                        TValue="AccountDto" Class="w-99"
                                                         FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
                                                         AllowFiltering="true" TextProperty="Name" Data=@accounts @bind-Value="selectedAccount" />
                                         <RadzenRequiredValidator Component="Account" Text="Account is required" Style="position: absolute" />
@@ -220,9 +218,9 @@ else
     string transactionAmountColumn = string.Empty;
     string transactionDescriptionColumn = string.Empty;
     string transactionAccountIdColumn = string.Empty;
-    protected IList<AccountMasterData>? accounts;
+    protected IList<AccountDto>? accounts;
     IList<string>? csvColumnsName;
-    AccountMasterData? selectedAccount;
+    AccountDto? selectedAccount;
     int csvColumnsNumber = 0;
     IList<string[]>? csvFileContent { get; set; } = new List<string[]>();
 

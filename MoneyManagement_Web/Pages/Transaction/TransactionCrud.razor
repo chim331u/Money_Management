@@ -26,13 +26,13 @@
                 <RadzenDataGridColumn TItem="TransactionDto" Property="Id" Filterable="false" Title="ID"
                                       Frozen="true" Width="20px" TextAlign="TextAlign.Center" />
 
-                <RadzenDataGridColumn TItem="TransactionDto" Property="AccountName" Title="Account" Frozen="true" Width="50px">
+                <RadzenDataGridColumn TItem="TransactionDto" Property="Account.Name" Title="Account" Frozen="true" Width="50px">
                     <EditTemplate Context="data">
                         <RadzenDropDown AllowClear="true" Name="Account.Name"
                                         TValue="AccountDto" Class="w-99" Placeholder="Select an Account"
                                         FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
                                         AllowFiltering="true" TextProperty="Name"
-                                        Data=@accountsList @bind-Value="data.AccountName" />
+                                        Data=@accountsList @bind-Value="data" />
                         <RadzenRequiredValidator Text="Account is required" Component="Account.Name" Popup="false" />
                     </EditTemplate>
                 </RadzenDataGridColumn>
