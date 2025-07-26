@@ -33,5 +33,6 @@ builder.Services.AddScoped<IHouseThingsService, HouseThingsService>();
 builder.Services.AddScoped<IStatisticService, StatisticService>();
 builder.Services.AddScoped<IBillService, BillService>();
 builder.Services.AddScoped<ITestServices, TestServices>();
+builder.Services.AddScoped<IConnectionService, ConnectionService>();
 builder.Services.AddClipboard();
 await builder.Build().RunAsync();

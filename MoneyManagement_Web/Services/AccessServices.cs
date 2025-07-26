@@ -3,8 +3,10 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using MoneyManagement_Data.DTOs;
 using MoneyManagement_Web.Data;
 using MoneyManagement_Web.Interfaces;
+using LoginModelDto = MoneyManagement_Web.Data.LoginModelDto;
 
 namespace MoneyManagement_Web.Services;
 
@@ -21,6 +23,7 @@ public class AccessServices : IAccessServices
     }
 
     public RegistrationRequest LoggedInfo { get; set; }
+    private IConnectionService _connectionService;
 
     private bool isAuthorized;
 
@@ -37,7 +40,7 @@ public class AccessServices : IAccessServices
 
     public string _apiToken { get; set; }
 
-    public AccessServices(IUtilityServices utilityServices)
+    public AccessServices(IUtilityServices utilityServices, IConnectionService connectionService)
     {
         _httpClient = new HttpClient();
 
@@ -52,45 +55,45 @@ public class AccessServices : IAccessServices
         };
 
         _utilityServices = utilityServices;
+        _connectionService = connectionService;
     }
 
-    public async Task<AuthResponse> Login(AuthRequest authRequest)
+    public async Task<bool> Login(LoginModelDto authRequest)
     {
-        var uri = new Uri(string.Format(_utilityServices.GetRestUrl() + $"api/access/login", string.Empty));
+        
+       // var uri = new Uri(string.Format(_utilityServices.GetRestUrl() + $"api/access/login", string.Empty));
 
         try
         {
-            var response = await _httpClient.PostAsJsonAsync(uri, authRequest);
+            //var response = await _httpClient.PostAsJsonAsync(uri, authRequest);
 
+            var loginResponse = await _connectionService.PostAsync<TokenModelDto>("api/v1/Login", authRequest);
 
-            if (response.IsSuccessStatusCode)
+            var dataResponse = loginResponse.Data;
+
+            if (dataResponse != null)
             {
-                var content = await response.Content.ReadAsStringAsync();
-                var dataResponse = JsonSerializer.Deserialize<AuthResponse>(content, _serializerOptions);
-                _apiToken = dataResponse.Token;
-                LoggedInfo = new RegistrationRequest { Username = dataResponse.Username, Email = dataResponse.Email };
+                
+                _apiToken = dataResponse.AccessToken;
+                LoggedInfo = new RegistrationRequest { Email = authRequest.Username };
                 IsAuthorized = true;
 
-                await _utilityServices.WriteLog(string.Concat(response.StatusCode.ToString(), " - User: '",
-                    dataResponse.Username, "' Access granted"));
-                return dataResponse;
+                // await _utilityServices.WriteLog(string.Concat(" User: '",
+                //     authRequest.Username, "' Access granted"));
+                return true;
             }
             else
             {
-                var content = await response.Content.ReadAsStringAsync();
-                if (content == "Bad credential")
-                    content = "Bad credential (user)";
-                else if (content == "Bad credentials") content = "Bad credential (password)";
-
-                await _utilityServices.WriteLog(string.Concat(response.StatusCode.ToString(), " - ", content));
-                return null;
+                
+                await _utilityServices.WriteLog("Failed to login, no data returned");
+                return false;
             }
         }
         catch (Exception ex)
         {
             Console.WriteLine(@"\tERROR {0}", ex.Message);
 
-            return null;
+            return false;
         }
     }
 

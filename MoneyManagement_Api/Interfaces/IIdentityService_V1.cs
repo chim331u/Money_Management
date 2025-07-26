@@ -1,5 +1,6 @@
 using MoneyManagement_Api.Contract;
 using MoneyManagement_Data;
+using MoneyManagement_Data.DTOs;
 
 namespace MoneyManagement_Api.Interfaces;
 

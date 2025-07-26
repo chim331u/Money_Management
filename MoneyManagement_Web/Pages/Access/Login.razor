@@ -59,10 +59,10 @@
     {
         logging = true;
 
-        var authResponse = await _accessService.Login(new AuthRequest { Email = args.Username, Password = args.Password });
-
+        var authResponse = await _accessService.Login(new LoginModelDto() { Username = args.Username, Password = args.Password });
+        
         logging = false;
-        if (authResponse == null)
+        if (!authResponse)
         {
             //login fail
             Console.WriteLine("Login Failed");
@@ -83,7 +83,7 @@
             {
                 Severity = NotificationSeverity.Success,
                 Summary = "Login success",
-                Detail = $"Username: {authResponse.Username} logged",
+                Detail = $"Username: {args.Username} logged",
                 Duration = 4000
             });
             // Console.WriteLine($"Username: {authResponse.Username} - email: {authResponse.Email} - token = {authResponse.Token}");
@@ -94,7 +94,7 @@
 
         if (args.RememberMe)
         {
-            //todo save values local
+            //todo save values local remember me
         }
     }
 

@@ -9,7 +9,7 @@ public interface IAccessServices
     event Action? OnChange;
     RegistrationRequest LoggedInfo { get; set; }
 
-    Task<AuthResponse> Login(AuthRequest authRequest);
+    Task<bool> Login(LoginModelDto authRequest);
     Task<string> Register(RegistrationRequest registrationRequest);
     Task<string> AccessTest();
 }

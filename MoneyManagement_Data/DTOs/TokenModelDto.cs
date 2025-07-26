@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace MoneyManagement_Api.Contract;
+namespace MoneyManagement_Data.DTOs;
 
 public class TokenModelDto
 {

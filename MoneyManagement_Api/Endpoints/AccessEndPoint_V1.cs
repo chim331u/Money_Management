@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using MoneyManagement_Api.Contract;
 using MoneyManagement_Api.Interfaces;
 using MoneyManagement_Api.Models.Access;
+using MoneyManagement_Data.DTOs;
 using Newtonsoft.Json;
 
 namespace MoneyManagement_Api.Endpoints;
